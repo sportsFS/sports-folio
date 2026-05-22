@@ -36,7 +36,7 @@ export default function Header() {
         }}
       >
         <img src={logo} alt="Sports Folio" style={{ height: 40 }} />
-        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
+        <span className="header-logo-text" style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
           Sports Folio Store
         </span>
       </button>
@@ -161,6 +161,9 @@ export default function Header() {
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-trigger { display: flex !important; }
+        }
+        @media (max-width: 600px) {
+          .header-logo-text { display: none; }
         }
       `}</style>
     </header>

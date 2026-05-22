@@ -64,9 +64,9 @@ export default function CartPage() {
                 <div style={{
                   width: 100, height: 100, background: 'var(--section-alt)',
                   borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '2.5rem', flexShrink: 0,
+                  flexShrink: 0, overflow: 'hidden', padding: 8,
                 }}>
-                  {item.emoji}
+                  <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4, color: 'var(--text)' }}>{item.name}</div>

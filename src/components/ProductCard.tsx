@@ -104,7 +104,7 @@ export default function ProductCard({ product }: Props) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
+            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
               ${product.price.toLocaleString('en-US')}
             </span>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>

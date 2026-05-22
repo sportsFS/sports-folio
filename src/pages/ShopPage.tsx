@@ -57,7 +57,7 @@ export default function ShopPage() {
         <div className="reveal" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)', borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
           🛒 Shop
         </div>
-        <h2 className="reveal section-title" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
+        <h2 className="reveal section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
           All Cricket Equipment
         </h2>
         <p className="reveal" style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
@@ -142,7 +142,7 @@ export default function ShopPage() {
                   : (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px' }}>
                       <div style={{ fontSize: '4rem', marginBottom: 16, opacity: 0.3 }}>🔍</div>
-                      <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: 12, color: 'var(--text)' }}>No Products Found</h3>
+                      <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', marginBottom: 12, color: 'var(--text)' }}>No Products Found</h3>
                       <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your filters</p>
                     </div>
                   )

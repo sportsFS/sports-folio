@@ -116,7 +116,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="anim-2" style={{
-            fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(2rem,6vw,4.5rem)',
+            fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(2rem,6vw,4.5rem)',
             fontWeight: 900, lineHeight: 1.1, marginBottom: 24, color: 'var(--text)',
           }}>
             UNLEASH YOUR<br />
@@ -145,7 +145,7 @@ export default function HomePage() {
               { num: '24/7', label: 'Support' },
             ].map(stat => (
               <div key={stat.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2rem', fontWeight: 900, color: 'var(--neon-dark)' }}>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2rem', fontWeight: 900, color: 'var(--neon-dark)' }}>
                   {stat.num}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>
@@ -175,7 +175,7 @@ export default function HomePage() {
             borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
             textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
           }}>🔥 Trending</div>
-          <h2 className="section-title" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
+          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
             Trending Right Now
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
@@ -206,7 +206,7 @@ export default function HomePage() {
           willChange: 'transform',
         }} />
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', color: 'white', padding: '0 20px' }}>
-          <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(1.8rem,4vw,3rem)', fontWeight: 900, marginBottom: 16 }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(1.8rem,4vw,3rem)', fontWeight: 900, marginBottom: 16 }}>
             GEAR UP FOR <span style={{ color: 'var(--neon)', textShadow: '0 0 30px var(--neon-glow)' }}>VICTORY</span>
           </h2>
           <p style={{ color: '#AAA', fontSize: '1.1rem', marginBottom: 32 }}>
@@ -225,7 +225,7 @@ export default function HomePage() {
             borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
             textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
           }}>✨ Why Us</div>
-          <h2 className="section-title" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
+          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
             Why Choose Sports Folio?
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
@@ -267,7 +267,7 @@ export default function HomePage() {
         <div className="brands-track">
           {[...brands, ...brands].map((brand, i) => (
             <span key={i} style={{
-              fontFamily: 'Orbitron, sans-serif', fontSize: '1.3rem', fontWeight: 700,
+              fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 700,
               color: 'var(--text-secondary)', opacity: 0.5, whiteSpace: 'nowrap',
               transition: 'all 0.3s ease',
             }}>
@@ -286,7 +286,7 @@ export default function HomePage() {
             borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
             textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
           }}>💬 Testimonials</div>
-          <h2 className="section-title" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
+          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
             What Players Say
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
@@ -307,7 +307,7 @@ export default function HomePage() {
           borderRadius: '50%', filter: 'blur(120px)', opacity: 0.15, bottom: -200, right: -100,
         }} />
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 600, margin: '0 auto' }} className="reveal">
-          <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.2rem', fontWeight: 800, color: '#fff', marginBottom: 16 }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.2rem', fontWeight: 800, color: '#fff', marginBottom: 16 }}>
             JOIN THE CREASE CLUB
           </h2>
           <p style={{ color: '#999', marginBottom: 32, lineHeight: 1.7 }}>
@@ -323,7 +323,7 @@ export default function HomePage() {
               style={{
                 flex: 1, minWidth: 200, padding: '16px 24px', border: '2px solid #333',
                 borderRadius: 50, background: '#111', color: 'white', fontSize: '0.95rem',
-                fontFamily: 'Inter, sans-serif', outline: 'none',
+                fontFamily: 'Space Grotesk, sans-serif', outline: 'none',
               }}
             />
             <button type="submit" className="btn-neon">SUBSCRIBE</button>

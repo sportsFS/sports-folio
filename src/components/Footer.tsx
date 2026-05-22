@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import logo from '../assets/logo.png';
 
 export default function Footer() {
   const { showPage } = useApp();
@@ -16,17 +17,13 @@ export default function Footer() {
           <button
             onClick={() => showPage('home')}
             style={{
-              fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: '1.2rem',
-              color: 'white', display: 'flex', alignItems: 'center', gap: 8,
-              background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16,
+              background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10,
             }}
           >
-            <div style={{
-              width: 36, height: 36, background: 'var(--neon)', borderRadius: 10,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.1rem',
-            }}>🏏</div>
-            SPORTS <span style={{ color: 'var(--neon)' }}>FOLIO</span>
+            <img src={logo} alt="Sports Folio" style={{ height: 40 }} />
+            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: '#fff' }}>
+              Sports Folio Store
+            </span>
           </button>
           <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: 20 }}>
             India's most trusted destination for premium cricket equipment. Gear up with the best — play like a champion.

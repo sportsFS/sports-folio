@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import logo from '../assets/logo.png';
 
 export default function Header() {
   const { theme, toggleTheme, cartCount, currentPage, showPage } = useApp();
@@ -30,20 +31,14 @@ export default function Header() {
       <button
         onClick={() => navClick('home')}
         style={{
-          fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: '1.3rem',
-          color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8,
+          display: 'flex', alignItems: 'center', gap: 10,
           background: 'none', border: 'none', cursor: 'pointer',
         }}
       >
-        <div style={{
-          width: 36, height: 36, background: 'var(--neon)', borderRadius: 10,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.1rem', color: 'var(--black)', fontWeight: 900,
-        }}>
-          🏏
-        </div>
-        <span>SPORTS </span>
-        <span style={{ color: theme === 'dark' ? 'var(--neon)' : 'var(--neon-dark)' }}>FOLIO</span>
+        <img src={logo} alt="Sports Folio" style={{ height: 40 }} />
+        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
+          Sports Folio Store
+        </span>
       </button>
 
       {/* Desktop Nav */}
@@ -61,7 +56,7 @@ export default function Header() {
               background: currentPage === item.page ? 'var(--neon)' : 'transparent',
               color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
               boxShadow: currentPage === item.page ? '0 0 20px var(--neon-glow)' : 'none',
-              border: 'none', fontFamily: 'Inter, sans-serif',
+              border: 'none', fontFamily: 'Space Grotesk, sans-serif',
             } as React.CSSProperties}
           >
             {item.label}
@@ -152,7 +147,7 @@ export default function Header() {
                 padding: '12px 20px', borderRadius: 50, cursor: 'pointer',
                 background: currentPage === item.page ? 'var(--neon)' : 'transparent',
                 color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
-                border: 'none', fontFamily: 'Inter, sans-serif',
+                border: 'none', fontFamily: 'Space Grotesk, sans-serif',
                 textAlign: 'left', width: '100%',
               } as React.CSSProperties}
             >

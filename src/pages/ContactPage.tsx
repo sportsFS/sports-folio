@@ -27,7 +27,7 @@ export default function ContactPage() {
     width: '100%', padding: '14px 18px',
     border: '2px solid var(--card-border)', borderRadius: 12,
     background: 'var(--input-bg)', color: 'var(--text)',
-    fontSize: '0.95rem', fontFamily: 'Inter, sans-serif',
+    fontSize: '0.95rem', fontFamily: 'Space Grotesk, sans-serif',
     transition: 'border-color 0.3s ease', outline: 'none',
   };
 
@@ -49,7 +49,7 @@ export default function ContactPage() {
             }}>
               📞 Contact
             </div>
-            <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.2rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
+            <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.2rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
               Get in Touch
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 40 }}>
@@ -85,7 +85,7 @@ export default function ContactPage() {
             background: 'var(--card-bg)', border: '1px solid var(--card-border)',
             borderRadius: 24, padding: 40,
           }}>
-            <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1.3rem', fontWeight: 700, marginBottom: 28, color: 'var(--text)' }}>
+            <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 700, marginBottom: 28, color: 'var(--text)' }}>
               Send us a Message
             </h3>
             <form onSubmit={handleSubmit}>

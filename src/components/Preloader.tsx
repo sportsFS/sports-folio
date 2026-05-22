@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logo from '../assets/logo.png';
 
 export default function Preloader() {
   const [hidden, setHidden] = useState(false);
@@ -10,7 +11,7 @@ export default function Preloader() {
 
   return (
     <div id="preloader" className={hidden ? 'hidden' : ''}>
-      <div className="preloader-logo">SPORTS FOLIO</div>
+      <img src={logo} alt="Sports Folio" className="preloader-logo" />
       <div className="preloader-bar">
         <div className="preloader-bar-fill" />
       </div>

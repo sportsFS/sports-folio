@@ -25,7 +25,7 @@ export default function CartPage() {
       <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
           <div style={{ fontSize: '5rem', marginBottom: 24, opacity: 0.3 }}>🛒</div>
-          <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1.5rem', marginBottom: 12, color: 'var(--text)' }}>
+          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.5rem', marginBottom: 12, color: 'var(--text)' }}>
             Your Cart is Empty
           </h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
@@ -45,7 +45,7 @@ export default function CartPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)', borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
             🛒 Cart
           </div>
-          <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)' }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)' }}>
             Your Shopping Cart
           </h2>
         </div>
@@ -71,7 +71,7 @@ export default function CartPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4, color: 'var(--text)' }}>{item.name}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'capitalize' }}>{item.category}</div>
-                  <div style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)' }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)' }}>
                     ${(item.price * item.qty).toLocaleString('en-US')}
                   </div>
                 </div>
@@ -126,7 +126,7 @@ export default function CartPage() {
             background: 'var(--card-bg)', border: '1px solid var(--card-border)',
             borderRadius: 20, padding: 32, position: 'sticky', top: 100,
           }}>
-            <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1.2rem', fontWeight: 700, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
+            <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.2rem', fontWeight: 700, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
               Order Summary
             </h3>
 
@@ -151,7 +151,7 @@ export default function CartPage() {
                   flex: 1, padding: '12px 16px',
                   border: '2px solid var(--card-border)', borderRadius: 10,
                   background: 'var(--input-bg)', color: 'var(--text)',
-                  fontFamily: 'Inter, sans-serif', outline: 'none',
+                  fontFamily: 'Space Grotesk, sans-serif', outline: 'none',
                 }}
               />
               <button
@@ -189,7 +189,7 @@ export default function CartPage() {
                 background: 'transparent', border: '1px solid var(--card-border)',
                 borderRadius: 10, color: 'var(--text-secondary)',
                 cursor: 'pointer', fontSize: '0.85rem',
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: 'Space Grotesk, sans-serif',
               }}
             >
               ← Continue Shopping

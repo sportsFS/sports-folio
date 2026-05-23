@@ -151,6 +151,13 @@ export default function ShopPage() {
           </div>
         </div>
       </section>
+      <style>{`
+        @media (max-width: 768px) {
+          .shop-layout-responsive { flex-direction: column !important; }
+          .shop-sidebar-responsive { width: 100% !important; position: static !important; order: 1 !important; }
+          .shop-layout-responsive > div:last-child { order: 0 !important; }
+        }
+      `}</style>
     </div>
   );
 }

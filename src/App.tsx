@@ -8,27 +8,29 @@ import HomePage from './pages/HomePage';
 import ShopPage from './pages/ShopPage';
 import ContactPage from './pages/ContactPage';
 import CartPage from './pages/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import AdminPage from './pages/AdminPage';
 
 function AppContent() {
   const { currentPage } = useApp();
+
+  function showPage(page: string) {
+    return currentPage === page ? 'block' : 'none';
+  }
 
   return (
     <>
       <Preloader />
       <Header />
       <main style={{ background: 'var(--bg)', transition: 'background 0.5s ease' }}>
-        <div style={{ display: currentPage === 'home' ? 'block' : 'none' }}>
-          <HomePage />
-        </div>
-        <div style={{ display: currentPage === 'shop' ? 'block' : 'none' }}>
-          <ShopPage />
-        </div>
-        <div style={{ display: currentPage === 'contact' ? 'block' : 'none' }}>
-          <ContactPage />
-        </div>
-        <div style={{ display: currentPage === 'cart' ? 'block' : 'none' }}>
-          <CartPage />
-        </div>
+        <div style={{ display: showPage('home') }}><HomePage /></div>
+        <div style={{ display: showPage('shop') }}><ShopPage /></div>
+        <div style={{ display: showPage('contact') }}><ContactPage /></div>
+        <div style={{ display: showPage('cart') }}><CartPage /></div>
+        <div style={{ display: showPage('login') }}><LoginPage /></div>
+        <div style={{ display: showPage('register') }}><RegisterPage /></div>
+        <div style={{ display: showPage('admin') }}><AdminPage /></div>
       </main>
       <Footer />
       <Toast />

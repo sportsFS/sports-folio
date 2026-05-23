@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQty, showPage, showToast } = useApp();
+  const { cart, removeFromCart, updateQty, showPage, showToast, isLoggedIn } = useApp();
   const [promoCode, setPromoCode] = useState('');
 
   useEffect(() => {
@@ -172,7 +172,14 @@ export default function CartPage() {
             <button
               className="btn-neon"
               style={{ width: '100%', marginTop: 20 }}
-              onClick={() => showToast('Order Placed! 🎉', 'Your order has been placed successfully')}
+              onClick={() => {
+                if (!isLoggedIn) {
+                  showToast('Login Required', 'Please login to checkout');
+                  showPage('login');
+                } else {
+                  showToast('Order Placed!', 'Your order has been placed successfully');
+                }
+              }}
             >
               CHECKOUT →
             </button>

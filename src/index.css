@@ -640,6 +640,18 @@ footer {
   padding-left: 8px;
 }
 
+/* AUTH */
+.auth-input {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.auth-input:focus {
+  border-color: var(--neon) !important;
+  box-shadow: 0 0 0 3px rgba(170,255,0,0.1);
+}
+.auth-form {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
 /* SELECT */
 select {
   background: var(--card-bg);

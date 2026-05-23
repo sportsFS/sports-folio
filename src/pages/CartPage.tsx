@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQty, showPage, showToast, isLoggedIn } = useApp();
+  const { cart, removeFromCart, updateQty, showPage, showToast, isLoggedIn, placeOrder } = useApp();
   const [promoCode, setPromoCode] = useState('');
 
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function CartPage() {
                   showToast('Login Required', 'Please login to checkout');
                   showPage('login');
                 } else {
-                  showToast('Order Placed!', 'Your order has been placed successfully');
+                  placeOrder();
                 }
               }}
             >

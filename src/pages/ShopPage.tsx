@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { allProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { useApp } from '../context/AppContext';
@@ -7,7 +6,7 @@ import { useApp } from '../context/AppContext';
 type SortType = 'default' | 'low' | 'high' | 'name';
 
 export default function ShopPage() {
-  const { presetCategory, setPresetCategory } = useApp();
+  const { presetCategory, setPresetCategory, products } = useApp();
   const [loaded, setLoaded] = useState(false);
   const [category, setCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(15000);
@@ -42,7 +41,7 @@ export default function ShopPage() {
   }, [category, maxPrice]);
 
   const filtered = useMemo(() => {
-    let result = allProducts.filter(p =>
+    let result = products.filter(p =>
       (category === 'all' || p.category === category) && p.price <= maxPrice
     );
     if (sort === 'low') result = [...result].sort((a, b) => a.price - b.price);

@@ -160,6 +160,17 @@ export default function Header() {
           </span>
         </button>
 
+        {/* Sign In Pill — always visible */}
+        {!isLoggedIn && (
+          <button
+            onClick={() => navClick('login')}
+            className="btn-neon"
+            style={{ padding: '8px 18px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+          >
+            Sign In
+          </button>
+        )}
+
         {/* Cart Button */}
         <button
           onClick={() => navClick('cart')}

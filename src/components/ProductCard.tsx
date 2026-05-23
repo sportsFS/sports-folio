@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function ProductCard({ product }: Props) {
-  const { addToCart, showToast } = useApp();
+  const { addToCart, showToast, isLoggedIn, showPage } = useApp();
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
 
@@ -15,6 +15,11 @@ export default function ProductCard({ product }: Props) {
   const stars = '★'.repeat(Math.floor(product.rating));
 
   function handleAddToCart() {
+    if (!isLoggedIn) {
+      showToast('Login Required', 'Please login to add items to cart');
+      showPage('login');
+      return;
+    }
     addToCart(product);
     showToast(product.name, 'Added to your cart successfully!');
     setAdded(true);

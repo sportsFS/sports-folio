@@ -10,6 +10,7 @@ export default function ShopPage() {
   const [category, setCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(15000);
   const [sort, setSort] = useState<SortType>('default');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Trigger scroll reveals
   useEffect(() => {
@@ -125,13 +126,65 @@ export default function ShopPage() {
               <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 Showing {loaded ? filtered.length : '...'} products
               </div>
-              <select value={sort} onChange={e => setSort(e.target.value as SortType)}>
-                <option value="default">Sort by: Featured</option>
-                <option value="low">Price: Low to High</option>
-                <option value="high">Price: High to Low</option>
-                <option value="name">Name: A to Z</option>
-              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="mobile-filter-btn"
+                  onClick={() => setShowFilters(s => !s)}
+                  style={{
+                    padding: '10px 18px', fontSize: '0.85rem', fontWeight: 600,
+                    background: showFilters ? 'var(--neon)' : 'var(--card-bg)',
+                    color: showFilters ? 'var(--black)' : 'var(--text)',
+                    border: '1px solid var(--card-border)', borderRadius: 10,
+                    cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif',
+                    display: 'none', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+                  }}
+                >
+                  ☰ Filters {showFilters ? '▲' : '▼'}
+                </button>
+                <select value={sort} onChange={e => setSort(e.target.value as SortType)}>
+                  <option value="default">Sort by: Featured</option>
+                  <option value="low">Price: Low to High</option>
+                  <option value="high">Price: High to Low</option>
+                  <option value="name">Name: A to Z</option>
+                </select>
+              </div>
             </div>
+            {showFilters && (
+              <div className="mobile-filter-panel" style={{
+                background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+                borderRadius: 16, padding: 24, marginBottom: 24,
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+                  📂 Categories
+                </div>
+                {filterOptions.map(opt => (
+                  <div
+                    key={opt.value}
+                    className={`filter-option ${category === opt.value ? 'active' : ''}`}
+                    onClick={() => { setCategory(opt.value); setShowFilters(false); }}
+                  >
+                    <div className="filter-checkbox">✓</div>
+                    <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text)' }}>{opt.label}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{opt.count}</span>
+                  </div>
+                ))}
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginTop: 20, marginBottom: 16, color: 'var(--text)' }}>💰 Price Range</div>
+                <input type="range" min={0} max={15000} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <span>$0</span>
+                  <span>${maxPrice.toLocaleString('en-US')}</span>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginTop: 20, marginBottom: 16, color: 'var(--text)' }}>⭐ Rating</div>
+                {['4★ & above', '3★ & above'].map(r => <RatingFilter key={r} label={r} />)}
+                <button
+                  className="btn-neon"
+                  style={{ width: '100%', marginTop: 20 }}
+                  onClick={() => { setCategory('all'); setMaxPrice(15000); setSort('default'); setShowFilters(false); }}
+                >
+                  CLEAR ALL FILTERS
+                </button>
+              </div>
+            )}
 
             {/* Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24 }}>
@@ -153,9 +206,11 @@ export default function ShopPage() {
       </section>
       <style>{`
         @media (max-width: 768px) {
-          .shop-layout-responsive { flex-direction: column !important; }
-          .shop-sidebar-responsive { width: 100% !important; position: static !important; order: 1 !important; }
-          .shop-layout-responsive > div:last-child { order: 0 !important; }
+          .shop-sidebar-responsive { display: none !important; }
+          .mobile-filter-btn { display: inline-flex !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-filter-panel { display: none !important; }
         }
       `}</style>
     </div>

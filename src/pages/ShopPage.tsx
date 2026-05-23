@@ -2,15 +2,24 @@ import { useState, useEffect, useMemo } from 'react';
 import { allProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
+import { useApp } from '../context/AppContext';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
 
 export default function ShopPage() {
+  const { presetCategory, setPresetCategory } = useApp();
   const [loaded, setLoaded] = useState(false);
   const [category, setCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(15000);
   const [sort, setSort] = useState<SortType>('default');
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    if (presetCategory !== 'all') {
+      setCategory(presetCategory);
+      setPresetCategory('all');
+    }
+  }, []);
 
   // Trigger scroll reveals
   useEffect(() => {

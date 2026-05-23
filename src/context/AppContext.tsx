@@ -23,6 +23,8 @@ interface AppContextType {
   showPage: (page: string) => void;
   toast: ToastData;
   showToast: (msg: string, sub: string) => void;
+  presetCategory: string;
+  setPresetCategory: (cat: string) => void;
 }
 
 const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -32,6 +34,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentPage, setCurrentPage] = useState('home');
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', visible: false });
+  const [presetCategory, setPresetCategory] = useState('all');
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
@@ -82,7 +85,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       theme, toggleTheme,
       cart, addToCart, removeFromCart, updateQty, cartCount,
       currentPage, showPage,
-      toast, showToast
+      toast, showToast,
+      presetCategory, setPresetCategory
     }}>
       {children}
     </AppContext.Provider>

@@ -2,10 +2,20 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import logo from '../assets/logo.png';
 
+const categoryLinks = [
+  { label: 'All Products', value: 'all' },
+  { label: 'Cricket Bats', value: 'bats' },
+  { label: 'Cricket Balls', value: 'balls' },
+  { label: 'Protective Gear', value: 'protection' },
+  { label: 'Footwear', value: 'footwear' },
+  { label: 'Accessories', value: 'accessories' },
+];
+
 export default function Header() {
-  const { theme, toggleTheme, cartCount, currentPage, showPage } = useApp();
+  const { theme, toggleTheme, cartCount, currentPage, showPage, setPresetCategory } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -44,24 +54,66 @@ export default function Header() {
       {/* Desktop Nav */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: 8 }}
         className="desktop-nav">
-        {navItems.map(item => (
-          <button
-            key={item.page}
-            onClick={() => navClick(item.page)}
-            style={{
-              textDecoration: 'none',
-              fontWeight: 600, fontSize: '0.9rem',
-              padding: '8px 20px', borderRadius: 50,
-              transition: 'all 0.3s ease', cursor: 'pointer',
-              background: currentPage === item.page ? 'var(--neon)' : 'transparent',
-              color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
-              boxShadow: currentPage === item.page ? '0 0 20px var(--neon-glow)' : 'none',
-              border: 'none', fontFamily: 'Space Grotesk, sans-serif',
-            } as React.CSSProperties}
-          >
-            {item.label}
-          </button>
-        ))}
+        {navItems.map(item => {
+          if (item.page === 'shop') {
+            return (
+              <div
+                key={item.page}
+                className="shop-dropdown-wrapper"
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setShopOpen(true)}
+                onMouseLeave={() => setShopOpen(false)}
+              >
+                <button
+                  onClick={() => { setPresetCategory('all'); navClick(item.page); }}
+                  style={{
+                    textDecoration: 'none',
+                    fontWeight: 600, fontSize: '0.9rem',
+                    padding: '8px 20px', borderRadius: 50,
+                    transition: 'all 0.3s ease', cursor: 'pointer',
+                    background: currentPage === item.page ? 'var(--neon)' : 'transparent',
+                    color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
+                    boxShadow: currentPage === item.page ? '0 0 20px var(--neon-glow)' : 'none',
+                    border: 'none', fontFamily: 'Space Grotesk, sans-serif',
+                  } as React.CSSProperties}
+                >
+                  Shop {shopOpen ? '▲' : '▼'}
+                </button>
+                {shopOpen && (
+                  <div className="shop-dropdown-menu">
+                    {categoryLinks.map(cat => (
+                      <button
+                        key={cat.value}
+                        className="shop-dropdown-item"
+                        onClick={() => { setPresetCategory(cat.value); navClick('shop'); }}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={item.page}
+              onClick={() => navClick(item.page)}
+              style={{
+                textDecoration: 'none',
+                fontWeight: 600, fontSize: '0.9rem',
+                padding: '8px 20px', borderRadius: 50,
+                transition: 'all 0.3s ease', cursor: 'pointer',
+                background: currentPage === item.page ? 'var(--neon)' : 'transparent',
+                color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
+                boxShadow: currentPage === item.page ? '0 0 20px var(--neon-glow)' : 'none',
+                border: 'none', fontFamily: 'Space Grotesk, sans-serif',
+              } as React.CSSProperties}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Actions */}
@@ -138,26 +190,90 @@ export default function Header() {
       {/* Mobile Nav Dropdown */}
       {mobileOpen && (
         <div className="mobile-nav-open">
-          {navItems.map(item => (
-            <button
-              key={item.page}
-              onClick={() => navClick(item.page)}
-              style={{
-                fontWeight: 600, fontSize: '0.9rem',
-                padding: '12px 20px', borderRadius: 50, cursor: 'pointer',
-                background: currentPage === item.page ? 'var(--neon)' : 'transparent',
-                color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
-                border: 'none', fontFamily: 'Space Grotesk, sans-serif',
-                textAlign: 'left', width: '100%',
-              } as React.CSSProperties}
-            >
-              {item.label}
-            </button>
-          ))}
+          {navItems.map(item => {
+            if (item.page === 'shop') {
+              return (
+                <div key={item.page} style={{ width: '100%' }}>
+                  <button
+                    onClick={() => setShopOpen(s => !s)}
+                    style={{
+                      fontWeight: 600, fontSize: '0.9rem',
+                      padding: '12px 20px', borderRadius: 50, cursor: 'pointer',
+                      background: currentPage === item.page ? 'var(--neon)' : 'transparent',
+                      color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
+                      border: 'none', fontFamily: 'Space Grotesk, sans-serif',
+                      textAlign: 'left', width: '100%',
+                    } as React.CSSProperties}
+                  >
+                    Shop {shopOpen ? '▲' : '▼'}
+                  </button>
+                  {shopOpen && (
+                    <div style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {categoryLinks.map(cat => (
+                        <button
+                          key={cat.value}
+                          onClick={() => { setPresetCategory(cat.value); navClick('shop'); }}
+                          style={{
+                            fontWeight: 500, fontSize: '0.85rem',
+                            padding: '8px 16px', borderRadius: 50, cursor: 'pointer',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            border: 'none', fontFamily: 'Space Grotesk, sans-serif',
+                            textAlign: 'left', width: '100%',
+                          } as React.CSSProperties}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <button
+                key={item.page}
+                onClick={() => navClick(item.page)}
+                style={{
+                  fontWeight: 600, fontSize: '0.9rem',
+                  padding: '12px 20px', borderRadius: 50, cursor: 'pointer',
+                  background: currentPage === item.page ? 'var(--neon)' : 'transparent',
+                  color: currentPage === item.page ? 'var(--black)' : 'var(--text)',
+                  border: 'none', fontFamily: 'Space Grotesk, sans-serif',
+                  textAlign: 'left', width: '100%',
+                } as React.CSSProperties}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       )}
 
       <style>{`
+        .shop-dropdown-menu {
+          position: absolute; top: calc(100% + 8px); left: 0;
+          background: var(--card-bg); border: 1px solid var(--card-border);
+          border-radius: 12px; padding: 6px; min-width: 180px;
+          z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          animation: fadeDown 0.2s ease;
+        }
+        .shop-dropdown-item {
+          display: block; width: 100%; text-align: left;
+          padding: 8px 14px; border-radius: 8px; border: none;
+          background: transparent; cursor: pointer;
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 0.85rem; color: var(--text);
+          transition: background 0.2s;
+        }
+        .shop-dropdown-item:hover {
+          background: rgba(170,255,0,0.15);
+          color: var(--neon-dark);
+        }
+        @keyframes fadeDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-trigger { display: flex !important; }

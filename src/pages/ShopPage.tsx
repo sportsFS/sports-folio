@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 type SortType = 'default' | 'low' | 'high' | 'name';
 
 export default function ShopPage() {
-  const { presetCategory, setPresetCategory, products } = useApp();
+  const { presetCategory, setPresetCategory, products, searchQuery } = useApp();
   const [loaded, setLoaded] = useState(false);
   const [category, setCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState(15000);
@@ -44,11 +44,14 @@ export default function ShopPage() {
     let result = products.filter(p =>
       (category === 'all' || p.category === category) && p.price <= maxPrice
     );
+    if (searchQuery) {
+      result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
     if (sort === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sort === 'high') result = [...result].sort((a, b) => b.price - a.price);
     else if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [category, maxPrice, sort]);
+  }, [category, maxPrice, sort, searchQuery]);
 
   const filterOptions = [
     { label: 'All Products', value: 'all', count: 20 },
@@ -129,6 +132,25 @@ export default function ShopPage() {
 
           {/* Main */}
           <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Search Banner */}
+            {searchQuery && (
+              <div style={{
+                padding: '12px 20px', marginBottom: 20,
+                background: 'rgba(170,255,0,0.08)',
+                border: '1px solid rgba(170,255,0,0.25)',
+                borderRadius: 12,
+                display: 'flex', alignItems: 'center', gap: 10,
+                fontSize: '0.9rem', color: 'var(--text)',
+              }}>
+                <span style={{ fontWeight: 600 }}>
+                  Search results for "<span style={{ color: 'var(--neon-dark)' }}>{searchQuery}</span>"
+                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  — {loaded ? filtered.length : '...'} products found
+                </span>
+              </div>
+            )}
+
             {/* Toolbar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
               <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

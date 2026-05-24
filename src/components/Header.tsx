@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import logo from '../assets/logo.png';
+import SearchBar from './SearchBar';
 
 const categoryLinks = [
   { label: 'All Products', value: 'all' },
@@ -136,6 +137,7 @@ export default function Header() {
 
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <SearchBar />
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}

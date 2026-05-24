@@ -685,3 +685,145 @@ select {
     font-size: 0.85rem !important;
   }
 }
+
+/* SEARCH BAR */
+.search-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.search-bar-wrapper.expanded {
+  width: 320px;
+}
+
+.search-icon-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.search-icon-btn:hover {
+  border-color: var(--neon);
+  color: var(--neon-dark);
+  box-shadow: 0 0 15px var(--neon-glow);
+}
+
+.search-bar-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  padding: 0 44px 0 48px;
+  outline: none;
+  z-index: 2;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-bar-input:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 3px rgba(170, 255, 0, 0.1);
+}
+
+.search-bar-input::placeholder {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.search-bar-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  z-index: 1;
+  overflow: hidden;
+  opacity: 0.6;
+  animation: searchGlowRotate 3s linear infinite;
+  pointer-events: none;
+}
+
+.search-bar-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background-image: conic-gradient(
+    transparent,
+    var(--neon) 5%,
+    transparent 20%,
+    transparent 50%,
+    var(--neon-dark) 60%,
+    transparent 85%
+  );
+  animation: searchGlowSpin 3s linear infinite;
+}
+
+@keyframes searchGlowSpin {
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes searchGlowRotate {
+  100% { filter: hue-rotate(360deg); }
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  transition: all 0.2s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .search-bar-wrapper.expanded {
+    width: calc(100vw - 180px);
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar-wrapper.expanded {
+    width: calc(100vw - 140px);
+  }
+}

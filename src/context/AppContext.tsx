@@ -40,6 +40,8 @@ interface AppContextType {
   showToast: (msg: string, sub: string) => void;
   presetCategory: string;
   setPresetCategory: (cat: string) => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
   user: AuthUser | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
@@ -72,6 +74,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState('home');
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<AuthUser | null>(() => loadJSON('cricket_session', null));
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = loadJSON<Product[]>('cricket_products', null);
@@ -201,6 +204,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       theme, toggleTheme, cart, addToCart, removeFromCart, updateQty, cartCount,
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
+      searchQuery, setSearchQuery,
       user, isLoggedIn, isAdmin, login, register, logout,
       products, addProduct, updateProduct, deleteProduct,
       orders, updateOrderStatus, placeOrder,

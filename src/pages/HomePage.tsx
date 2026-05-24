@@ -57,22 +57,19 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleParallax);
   }, []);
 
-  // Particles
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  const heroImages = [
+    '/images/hero/AdobeStock_305237820.jpeg',
+    '/images/hero/AdobeStock_473788569.jpeg',
+    '/images/hero/Max_a_A_hyper-realistic_4K.png',
+    '/images/hero/Max_a_Gritty,_high-octane_.png',
+    '/images/hero/Max_a_Professional_sports_.png',
+  ];
+
   useEffect(() => {
-    const container = document.getElementById('heroParticles');
-    if (!container) return;
-    container.innerHTML = '';
-    for (let i = 0; i < 20; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = Math.random() * 100 + '%';
-      p.style.animationDelay = Math.random() * 6 + 's';
-      p.style.animationDuration = (4 + Math.random() * 4) + 's';
-      const size = (2 + Math.random() * 4) + 'px';
-      p.style.width = size;
-      p.style.height = size;
-      container.appendChild(p);
-    }
+    const timer = setInterval(() => setHeroIndex(prev => (prev + 1) % heroImages.length), 5000);
+    return () => clearInterval(timer);
   }, []);
 
   function handleSubscribe(e: React.FormEvent) {
@@ -85,74 +82,73 @@ export default function HomePage() {
     <>
       {/* ====== HERO ====== */}
       <section style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', overflow: 'hidden', paddingTop: 72,
+        minHeight: '100vh', position: 'relative', overflow: 'hidden', paddingTop: 72,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {/* BG */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <div className="hero-grid" />
-          <div className="hero-gradient-orb orb1" />
-          <div className="hero-gradient-orb orb2" />
-          <div className="hero-gradient-orb orb3" />
-          <div id="heroParticles" style={{ position: 'absolute', width: '100%', height: '100%' }} />
+        {/* Full-screen image carousel */}
+        <div className="hero-carousel">
+          {heroImages.map((img, i) => (
+            <div key={i} className={`hero-carousel-slide ${i === heroIndex ? 'active' : ''}`}>
+              <img src={img} alt={`Sports ${i + 1}`} className="hero-carousel-img" />
+            </div>
+          ))}
         </div>
 
-        {/* Floating emojis */}
-        <div className="cricket-ball-float" style={{ top: '20%', left: '10%', fontSize: '4rem', animationDelay: '0s' }}>🏏</div>
-        <div className="cricket-ball-float" style={{ top: '70%', right: '10%', fontSize: '3rem', animationDelay: '1s' }}>🔴</div>
-        <div className="cricket-ball-float" style={{ top: '40%', right: '20%', fontSize: '2.5rem', animationDelay: '2s' }}>🏆</div>
+        {/* Dark gradient overlay */}
+        <div className="hero-overlay" />
+
+        {/* Dot navigation */}
+        <div style={{
+          position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 3, display: 'flex', gap: 8,
+        }}>
+          {heroImages.map((_, i) => (
+            <button key={i} className={`hero-dot ${i === heroIndex ? 'active' : ''}`}
+              onClick={() => setHeroIndex(i)} aria-label={`Slide ${i + 1}`} />
+          ))}
+        </div>
 
         {/* Content */}
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 900, padding: '0 20px' }}>
-          <div className="anim-1" style={{
+        <div className="hero-content">
+          <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '10px 24px',
-            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
-            borderRadius: 50, fontWeight: 600, fontSize: '0.85rem', color: 'var(--neon-dark)',
-            marginBottom: 30, backdropFilter: 'blur(10px)',
+            padding: '8px 20px',
+            background: 'rgba(170,255,0,0.15)', border: '1px solid rgba(170,255,0,0.4)',
+            borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon)',
+            marginBottom: 24, backdropFilter: 'blur(8px)',
           }}>
-            <span className="dot-pulse" />
-            Season 2025 Collection Now Live
+            🏆 SPORTS EQUIPMENT
           </div>
 
-          <h1 className="anim-2" style={{
-            fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(2rem,6vw,4.5rem)',
-            fontWeight: 900, lineHeight: 1.1, marginBottom: 24, color: 'var(--text)',
+          <h1 style={{
+            fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(2rem,5vw,4rem)',
+            fontWeight: 900, lineHeight: 1.1, marginBottom: 20, color: '#fff',
           }}>
-            UNLEASH YOUR<br />
-            <span className="neon-highlight">CRICKET BEAST</span>
+            Your Game. <span style={{ color: 'var(--neon)', textShadow: '0 0 30px var(--neon-glow)' }}>Your Gear.</span><br />
+            Your Store.
           </h1>
 
-          <p className="anim-3" style={{
-            fontSize: '1.2rem', color: 'var(--text-secondary)', lineHeight: 1.8,
-            marginBottom: 40, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto',
+          <p style={{
+            fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7,
+            marginBottom: 32, maxWidth: 550, marginLeft: 'auto', marginRight: 'auto',
           }}>
-            Premium cricket equipment crafted for champions. From willow bats to protective gear — elevate every shot, every delivery, every catch.
+            Premium sports equipment for every athlete — from cricket to football, 
+            tennis to training. Gear up and play your best.
           </p>
 
-          <div className="anim-4" style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn-neon" onClick={() => showPage('shop')}>🛒 SHOP NOW</button>
-            <button className="btn-outline" onClick={() => showPage('shop')}>EXPLORE COLLECTION</button>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
+            <button className="btn-neon" onClick={() => showPage('shop')}>SHOP NOW →</button>
+            <button className="btn-outline" onClick={() => showPage('shop')}
+              style={{ borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
+              EXPLORE MORE
+            </button>
           </div>
 
-          <div className="anim-5" style={{
-            display: 'flex', gap: 48, justifyContent: 'center', marginTop: 60, flexWrap: 'wrap',
-          }}>
-            {[
-              { num: '500+', label: 'Products' },
-              { num: '50K+', label: 'Happy Customers' },
-              { num: '4.9', label: 'Average Rating' },
-              { num: '24/7', label: 'Support' },
-            ].map(stat => (
-              <div key={stat.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2rem', fontWeight: 900, color: 'var(--neon-dark)' }}>
-                  {stat.num}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="hero-cat-link" onClick={() => showPage('shop')}>⚽ Football</button>
+            <button className="hero-cat-link" onClick={() => showPage('shop')}>🏏 Cricket</button>
+            <button className="hero-cat-link" onClick={() => showPage('shop')}>🏀 Basketball</button>
+            <button className="hero-cat-link" onClick={() => showPage('shop')}>🎾 Tennis</button>
           </div>
         </div>
       </section>

@@ -20,10 +20,5 @@ jobs:
 
       - run: npm run build
 
-      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: dist/
-          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+      - run: |
+          lftp -c "set ftp:ssl-allow no; open -u ${{ secrets.FTP_USERNAME }},'${{ secrets.FTP_PASSWORD }}' ${{ secrets.FTP_HOST }}; mirror -R --delete dist/ ./"

@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as crypto from "../crypto.js";
+import type * as email from "../email.js";
 import type * as orders from "../orders.js";
+import type * as otp from "../otp.js";
 import type * as products from "../products.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
@@ -20,7 +23,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crypto: typeof crypto;
+  email: typeof email;
   orders: typeof orders;
+  otp: typeof otp;
   products: typeof products;
   seed: typeof seed;
   users: typeof users;

@@ -51,7 +51,7 @@ export default function ShopPage() {
     else if (sort === 'high') result = [...result].sort((a, b) => b.price - a.price);
     else if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [category, maxPrice, sort, searchQuery]);
+  }, [category, maxPrice, sort, searchQuery, products]);
 
   const filterOptions = [
     { label: 'All Products', value: 'all', count: 20 },

@@ -11,7 +11,7 @@ export default function ProductCard({ product }: Props) {
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
 
-  const discount = Math.round((1 - product.price / product.oldPrice) * 100);
+  const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const stars = '★'.repeat(Math.floor(product.rating));
 
   function handleAddToCart() {
@@ -105,16 +105,18 @@ export default function ProductCard({ product }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: '0.85rem' }}>
           <span style={{ color: '#FFD700', letterSpacing: 2 }}>{stars}</span>
           <span style={{ color: 'var(--text)' }}>{product.rating}</span>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({product.reviews})</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({product.reviews ?? 0})</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
               ${product.price.toLocaleString('en-US')}
             </span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>
-              ${product.oldPrice.toLocaleString('en-US')}
-            </span>
+            {product.oldPrice && (
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>
+                ${product.oldPrice.toLocaleString('en-US')}
+              </span>
+            )}
           </div>
           <span style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
         </div>

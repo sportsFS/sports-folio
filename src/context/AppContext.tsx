@@ -29,7 +29,7 @@ export interface Order {
   userName: string;
   items: OrderItem[];
   total: number;
-  status: 'pending' | 'shipped' | 'delivered';
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
 }
 
@@ -53,15 +53,19 @@ interface AppContextType {
   isLoggedIn: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  sendOtp: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   products: Product[];
   addProduct: (p: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   orders: Order[];
+  cancelOrder: (id: string) => Promise<{ success: boolean; error?: string }>;
   updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => Promise<void>;
   placeOrder: () => void;
+  sendResetOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -89,9 +93,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteProductMutation = useMutation(api.products.remove);
   const loginMutation = useMutation(api.users.login);
   const registerMutation = useMutation(api.users.register);
+  const sendOtpMutation = useMutation(api.otp.sendOtp);
+  const verifyOtpMutation = useMutation(api.otp.verifyOtp);
   const seedMutation = useMutation(api.seed.seed);
   const placeOrderMutation = useMutation(api.orders.placeOrder);
+  const cancelOrderMutation = useMutation(api.orders.cancelOrder);
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
+  const sendResetOtpMutation = useMutation(api.otp.sendResetOtp);
+  const resetPasswordMutation = useMutation(api.otp.resetPassword);
 
   const ordersData = useQuery(api.orders.list, {
     userId: user?.id,
@@ -179,9 +188,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loginMutation]);
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const sendOtp = useCallback(async (name: string, email: string, password: string) => {
     try {
-      const result = await registerMutation({ name, email, password });
+      await sendOtpMutation({ name, email, password });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to send OTP' };
+    }
+  }, [sendOtpMutation]);
+
+  const verifyOtp = useCallback(async (email: string, code: string) => {
+    try {
+      const result = await verifyOtpMutation({ email, code });
       const session: AuthUser = {
         id: result.id,
         name: result.name,
@@ -192,9 +210,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveJSON('cricket_session', session);
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Registration failed' };
+      return { success: false, error: err.message || 'Verification failed' };
     }
-  }, [registerMutation]);
+  }, [verifyOtpMutation]);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -236,9 +254,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await deleteProductMutation({ id: id as any });
   }, [deleteProductMutation]);
 
+  const cancelOrder = useCallback(async (id: string) => {
+    try {
+      await cancelOrderMutation({ id: id as any, userId: user?.id as any });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Cancellation failed' };
+    }
+  }, [cancelOrderMutation, user]);
+
   const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered') => {
     await updateOrderStatusMutation({ id: id as any, status });
   }, [updateOrderStatusMutation]);
+
+  const sendResetOtp = useCallback(async (email: string) => {
+    try {
+      await sendResetOtpMutation({ email });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to send reset code' };
+    }
+  }, [sendResetOtpMutation]);
+
+  const resetPassword = useCallback(async (email: string, code: string, newPassword: string) => {
+    try {
+      await resetPasswordMutation({ email, code, newPassword });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Password reset failed' };
+    }
+  }, [resetPasswordMutation]);
 
   const placeOrder = useCallback(() => {
     if (!user || cart.length === 0) return;
@@ -263,9 +308,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
       searchQuery, setSearchQuery,
-      user, isLoggedIn, isAdmin, login, register, logout,
+      user, isLoggedIn, isAdmin, login, sendOtp, verifyOtp, logout,
       products, addProduct, updateProduct, deleteProduct,
-      orders, updateOrderStatus, placeOrder,
+      orders, cancelOrder, updateOrderStatus, placeOrder, sendResetOtp, resetPassword,
     }}>
       {children}
     </AppContext.Provider>

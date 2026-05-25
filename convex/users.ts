@@ -1,14 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + "sportsfolio-salt-2024");
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import { hashPassword } from "./crypto";
 
 export const register = mutation({
   args: {

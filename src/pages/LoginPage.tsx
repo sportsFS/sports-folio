@@ -64,6 +64,12 @@ export default function LoginPage() {
             />
           </div>
 
+          <div style={{ textAlign: 'right', marginBottom: 16 }}>
+            <button onClick={() => showPage('forgot-password')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', fontWeight: 600, cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem', textDecoration: 'underline', opacity: 0.8 }}>
+              Forgot password?
+            </button>
+          </div>
+
           <button type="submit" className="btn-neon" style={{ width: '100%', padding: '14px' }} disabled={loading}>
             {loading ? 'SIGNING IN...' : 'SIGN IN →'}
           </button>

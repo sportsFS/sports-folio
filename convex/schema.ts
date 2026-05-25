@@ -20,6 +20,14 @@ export default defineSchema({
     password: v.string(),
     role: v.union(v.literal("user"), v.literal("admin")),
   }).index("by_email", ["email"]),
+  otps: defineTable({
+    email: v.string(),
+    code: v.string(),
+    expiresAt: v.number(),
+    type: v.union(v.literal("register"), v.literal("reset")),
+    name: v.optional(v.string()),
+    hashedPassword: v.optional(v.string()),
+  }).index("by_email", ["email"]),
   orders: defineTable({
     userId: v.id("users"),
     userName: v.string(),
@@ -30,7 +38,7 @@ export default defineSchema({
       qty: v.number(),
     })),
     total: v.number(),
-    status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered")),
+    status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered"), v.literal("cancelled")),
     createdAt: v.string(),
   }),
 });

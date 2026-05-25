@@ -11,6 +11,8 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AdminPage from './pages/AdminPage';
+import MyOrdersPage from './pages/MyOrdersPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 function AppContent() {
   const { currentPage } = useApp();
@@ -31,6 +33,8 @@ function AppContent() {
         <div style={{ display: showPage('login') }}><LoginPage /></div>
         <div style={{ display: showPage('register') }}><RegisterPage /></div>
         <div style={{ display: showPage('admin') }}><AdminPage /></div>
+        <div style={{ display: showPage('my-orders') }}><MyOrdersPage /></div>
+        <div style={{ display: showPage('forgot-password') }}><ForgotPasswordPage /></div>
       </main>
       <Footer />
       <Toast />

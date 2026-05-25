@@ -45,6 +45,7 @@ export default function Header() {
     navItems.push({ label: 'Register', page: 'register' });
   } else {
     if (isAdmin) navItems.push({ label: 'Admin Panel', page: 'admin' });
+    navItems.push({ label: 'My Orders', page: 'my-orders' });
     navItems.push({ label: `Hi, ${user!.name.split(' ')[0]}`, page: '', type: 'user' });
     navItems.push({ label: 'Logout', page: '', type: 'logout' });
   }

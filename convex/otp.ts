@@ -1,0 +1,137 @@
+import { mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { hashPassword } from "./crypto";
+import { sendEmail } from "./email";
+
+export const sendOtp = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    password: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.toLowerCase().trim();
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+    if (existing) throw new Error("An account with this email already exists");
+    const oldOtps = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .collect();
+    for (const otp of oldOtps) await ctx.db.delete(otp._id);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await ctx.db.insert("otps", {
+      email,
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      type: "register",
+      name: args.name.trim(),
+      hashedPassword: await hashPassword(args.password),
+    });
+    await sendEmail(
+      email,
+      "Verify your email - Sports Folio Store",
+      `<div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color: #1a1a1a;">Verify your email</h2>
+        <p style="color: #555;">Your verification code is:</p>
+        <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; font-size: 2rem; font-weight: bold; letter-spacing: 8px; color: #1a1a1a;">${code}</div>
+        <p style="color: #999; font-size: 0.85rem;">This code expires in 5 minutes.</p>
+      </div>`
+    );
+  },
+});
+
+export const verifyOtp = mutation({
+  args: {
+    email: v.string(),
+    code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.toLowerCase().trim();
+    const otpRecord = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+    if (!otpRecord) throw new Error("No verification code found. Please request a new one.");
+    if (Date.now() > otpRecord.expiresAt) {
+      await ctx.db.delete(otpRecord._id);
+      throw new Error("Verification code has expired. Please request a new one.");
+    }
+    if (otpRecord.code !== args.code) throw new Error("Invalid verification code.");
+    const userId = await ctx.db.insert("users", {
+      name: otpRecord.name,
+      email,
+      password: otpRecord.hashedPassword,
+      role: "user",
+    });
+    await ctx.db.delete(otpRecord._id);
+    return { id: userId, name: otpRecord.name!, email, role: "user" as const };
+  },
+});
+
+export const sendResetOtp = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const email = args.email.toLowerCase().trim();
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+    if (!user) throw new Error("No account found with this email");
+    const oldOtps = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .collect();
+    for (const otp of oldOtps) await ctx.db.delete(otp._id);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await ctx.db.insert("otps", {
+      email,
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      type: "reset",
+    });
+    await sendEmail(email, "Reset your password - Sports Folio Store",
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1a1a1a">Reset your password</h2>
+        <p style="color:#555">Your password reset code is:</p>
+        <div style="background:#f4f4f4;padding:20px;text-align:center;border-radius:8px;font-size:2rem;font-weight:bold;letter-spacing:8px;color:#1a1a1a">${code}</div>
+        <p style="color:#999;font-size:0.85rem">This code expires in 5 minutes.</p>
+      </div>`);
+  },
+});
+
+export const resetPassword = mutation({
+  args: {
+    email: v.string(),
+    code: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.toLowerCase().trim();
+    const otpRecord = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+    if (!otpRecord) throw new Error("No reset code found. Please request a new one.");
+    if (Date.now() > otpRecord.expiresAt) {
+      await ctx.db.delete(otpRecord._id);
+      throw new Error("Reset code has expired. Please request a new one.");
+    }
+    if (otpRecord.code !== args.code) throw new Error("Invalid reset code.");
+    if (otpRecord.type !== "reset") throw new Error("Invalid reset code.");
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+    if (!user) throw new Error("User not found");
+    await ctx.db.patch(user._id, { password: await hashPassword(args.newPassword) });
+    await ctx.db.delete(otpRecord._id);
+    await sendEmail(email, "Password Reset Successful - Sports Folio Store",
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1a1a1a">Password Reset Successful</h2>
+        <p style="color:#555">Your password has been changed.</p>
+      </div>`);
+  },
+});

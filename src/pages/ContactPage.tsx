@@ -59,7 +59,7 @@ export default function ContactPage() {
             {[
               { icon: '📍', title: 'Our Store', lines: ['101-1025 King Street East,', 'Cambridge, ON N3H 3P5, Canada'] },
               { icon: '📧', title: 'Email Us', lines: ['hello@sportsfolio.store', 'support@sportsfolio.store'] },
-              { icon: '📱', title: 'Call Us', lines: ['+1 519-588-5307', 'Mon–Sat: 9AM–9PM EST'] },
+              { icon: '📱', title: 'Call Us', lines: ['+1 519-588-5307'] },
               { icon: '🕐', title: 'Store Hours', lines: ['Mon: 11AM–1PM, 3:30–8PM', 'Wed–Thu: 11AM–1PM, 4–8PM', 'Fri: 11AM–8PM', 'Sat–Sun: 12–8PM', 'Tuesday: Closed'] },
             ].map(detail => (
               <div key={detail.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 28 }}>

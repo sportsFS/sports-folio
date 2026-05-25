@@ -331,9 +331,11 @@ export default function HomePage() {
 }
 
 const testimonialData = [
-  { initials: 'RK', name: 'Rahul Kumar', role: 'District Level Player', text: '"The SS Ton Player bat I bought here is phenomenal! The pickup is incredible and the sweet spot is massive. Scored my first century with it. Sports Folio is now my go-to store."' },
-  { initials: 'PS', name: 'Priya Sharma', role: "Women's Team Captain", text: '"Amazing quality and super fast delivery. The protective gear saved me during a crucial match. Their customer support helped me choose the perfect size. Highly recommended!"' },
-  { initials: 'AV', name: 'Arun Verma', role: 'Club Cricketer', text: '"Best prices I\'ve found anywhere for premium cricket gear. The MRF Genius bat is absolute class. Delivery was quick and packaging was excellent. Will shop here again for sure!"' },
+  { initials: 'RP', name: 'Rajmohan PM', role: 'Verified Buyer', text: 'Bought my new MRF original from Sportfolio. Got my bat today after oiling and knocking. Amal helped me choose the best for my budget and requirements. Very helpful staff, and lots of good original stock. Very happy with product and service.' },
+  { initials: 'VV', name: 'Vivek Venu', role: 'Verified Buyer', text: 'The prices are very competitive, especially considering the quality and expertise you receive. If you are serious about cricket and demand the best gear and advice, make SportsFolio your first and last stop. Highly recommended!' },
+  { initials: 'JS', name: 'Jino Sunny', role: 'Verified Buyer', text: 'I recently purchased a R10 scooped cricket bat from Sportsfolio. The bat has excellent balance, making it easy to maneuver. The sweet spot is large, and the pickup is perfect. The customer service was excellent — they guided me in selecting the right bat based on my style of play.' },
+  { initials: 'AR', name: 'Ananth Rao', role: 'Verified Buyer', text: 'Had a fantastic experience purchasing two Galaxian cricket bats from Sportsfolio. Lightweight with excellent bat speed, perfect for big hits. Amal provided outstanding customer service through WhatsApp, making the entire process smooth despite ordering from the US to Canada.' },
+  { initials: 'JM', name: 'Joby Mathew', role: 'Verified Buyer', text: 'Hands down the best sports shop I\'ve ever been to! Extensive range of top-quality gear. The staff is incredibly knowledgeable and passionate about sports. Prices are very competitive for the quality. I highly recommend Sportsfolio and will definitely be coming back!' },
 ];
 
 function TestimonialsCarousel() {

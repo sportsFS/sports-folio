@@ -57,10 +57,10 @@ export default function ContactPage() {
             </p>
 
             {[
-              { icon: '📍', title: 'Our Store', lines: ['42, MG Road, Bengaluru,', 'Karnataka 560001, India'] },
+              { icon: '📍', title: 'Our Store', lines: ['101-1025 King Street East,', 'Cambridge, ON N3H 3P5, Canada'] },
               { icon: '📧', title: 'Email Us', lines: ['hello@sportsfolio.store', 'support@sportsfolio.store'] },
-              { icon: '📱', title: 'Call Us', lines: ['+91 98765 43210', 'Mon - Sat: 9AM - 9PM IST'] },
-              { icon: '💬', title: 'Live Chat', lines: ['Available 24/7 for instant support'] },
+              { icon: '📱', title: 'Call Us', lines: ['+1 519-588-5307', 'Mon–Sat: 9AM–9PM EST'] },
+              { icon: '🕐', title: 'Store Hours', lines: ['Mon: 11AM–1PM, 3:30–8PM', 'Wed–Thu: 11AM–1PM, 4–8PM', 'Fri: 11AM–8PM', 'Sat–Sun: 12–8PM', 'Tuesday: Closed'] },
             ].map(detail => (
               <div key={detail.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 28 }}>
                 <div style={{
@@ -163,6 +163,20 @@ export default function ContactPage() {
               </button>
             </form>
           </div>
+        </div>
+
+        {/* Google Maps */}
+        <div className="reveal" style={{ marginTop: 48, borderRadius: 24, overflow: 'hidden', border: '1px solid var(--card-border)' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2899.2147114822365!2d-80.35577132401217!3d43.393441471115615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x882b898fabc360df%3A0x7709fedc3ff576a9!2sSportsfolio!5e0!3m2!1sen!2sin!4v1779699366585!5m2!1sen!2sin"
+            width="100%"
+            height="400"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Sportsfolio Location"
+          />
         </div>
       </section>
     </div>

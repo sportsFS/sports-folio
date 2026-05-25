@@ -86,9 +86,9 @@ function DashboardTab({ products, totalUsers, orders, showPage }: {
 /* ── Products Tab ── */
 function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   products: Product[]; addProduct: (p: Omit<Product, 'id'>) => void;
-  updateProduct: (id: number, u: Partial<Product>) => void; deleteProduct: (id: number) => void;
+  updateProduct: (id: string, u: Partial<Product>) => void; deleteProduct: (id: string) => void;
 }) {
-  const [modal, setModal] = useState<{ open: boolean; editId?: number }>({ open: false });
+  const [modal, setModal] = useState<{ open: boolean; editId?: string }>({ open: false });
   const [form, setForm] = useState({ name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '', image: '/images/products/product.jpg', badge: '', badgeClass: '' });
 
   function openAdd() {

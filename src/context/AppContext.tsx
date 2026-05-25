@@ -1,10 +1,19 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Product, allProducts } from '../data/products';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
-const ADMIN_SEED = {
-  id: 'admin-1', name: 'Admin', email: 'admin@sportsfolio.com',
-  password: 'admin123', role: 'admin' as const,
-};
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  oldPrice?: number;
+  image: string;
+  category: string;
+  rating: number;
+  reviews?: number;
+  badge?: string;
+  description?: string;
+}
 
 interface CartItem extends Product { qty: number }
 
@@ -12,9 +21,7 @@ interface ToastData { msg: string; sub: string; visible: boolean }
 
 export interface AuthUser { id: string; name: string; email: string; role: 'user' | 'admin' }
 
-interface StoredUser extends AuthUser { password: string }
-
-export interface OrderItem { productId: number; name: string; price: number; qty: number }
+export interface OrderItem { productId: string; name: string; price: number; qty: number }
 
 export interface Order {
   id: string;
@@ -31,8 +38,8 @@ interface AppContextType {
   toggleTheme: () => void;
   cart: CartItem[];
   addToCart: (product: Product) => void;
-  removeFromCart: (id: number) => void;
-  updateQty: (id: number, delta: number) => void;
+  removeFromCart: (id: string) => void;
+  updateQty: (id: string, delta: number) => void;
   cartCount: number;
   currentPage: string;
   showPage: (page: string) => void;
@@ -45,15 +52,15 @@ interface AppContextType {
   user: AuthUser | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  register: (name: string, email: string, password: string) => { success: boolean; error?: string };
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   products: Product[];
-  addProduct: (p: Omit<Product, 'id'>) => void;
-  updateProduct: (id: number, updates: Partial<Product>) => void;
-  deleteProduct: (id: number) => void;
+  addProduct: (p: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   orders: Order[];
-  updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => void;
+  updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => Promise<void>;
   placeOrder: () => void;
 }
 
@@ -65,8 +72,6 @@ function loadJSON<T>(key: string, fallback: T): T {
 function saveJSON(key: string, value: unknown) {
   localStorage.setItem(key, JSON.stringify(value));
 }
-function genId(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-function genNumId(existing: number[]): number { return existing.length ? Math.max(...existing) + 1 : 1; }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -76,23 +81,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<AuthUser | null>(() => loadJSON('cricket_session', null));
-  const [products, setProducts] = useState<Product[]>(() => {
-    const stored = loadJSON<Product[]>('cricket_products', null);
-    if (stored) return stored;
-    saveJSON('cricket_products', allProducts);
-    return allProducts;
+
+  // Convex hooks
+  const productsData = useQuery(api.products.list);
+  const addProductMutation = useMutation(api.products.add);
+  const updateProductMutation = useMutation(api.products.update);
+  const deleteProductMutation = useMutation(api.products.remove);
+  const loginMutation = useMutation(api.users.login);
+  const registerMutation = useMutation(api.users.register);
+  const seedMutation = useMutation(api.seed.seed);
+  const placeOrderMutation = useMutation(api.orders.placeOrder);
+  const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
+
+  const ordersData = useQuery(api.orders.list, {
+    userId: user?.id,
+    isAdmin: user?.role === 'admin' || false,
   });
-  const [orders, setOrders] = useState<Order[]>(() => loadJSON<Order[]>('cricket_orders', []));
 
+  // Seed admin + products once on first load
+  const seeded = useRef(false);
   useEffect(() => {
-    const users = loadJSON<StoredUser[]>('cricket_users', []);
-    if (!users.find(u => u.email === ADMIN_SEED.email)) {
-      saveJSON('cricket_users', [...users, ADMIN_SEED]);
+    if (!seeded.current) {
+      seeded.current = true;
+      seedMutation();
     }
-  }, []);
+  }, [seedMutation]);
 
-  useEffect(() => { saveJSON('cricket_products', products); }, [products]);
-  useEffect(() => { saveJSON('cricket_orders', orders); }, [orders]);
+  const products: Product[] = useMemo(() => {
+    if (!productsData) return [];
+    return productsData as Product[];
+  }, [productsData]);
+
+  const orders: Order[] = useMemo(() => {
+    if (!ordersData) return [];
+    return ordersData as Order[];
+  }, [ordersData]);
 
   const isLoggedIn = user !== null;
   const isAdmin = user?.role === 'admin';
@@ -113,11 +136,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const removeFromCart = useCallback((id: number) => {
+  const removeFromCart = useCallback((id: string) => {
     setCart(prev => prev.filter(c => c.id !== id));
   }, []);
 
-  const updateQty = useCallback((id: number, delta: number) => {
+  const updateQty = useCallback((id: string, delta: number) => {
     setCart(prev => {
       const item = prev.find(c => c.id === id);
       if (!item) return prev;
@@ -139,65 +162,100 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const login = useCallback((email: string, password: string) => {
-    const users = loadJSON<StoredUser[]>('cricket_users', []);
-    const found = users.find(u => u.email === email.toLowerCase().trim());
-    if (!found) return { success: false, error: 'No account found with this email' };
-    if (found.password !== password) return { success: false, error: 'Incorrect password' };
-    const session: AuthUser = { id: found.id, name: found.name, email: found.email, role: found.role };
-    setUser(session);
-    saveJSON('cricket_session', session);
-    return { success: true };
-  }, []);
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const result = await loginMutation({ email, password });
+      const session: AuthUser = {
+        id: result.id,
+        name: result.name,
+        email: result.email,
+        role: result.role,
+      };
+      setUser(session);
+      saveJSON('cricket_session', session);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login failed' };
+    }
+  }, [loginMutation]);
 
-  const register = useCallback((name: string, email: string, password: string) => {
-    const cleanEmail = email.toLowerCase().trim();
-    const users = loadJSON<StoredUser[]>('cricket_users', []);
-    if (users.find(u => u.email === cleanEmail)) return { success: false, error: 'An account with this email already exists' };
-    const newUser: StoredUser = { id: genId(), name: name.trim(), email: cleanEmail, password, role: 'user' };
-    saveJSON('cricket_users', [...users, newUser]);
-    const session: AuthUser = { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role };
-    setUser(session);
-    saveJSON('cricket_session', session);
-    return { success: true };
-  }, []);
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    try {
+      const result = await registerMutation({ name, email, password });
+      const session: AuthUser = {
+        id: result.id,
+        name: result.name,
+        email: result.email,
+        role: result.role,
+      };
+      setUser(session);
+      saveJSON('cricket_session', session);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Registration failed' };
+    }
+  }, [registerMutation]);
 
   const logout = useCallback(() => {
     setUser(null);
     saveJSON('cricket_session', null);
   }, []);
 
-  const addProduct = useCallback((p: Omit<Product, 'id'>) => {
-    setProducts(prev => [...prev, { id: genNumId(prev.map(x => x.id)), ...p }]);
-  }, []);
+  const addProduct = useCallback(async (p: Omit<Product, 'id'>) => {
+    await addProductMutation({
+      name: p.name,
+      price: p.price,
+      oldPrice: p.oldPrice,
+      image: p.image,
+      category: p.category,
+      rating: p.rating,
+      reviews: p.reviews,
+      badge: p.badge,
+      badgeClass: p.badgeClass,
+      description: p.description,
+    });
+  }, [addProductMutation]);
 
-  const updateProduct = useCallback((id: number, updates: Partial<Product>) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, []);
+  const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
+    await updateProductMutation({
+      id: id as any,
+      name: updates.name,
+      price: updates.price,
+      oldPrice: updates.oldPrice,
+      image: updates.image,
+      category: updates.category,
+      rating: updates.rating,
+      reviews: updates.reviews,
+      badge: updates.badge,
+      badgeClass: updates.badgeClass,
+      description: updates.description,
+    });
+  }, [updateProductMutation]);
 
-  const deleteProduct = useCallback((id: number) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-  }, []);
+  const deleteProduct = useCallback(async (id: string) => {
+    await deleteProductMutation({ id: id as any });
+  }, [deleteProductMutation]);
 
-  const updateOrderStatus = useCallback((id: string, status: 'pending' | 'shipped' | 'delivered') => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-  }, []);
+  const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered') => {
+    await updateOrderStatusMutation({ id: id as any, status });
+  }, [updateOrderStatusMutation]);
 
   const placeOrder = useCallback(() => {
     if (!user || cart.length === 0) return;
-    const order: Order = {
-      id: genId(),
-      userId: user.id,
+    placeOrderMutation({
+      userId: user.id as any,
       userName: user.name,
-      items: cart.map(c => ({ productId: c.id, name: c.name, price: c.price, qty: c.qty })),
+      items: cart.map(c => ({
+        productId: c.id,
+        name: c.name,
+        price: c.price,
+        qty: c.qty,
+      })),
       total: cart.reduce((sum, c) => sum + c.price * c.qty, 0),
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    setOrders(prev => [...prev, order]);
+    });
     setCart([]);
-    showToast('Order Placed!', `Order #${order.id.slice(0, 8)} placed successfully`);
-  }, [user, cart, showToast]);
+    showToast('Order Placed!', 'Your order has been placed successfully');
+  }, [user, cart, placeOrderMutation, showToast]);
 
   return (
     <AppContext.Provider value={{

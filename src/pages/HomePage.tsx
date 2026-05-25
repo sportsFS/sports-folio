@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { allProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 
@@ -16,7 +15,7 @@ const flashItems = [
 const brands = ['SS Cricket', 'SG Sports', 'MRF', 'Gray-Nicolls', 'Kookaburra', 'GM Cricket', 'New Balance', 'Adidas Cricket', 'Puma Cricket', 'DSC'];
 
 export default function HomePage() {
-  const { showPage, showToast } = useApp();
+  const { showPage, showToast, products } = useApp();
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [email, setEmail] = useState('');
   const parallaxRef = useRef<HTMLDivElement>(null);
@@ -184,7 +183,7 @@ export default function HomePage() {
         }}>
           {!productsLoaded
             ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-            : allProducts.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
+            : products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
           }
         </div>
         <div style={{ textAlign: 'center', marginTop: 48 }}>

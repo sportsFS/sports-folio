@@ -88,9 +88,9 @@ export default function Footer() {
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 20, color: '#FFF' }}>
             Support
           </h4>
-          {['FAQs', 'Shipping Policy', 'Return Policy', 'Privacy Policy', 'Terms of Service'].map(link => (
-            <a key={link} href="#" className="footer-link">{link}</a>
-          ))}
+          <button className="footer-link" onClick={() => showPage('shipping')}>Shipping & Returns</button>
+          <button className="footer-link" onClick={() => showPage('privacy')}>Privacy Policy</button>
+          <button className="footer-link" onClick={() => showPage('terms')}>Terms of Service</button>
         </div>
       </div>
 

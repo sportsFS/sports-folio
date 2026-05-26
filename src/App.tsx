@@ -13,6 +13,9 @@ import RegisterPage from './pages/RegisterPage';
 import AdminPage from './pages/AdminPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import ShippingPage from './pages/ShippingPage';
 
 function AppContent() {
   const { currentPage } = useApp();
@@ -35,6 +38,9 @@ function AppContent() {
         <div style={{ display: showPage('admin') }}><AdminPage /></div>
         <div style={{ display: showPage('my-orders') }}><MyOrdersPage /></div>
         <div style={{ display: showPage('forgot-password') }}><ForgotPasswordPage /></div>
+        <div style={{ display: showPage('privacy') }}><PrivacyPage /></div>
+        <div style={{ display: showPage('terms') }}><TermsPage /></div>
+        <div style={{ display: showPage('shipping') }}><ShippingPage /></div>
       </main>
       <Footer />
       <Toast />

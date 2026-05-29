@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import logo from '../assets/logo.png';
 import SearchBar from './SearchBar';
@@ -17,6 +17,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const shopTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -87,8 +88,8 @@ export default function Header() {
           if (item.page === 'shop') {
             return (
               <div key={item.page} className="shop-dropdown-wrapper" style={{ position: 'relative' }}
-                onMouseEnter={() => setShopOpen(true)}
-                onMouseLeave={() => setShopOpen(false)}
+                onMouseEnter={() => { if (shopTimeout.current) clearTimeout(shopTimeout.current); setShopOpen(true); }}
+                onMouseLeave={() => { shopTimeout.current = setTimeout(() => setShopOpen(false), 200); }}
               >
                 <button
                   onClick={() => { setPresetCategory('all'); navClick(item.page); }}
@@ -297,7 +298,7 @@ export default function Header() {
 
       <style>{`
         .shop-dropdown-menu {
-          position: absolute; top: calc(100% + 8px); left: 0;
+          position: absolute; top: 100%; left: 0;
           background: var(--card-bg); border: 1px solid var(--card-border);
           border-radius: 12px; padding: 6px; min-width: 180px;
           z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.15);

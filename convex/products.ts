@@ -1,6 +1,11 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+async function requireAdmin(ctx: any, userId: string) {
+  const user = await ctx.db.get(userId);
+  if (!user || user.role !== "admin") throw new Error("Unauthorized: admin access required");
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -22,6 +27,7 @@ export const list = query({
 
 export const add = mutation({
   args: {
+    userId: v.id("users"),
     name: v.string(),
     price: v.number(),
     oldPrice: v.optional(v.number()),
@@ -34,13 +40,16 @@ export const add = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const id = await ctx.db.insert("products", args);
+    await requireAdmin(ctx, args.userId);
+    const { userId, ...fields } = args;
+    const id = await ctx.db.insert("products", fields);
     return id;
   },
 });
 
 export const update = mutation({
   args: {
+    userId: v.id("users"),
     id: v.id("products"),
     name: v.optional(v.string()),
     price: v.optional(v.number()),
@@ -54,14 +63,19 @@ export const update = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    await requireAdmin(ctx, args.userId);
+    const { userId, id, ...fields } = args;
     await ctx.db.patch(id, fields);
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("products") },
+  args: {
+    userId: v.id("users"),
+    id: v.id("products"),
+  },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.userId);
     await ctx.db.delete(args.id);
   },
 });

@@ -3,13 +3,28 @@ import { v } from "convex/values";
 import { hashPassword } from "./crypto";
 import { sendEmail } from "./email";
 
+function generateOtp(): string {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return (buf[0] % 900000 + 100000).toString();
+}
+
+function validatePassword(password: string): void {
+  if (password.length < 8) throw new Error("Password must be at least 8 characters");
+  if (!/[a-zA-Z]/.test(password)) throw new Error("Password must contain at least one letter");
+  if (!/[0-9]/.test(password)) throw new Error("Password must contain at least one number");
+}
+
 export const sendOtp = mutation({
   args: {
     name: v.string(),
     email: v.string(),
     password: v.string(),
   },
+  rateLimiter: { kind: "token bucket", maxTokens: 3, refillRate: 1 },
   handler: async (ctx, args) => {
+    await ctx.rateLimiter.rateLimit();
+    validatePassword(args.password);
     const email = args.email.toLowerCase().trim();
     const existing = await ctx.db
       .query("users")
@@ -21,7 +36,7 @@ export const sendOtp = mutation({
       .withIndex("by_email", q => q.eq("email", email))
       .collect();
     for (const otp of oldOtps) await ctx.db.delete(otp._id);
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = generateOtp();
     await ctx.db.insert("otps", {
       email,
       code,
@@ -73,7 +88,9 @@ export const verifyOtp = mutation({
 
 export const sendResetOtp = mutation({
   args: { email: v.string() },
+  rateLimiter: { kind: "token bucket", maxTokens: 3, refillRate: 1 },
   handler: async (ctx, args) => {
+    await ctx.rateLimiter.rateLimit();
     const email = args.email.toLowerCase().trim();
     const user = await ctx.db
       .query("users")
@@ -85,7 +102,7 @@ export const sendResetOtp = mutation({
       .withIndex("by_email", q => q.eq("email", email))
       .collect();
     for (const otp of oldOtps) await ctx.db.delete(otp._id);
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = generateOtp();
     await ctx.db.insert("otps", {
       email,
       code,
@@ -121,6 +138,7 @@ export const resetPassword = mutation({
     }
     if (otpRecord.code !== args.code) throw new Error("Invalid reset code.");
     if (otpRecord.type !== "reset") throw new Error("Invalid reset code.");
+    validatePassword(args.newPassword);
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", q => q.eq("email", email))

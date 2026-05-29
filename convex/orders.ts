@@ -52,6 +52,8 @@ export const placeOrder = mutation({
     total: v.number(),
   },
   handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("Unauthorized: user not found");
     const orderId = await ctx.db.insert("orders", {
       userId: args.userId,
       userName: args.userName,
@@ -61,23 +63,20 @@ export const placeOrder = mutation({
       createdAt: new Date().toISOString(),
     });
     try {
-      const user = await ctx.db.get(args.userId);
-      if (user) {
-        const itemsHtml = args.items.map(i =>
-          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
-        ).join("");
-        await sendEmail(user.email, "Order Confirmed - Sports Folio Store",
-          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
-            <h2 style="color:#1a1a1a">Order Confirmed!</h2>
-            <p style="color:#555">Thanks ${args.userName}, your order has been placed.</p>
-            <p style="color:#999;font-size:0.85rem">Order #${orderId}</p>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0">
-              <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
-              ${itemsHtml}
-            </table>
-            <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
-          </div>`);
-      }
+      const itemsHtml = args.items.map(i =>
+        `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
+      ).join("");
+      await sendEmail(user.email, "Order Confirmed - Sports Folio Store",
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">Order Confirmed!</h2>
+          <p style="color:#555">Thanks ${args.userName}, your order has been placed.</p>
+          <p style="color:#999;font-size:0.85rem">Order #${orderId}</p>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0">
+            <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
+            ${itemsHtml}
+          </table>
+          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
+        </div>`);
     } catch (e) {
       console.error("Failed to send order confirmation:", e);
     }
@@ -113,10 +112,13 @@ export const cancelOrder = mutation({
 
 export const updateStatus = mutation({
   args: {
+    userId: v.id("users"),
     id: v.id("orders"),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered")),
   },
   handler: async (ctx, args) => {
+    const caller = await ctx.db.get(args.userId);
+    if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
     await ctx.db.patch(args.id, { status: args.status });

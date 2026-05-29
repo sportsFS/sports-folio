@@ -221,6 +221,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addProduct = useCallback(async (p: Omit<Product, 'id'>) => {
     await addProductMutation({
+      userId: user?.id as any,
       name: p.name,
       price: p.price,
       oldPrice: p.oldPrice,
@@ -232,10 +233,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: p.badgeClass,
       description: p.description,
     });
-  }, [addProductMutation]);
+  }, [addProductMutation, user]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
     await updateProductMutation({
+      userId: user?.id as any,
       id: id as any,
       name: updates.name,
       price: updates.price,
@@ -248,11 +250,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: updates.badgeClass,
       description: updates.description,
     });
-  }, [updateProductMutation]);
+  }, [updateProductMutation, user]);
 
   const deleteProduct = useCallback(async (id: string) => {
-    await deleteProductMutation({ id: id as any });
-  }, [deleteProductMutation]);
+    await deleteProductMutation({ userId: user?.id as any, id: id as any });
+  }, [deleteProductMutation, user]);
 
   const cancelOrder = useCallback(async (id: string) => {
     try {
@@ -264,8 +266,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [cancelOrderMutation, user]);
 
   const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered') => {
-    await updateOrderStatusMutation({ id: id as any, status });
-  }, [updateOrderStatusMutation]);
+    await updateOrderStatusMutation({ userId: user?.id as any, id: id as any, status });
+  }, [updateOrderStatusMutation, user]);
 
   const sendResetOtp = useCallback(async (email: string) => {
     try {

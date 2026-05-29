@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const products = await ctx.db.query("products").collect();
+    const products = await ctx.db.query("products").limit(100).collect();
     return products.map(p => ({
       id: p._id,
       name: p.name,
@@ -16,7 +16,6 @@ export const list = query({
       reviews: p.reviews,
       badge: p.badge,
       badgeClass: p.badgeClass,
-      description: p.description,
     }));
   },
 });

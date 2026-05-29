@@ -9,7 +9,7 @@ export const list = query({
   },
   handler: async (ctx, args) => {
     if (args.isAdmin) {
-      const orders = await ctx.db.query("orders").collect();
+      const orders = await ctx.db.query("orders").order("desc").limit(200).collect();
       return orders.map(o => ({
         id: o._id,
         userId: o.userId,
@@ -24,6 +24,8 @@ export const list = query({
     const orders = await ctx.db
       .query("orders")
       .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .order("desc")
+      .limit(50)
       .collect();
     return orders.map(o => ({
       id: o._id,

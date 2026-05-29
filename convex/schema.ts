@@ -13,7 +13,7 @@ export default defineSchema({
     badge: v.optional(v.string()),
     badgeClass: v.optional(v.string()),
     description: v.optional(v.string()),
-  }),
+  }).index("by_category", ["category"]),
   users: defineTable({
     name: v.string(),
     email: v.string(),
@@ -40,5 +40,5 @@ export default defineSchema({
     total: v.number(),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered"), v.literal("cancelled")),
     createdAt: v.string(),
-  }),
+  }).index("by_userId", ["userId"]),
 });

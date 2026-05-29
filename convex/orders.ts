@@ -23,7 +23,7 @@ export const list = query({
     if (!args.userId) return [];
     const orders = await ctx.db
       .query("orders")
-      .filter(q => q.eq(q.field("userId"), args.userId))
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
       .collect();
     return orders.map(o => ({
       id: o._id,

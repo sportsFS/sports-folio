@@ -147,7 +147,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
             {products.map(p => (
               <tr key={p.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
                 <td style={{ padding: '10px 8px' }}>
-                  <img src={p.image} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                  <img src={p.image} alt="" loading="lazy" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
                 </td>
                 <td style={{ padding: '10px 8px', fontWeight: 600 }}>{p.name}</td>
                 <td style={{ padding: '10px 8px', color: 'var(--text-secondary)' }}>{categoryLabel[p.category] || p.category}</td>

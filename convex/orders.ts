@@ -77,8 +77,18 @@ export const placeOrder = mutation({
           </table>
           <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
         </div>`);
+      await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - Sports Folio Store`,
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1a1a1a">New Order Received</h2>
+          <p style="color:#555"><strong>${args.userName}</strong> placed order #${orderId}</p>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0">
+            <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
+            ${itemsHtml}
+          </table>
+          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
+        </div>`);
     } catch (e) {
-      console.error("Failed to send order confirmation:", e);
+      console.error("Failed to send order emails:", e);
     }
     return orderId;
   },

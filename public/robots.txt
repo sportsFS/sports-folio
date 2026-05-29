@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://sportsfoliostore.com/sitemap.xml

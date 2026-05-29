@@ -77,7 +77,7 @@ export default function ProductCard({ product }: Props) {
         position: 'relative', overflow: 'hidden',
         transition: 'all 0.4s ease',
       }}>
-        <img src={product.image} alt={product.name} className="card-image-inner" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} />
+        <img src={product.image} alt={product.name} className="card-image-inner" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: 60,

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useApp, Order } from '../context/AppContext';
+import { useAction } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { Product } from '../data/products';
 
 type Tab = 'dashboard' | 'products' | 'orders' | 'users';
@@ -90,6 +92,8 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
 }) {
   const [modal, setModal] = useState<{ open: boolean; editId?: string }>({ open: false });
   const [form, setForm] = useState({ name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '', image: '/images/products/product.jpg', badge: '', badgeClass: '' });
+  const [uploading, setUploading] = useState(false);
+  const uploadAction = useAction(api.upload.uploadImage);
 
   function openAdd() {
     setForm({ name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '', image: '/images/products/product.jpg', badge: '', badgeClass: '' });
@@ -99,6 +103,24 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   function openEdit(p: Product) {
     setForm({ name: p.name, category: p.category, price: String(p.price), oldPrice: String(p.oldPrice), rating: String(p.rating), reviews: String(p.reviews), image: p.image, badge: p.badge, badgeClass: p.badgeClass || '' });
     setModal({ open: true, editId: p.id });
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('File must be under 5MB'); return; }
+    setUploading(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const url = await uploadAction({ file: uint8Array });
+      setForm(f => ({ ...f, image: url }));
+    } catch (err) {
+      alert('Upload failed. Try using an image URL instead.');
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleSave() {
@@ -192,7 +214,37 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
                 <input placeholder="Rating (1-5)" type="number" step="0.1" min="0" max="5" value={form.rating} onChange={e => setForm(f => ({ ...f, rating: e.target.value }))} className="auth-input" style={{ width: '100%', padding: '10px 14px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.9rem' }} />
                 <input placeholder="Reviews" type="number" value={form.reviews} onChange={e => setForm(f => ({ ...f, reviews: e.target.value }))} className="auth-input" style={{ width: '100%', padding: '10px 14px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.9rem' }} />
               </div>
-              <input placeholder="Image URL" value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} className="auth-input" style={{ width: '100%', padding: '10px 14px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.9rem' }} />
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Product Image
+                </label>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 80, height: 80, borderRadius: 12, border: '2px solid var(--card-border)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--input-bg)' }}>
+                    {form.image ? (
+                      <img src={form.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '2rem', opacity: 0.3 }}>📷</span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{
+                      padding: '8px 16px', borderRadius: 8, border: '1px solid var(--card-border)',
+                      background: 'var(--input-bg)', color: 'var(--text)', cursor: 'pointer',
+                      fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem', fontWeight: 600,
+                      textAlign: 'center', transition: 'all 0.2s',
+                    }}>
+                      {uploading ? 'Uploading...' : 'Choose File'}
+                      <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading} style={{ display: 'none' }} />
+                    </label>
+                    <input
+                      placeholder="Or paste image URL"
+                      value={form.image}
+                      onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
+                      style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--card-border)', borderRadius: 8, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.75rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <input placeholder="Badge (e.g. Bestseller)" value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))} className="auth-input" style={{ width: '100%', padding: '10px 14px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.9rem' }} />
                 <select value={form.badgeClass} onChange={e => setForm(f => ({ ...f, badgeClass: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.9rem' }}>

@@ -1,3 +1,10 @@
 node_modules
 dist
-*.local
+.env
+.env.local
+*.log
+*.docx
+*.py
+*.pdf
+.DS_Store
+Thumbs.db

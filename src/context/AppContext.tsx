@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
 export interface Product {
@@ -63,7 +63,7 @@ interface AppContextType {
   orders: Order[];
   cancelOrder: (id: string) => Promise<{ success: boolean; error?: string }>;
   updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => Promise<void>;
-  placeOrder: () => void;
+  placeOrder: () => Promise<void>;
   sendResetOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -101,6 +101,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
   const sendResetOtpMutation = useMutation(api.otp.sendResetOtp);
   const resetPasswordMutation = useMutation(api.otp.resetPassword);
+  const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
 
   const ordersData = useQuery(api.orders.list, {
     userId: user?.id,
@@ -287,22 +288,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [resetPasswordMutation]);
 
-  const placeOrder = useCallback(() => {
+  const placeOrder = useCallback(async () => {
     if (!user || cart.length === 0) return;
-    placeOrderMutation({
-      userId: user.id as any,
-      userName: user.name,
-      items: cart.map(c => ({
-        productId: c.id,
-        name: c.name,
-        price: c.price,
-        qty: c.qty,
-      })),
-      total: cart.reduce((sum, c) => sum + c.price * c.qty, 0),
-    });
-    setCart([]);
-    showToast('Order Placed!', 'Your order has been placed successfully');
-  }, [user, cart, placeOrderMutation, showToast]);
+    try {
+      const result = await createCheckoutSession({
+        userId: user.id as any,
+        userName: user.name,
+        items: cart.map(c => ({
+          productId: c.id,
+          name: c.name,
+          price: c.price,
+          qty: c.qty,
+        })),
+        total: cart.reduce((sum, c) => sum + c.price * c.qty, 0),
+      });
+      setCart([]);
+      window.location.href = result.url;
+    } catch (err: any) {
+      showToast('Checkout Failed', err.message || 'Something went wrong');
+    }
+  }, [user, cart, createCheckoutSession, showToast]);
 
   return (
     <AppContext.Provider value={{

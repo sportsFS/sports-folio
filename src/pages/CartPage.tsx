@@ -172,12 +172,12 @@ export default function CartPage() {
             <button
               className="btn-neon"
               style={{ width: '100%', marginTop: 20 }}
-              onClick={() => {
+              onClick={async () => {
                 if (!isLoggedIn) {
                   showToast('Login Required', 'Please login to checkout');
                   showPage('login');
                 } else {
-                  placeOrder();
+                  await placeOrder();
                 }
               }}
             >
@@ -185,7 +185,7 @@ export default function CartPage() {
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 12 }}>
-              🔒 Secure checkout powered by Razorpay
+              🔒 Secure checkout powered by Stripe
             </p>
 
             <button

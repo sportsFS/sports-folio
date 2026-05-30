@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Preloader from './components/Preloader';
@@ -23,9 +24,21 @@ import NotFoundPage from './pages/NotFoundPage';
 const KNOWN_PAGES = ['home', 'shop', 'contact', 'cart', 'login', 'register', 'admin', 'my-orders', 'forgot-password', 'privacy', 'terms', 'shipping'];
 
 function AppContent() {
-  const { currentPage } = useApp();
+  const { currentPage, showPage, showToast } = useApp();
 
-  function showPage(page: string) {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('order') === 'success') {
+      showToast('Payment Successful!', 'Your order has been placed');
+      showPage('my-orders');
+      window.history.replaceState({}, '', '/');
+    } else if (params.get('page') === 'cart') {
+      showPage('cart');
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
+  function showPageDisplay(page: string) {
     return currentPage === page ? 'block' : 'none';
   }
 
@@ -34,18 +47,18 @@ function AppContent() {
       <Preloader />
       <Header />
       <main style={{ background: 'var(--bg)', transition: 'background 0.5s ease' }}>
-        <div style={{ display: showPage('home') }}><HomePage /></div>
-        <div style={{ display: showPage('shop') }}><ShopPage /></div>
-        <div style={{ display: showPage('contact') }}><ContactPage /></div>
-        <div style={{ display: showPage('cart') }}><CartPage /></div>
-        <div style={{ display: showPage('login') }}><LoginPage /></div>
-        <div style={{ display: showPage('register') }}><RegisterPage /></div>
-        <div style={{ display: showPage('admin') }}><AdminPage /></div>
-        <div style={{ display: showPage('my-orders') }}><MyOrdersPage /></div>
-        <div style={{ display: showPage('forgot-password') }}><ForgotPasswordPage /></div>
-        <div style={{ display: showPage('privacy') }}><PrivacyPage /></div>
-        <div style={{ display: showPage('terms') }}><TermsPage /></div>
-        <div style={{ display: showPage('shipping') }}><ShippingPage /></div>
+        <div style={{ display: showPageDisplay('home') }}><HomePage /></div>
+        <div style={{ display: showPageDisplay('shop') }}><ShopPage /></div>
+        <div style={{ display: showPageDisplay('contact') }}><ContactPage /></div>
+        <div style={{ display: showPageDisplay('cart') }}><CartPage /></div>
+        <div style={{ display: showPageDisplay('login') }}><LoginPage /></div>
+        <div style={{ display: showPageDisplay('register') }}><RegisterPage /></div>
+        <div style={{ display: showPageDisplay('admin') }}><AdminPage /></div>
+        <div style={{ display: showPageDisplay('my-orders') }}><MyOrdersPage /></div>
+        <div style={{ display: showPageDisplay('forgot-password') }}><ForgotPasswordPage /></div>
+        <div style={{ display: showPageDisplay('privacy') }}><PrivacyPage /></div>
+        <div style={{ display: showPageDisplay('terms') }}><TermsPage /></div>
+        <div style={{ display: showPageDisplay('shipping') }}><ShippingPage /></div>
         {!KNOWN_PAGES.includes(currentPage) && <NotFoundPage />}
       </main>
       <Footer />

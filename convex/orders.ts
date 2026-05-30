@@ -1,5 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { sendEmail } from "./email";
 
 export const list = query({
@@ -39,6 +40,94 @@ export const list = query({
   },
 });
 
+export const placeOrderInternal = internalMutation({
+  args: {
+    userId: v.id("users"),
+    userName: v.string(),
+    items: v.array(v.object({
+      productId: v.number(),
+      name: v.string(),
+      price: v.number(),
+      qty: v.number(),
+    })),
+    total: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const orderId = await ctx.db.insert("orders", {
+      userId: args.userId,
+      userName: args.userName,
+      items: args.items,
+      total: args.total,
+      status: "pending",
+      paymentStatus: "pending",
+      createdAt: new Date().toISOString(),
+      stripeSessionId: undefined,
+      paymentIntent: undefined,
+    });
+    try {
+      const user = await ctx.db.get(args.userId);
+      if (user) {
+        await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - Sports Folio Store (pending payment)`,
+          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+            <h2 style="color:#1a1a1a">New Order Received (Awaiting Payment)</h2>
+            <p style="color:#555"><strong>${args.userName}</strong> started order #${orderId}</p>
+            <p style="color:#999;font-size:0.85rem">Payment status: Pending</p>
+          </div>`);
+      }
+    } catch (e) {
+      console.error("Failed to send pending payment email:", e);
+    }
+    return orderId;
+  },
+});
+
+export const setStripeSession = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    stripeSessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, { stripeSessionId: args.stripeSessionId });
+  },
+});
+
+export const fulfillOrder = internalMutation({
+  args: {
+    orderId: v.id("orders"),
+    paymentIntent: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) throw new Error("Order not found");
+    await ctx.db.patch(args.orderId, {
+      paymentStatus: "paid",
+      paymentIntent: args.paymentIntent,
+    });
+    try {
+      const user = await ctx.db.get(order.userId);
+      if (user) {
+        const itemsHtml = order.items.map(i =>
+          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
+        ).join("");
+        await sendEmail(user.email, "Payment Confirmed - Sports Folio Store",
+          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+            <h2 style="color:#1a1a1a">Payment Received!</h2>
+            <p style="color:#555">Thanks ${order.userName}, your payment of $${order.total.toFixed(2)} has been confirmed.</p>
+            <p style="color:#999;font-size:0.85rem">Order #${args.orderId}</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0">
+              <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
+              ${itemsHtml}
+            </table>
+            <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${order.total.toFixed(2)}</p>
+            <p style="color:#555;margin-top:16px">We'll notify you when your order ships!</p>
+          </div>`);
+      }
+    } catch (e) {
+      console.error("Failed to send payment confirmation email:", e);
+    }
+  },
+});
+
 export const placeOrder = mutation({
   args: {
     userId: v.id("users"),
@@ -61,6 +150,9 @@ export const placeOrder = mutation({
       total: args.total,
       status: "pending",
       createdAt: new Date().toISOString(),
+      paymentStatus: undefined,
+      stripeSessionId: undefined,
+      paymentIntent: undefined,
     });
     try {
       const itemsHtml = args.items.map(i =>

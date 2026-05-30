@@ -31,6 +31,9 @@ export interface Order {
   total: number;
   status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed';
+  paymentIntent?: string;
+  stripeSessionId?: string;
 }
 
 interface AppContextType {
@@ -96,7 +99,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sendOtpMutation = useMutation(api.otp.sendOtp);
   const verifyOtpMutation = useMutation(api.otp.verifyOtp);
   const seedMutation = useMutation(api.seed.seed);
-  const placeOrderMutation = useMutation(api.orders.placeOrder);
   const cancelOrderMutation = useMutation(api.orders.cancelOrder);
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
   const sendResetOtpMutation = useMutation(api.otp.sendResetOtp);

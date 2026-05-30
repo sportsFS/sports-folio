@@ -1,6 +1,5 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 import { sendEmail } from "./email";
 
 export const list = query({
@@ -19,6 +18,9 @@ export const list = query({
         total: o.total,
         status: o.status,
         createdAt: o.createdAt,
+        paymentStatus: o.paymentStatus,
+        paymentIntent: o.paymentIntent,
+        stripeSessionId: o.stripeSessionId,
       }));
     }
     if (!args.userId) return [];
@@ -36,6 +38,9 @@ export const list = query({
       total: o.total,
       status: o.status,
       createdAt: o.createdAt,
+      paymentStatus: o.paymentStatus,
+      paymentIntent: o.paymentIntent,
+      stripeSessionId: o.stripeSessionId,
     }));
   },
 });

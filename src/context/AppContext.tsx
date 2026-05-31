@@ -12,6 +12,7 @@ export interface Product {
   rating: number;
   reviews?: number;
   badge?: string;
+  badgeClass?: string;
   description?: string;
 }
 
@@ -95,7 +96,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateProductMutation = useMutation(api.products.update);
   const deleteProductMutation = useMutation(api.products.remove);
   const loginMutation = useMutation(api.users.login);
-  const registerMutation = useMutation(api.users.register);
   const sendOtpMutation = useMutation(api.otp.sendOtp);
   const verifyOtpMutation = useMutation(api.otp.verifyOtp);
   const seedMutation = useMutation(api.seed.seed);
@@ -106,7 +106,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
 
   const ordersData = useQuery(api.orders.list, {
-    userId: user?.id,
+    userId: user?.id as any,
     isAdmin: user?.role === 'admin' || false,
   });
 
@@ -121,12 +121,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const products: Product[] = useMemo(() => {
     if (!productsData) return [];
-    return productsData as Product[];
+    return productsData as any as Product[];
   }, [productsData]);
 
   const orders: Order[] = useMemo(() => {
     if (!ordersData) return [];
-    return ordersData as Order[];
+    return ordersData as any as Order[];
   }, [ordersData]);
 
   const isLoggedIn = user !== null;
@@ -297,15 +297,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userId: user.id as any,
         userName: user.name,
         items: cart.map(c => ({
-          productId: c.id,
+          productId: c.id as any,
           name: c.name,
           price: c.price,
           qty: c.qty,
-        })),
+        })) as any,
         total: cart.reduce((sum, c) => sum + c.price * c.qty, 0),
       });
       setCart([]);
-      window.location.href = result.url;
+      window.location.href = result.url!;
     } catch (err: any) {
       showToast('Checkout Failed', err.message || 'Something went wrong');
     }

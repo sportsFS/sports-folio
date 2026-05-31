@@ -9,7 +9,7 @@ async function requireAdmin(ctx: any, userId: string) {
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const products = await ctx.db.query("products").limit(100).collect();
+    const products = await ctx.db.query("products").take(100);
     return products.map(p => ({
       id: p._id,
       name: p.name,

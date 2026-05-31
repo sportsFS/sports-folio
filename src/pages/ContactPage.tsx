@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
-import { useApp } from '../context/AppContext';
 
 export default function ContactPage() {
-  const { showPage } = useApp();
-
   useEffect(() => {
     function triggerReveals() {
       document.querySelectorAll('.reveal').forEach(el => {

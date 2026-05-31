@@ -21,9 +21,7 @@ export const sendOtp = mutation({
     email: v.string(),
     password: v.string(),
   },
-  rateLimiter: { kind: "token bucket", maxTokens: 3, refillRate: 1 },
   handler: async (ctx, args) => {
-    await ctx.rateLimiter.rateLimit();
     validatePassword(args.password);
     const email = args.email.toLowerCase().trim();
     const existing = await ctx.db
@@ -76,9 +74,9 @@ export const verifyOtp = mutation({
     }
     if (otpRecord.code !== args.code) throw new Error("Invalid verification code.");
     const userId = await ctx.db.insert("users", {
-      name: otpRecord.name,
+      name: otpRecord.name!,
       email,
-      password: otpRecord.hashedPassword,
+      password: otpRecord.hashedPassword!,
       role: "user",
     });
     await ctx.db.delete(otpRecord._id);
@@ -88,9 +86,7 @@ export const verifyOtp = mutation({
 
 export const sendResetOtp = mutation({
   args: { email: v.string() },
-  rateLimiter: { kind: "token bucket", maxTokens: 3, refillRate: 1 },
   handler: async (ctx, args) => {
-    await ctx.rateLimiter.rateLimit();
     const email = args.email.toLowerCase().trim();
     const user = await ctx.db
       .query("users")

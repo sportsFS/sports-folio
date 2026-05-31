@@ -101,7 +101,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   }
 
   function openEdit(p: Product) {
-    setForm({ name: p.name, category: p.category, price: String(p.price), oldPrice: String(p.oldPrice), rating: String(p.rating), reviews: String(p.reviews), image: p.image, badge: p.badge, badgeClass: p.badgeClass || '' });
+    setForm({ name: p.name, category: p.category, price: String(p.price), oldPrice: String(p.oldPrice || ''), rating: String(p.rating), reviews: String(p.reviews || ''), image: p.image, badge: p.badge || '', badgeClass: p.badgeClass || '' });
     setModal({ open: true, editId: p.id });
   }
 
@@ -113,8 +113,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
     setUploading(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const url = await uploadAction({ file: uint8Array });
+      const url = await uploadAction({ file: arrayBuffer }) as string;
       setForm(f => ({ ...f, image: url }));
     } catch (err) {
       alert('Upload failed. Try using an image URL instead.');

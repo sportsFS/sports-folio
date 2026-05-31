@@ -3,7 +3,9 @@ import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export const createCheckoutSession = action({
   args: {
@@ -18,6 +20,7 @@ export const createCheckoutSession = action({
     total: v.number(),
   },
   handler: async (ctx, args) => {
+    const stripe = getStripe();
     const orderId = await ctx.runMutation(internal.orders.placeOrderInternal, {
       userId: args.userId,
       userName: args.userName,

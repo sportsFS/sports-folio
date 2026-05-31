@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { hashPassword } from "./crypto";
 
@@ -39,9 +39,7 @@ export const login = mutation({
     email: v.string(),
     password: v.string(),
   },
-  rateLimiter: { kind: "token bucket", maxTokens: 5, refillRate: 1 },
   handler: async (ctx, args) => {
-    await ctx.rateLimiter.rateLimit();
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", q => q.eq("email", args.email.toLowerCase().trim()))

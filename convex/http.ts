@@ -3,7 +3,9 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 const http = httpRouter();
 
@@ -11,6 +13,7 @@ http.route({
   path: "/stripe",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
+    const stripe = getStripe();
     const signature = request.headers.get("stripe-signature");
     if (!signature) {
       return new Response("Missing stripe-signature header", { status: 400 });

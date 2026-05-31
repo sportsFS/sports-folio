@@ -22,8 +22,14 @@ export const sendOtp = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
-    validatePassword(args.password);
     const email = args.email.toLowerCase().trim();
+    const recentOtps = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .collect();
+    const recentCount = recentOtps.filter(o => Date.now() - o.expiresAt < 5 * 60 * 1000).length;
+    if (recentCount >= 3) throw new Error("Too many requests. Please wait a few minutes and try again.");
+    validatePassword(args.password);
     const existing = await ctx.db
       .query("users")
       .withIndex("by_email", q => q.eq("email", email))
@@ -88,6 +94,12 @@ export const sendResetOtp = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const email = args.email.toLowerCase().trim();
+    const recentOtps = await ctx.db
+      .query("otps")
+      .withIndex("by_email", q => q.eq("email", email))
+      .collect();
+    const recentCount = recentOtps.filter(o => Date.now() - o.expiresAt < 5 * 60 * 1000).length;
+    if (recentCount >= 3) throw new Error("Too many requests. Please wait a few minutes and try again.");
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", q => q.eq("email", email))

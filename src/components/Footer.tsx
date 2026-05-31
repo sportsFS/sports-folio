@@ -99,7 +99,7 @@ export default function Footer() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontSize: '0.8rem', color: '#666', flexWrap: 'wrap', gap: 12,
       }}>
-        <span>© 2025 Sports Folio Store. All rights reserved.</span>
+        <span>© 2026 Sports Folio Store. All rights reserved.</span>
         <span>Made with 🏏 for cricket lovers</span>
       </div>
     </footer>

@@ -18,9 +18,24 @@ export default function AdminPage() {
   const { user, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
   const [tab, setTab] = useState<Tab>('dashboard');
 
-  const totalUsers = (() => {
-    try { return JSON.parse(localStorage.getItem('cricket_users') || '[]').length; } catch { return 1; }
-  })();
+  if (!user || user.role !== 'admin') {
+    return (
+      <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+          <div style={{ fontSize: '5rem', marginBottom: 24, opacity: 0.3 }}>🔒</div>
+          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.5rem', marginBottom: 12, color: 'var(--text)' }}>
+            Admin Access Required
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
+            You don't have permission to access this page.
+          </p>
+          <button className="btn-neon" onClick={() => showPage('home')}>BACK TO HOME</button>
+        </div>
+      </div>
+    );
+  }
+
+  const totalUsers = 1;
 
   const tabStyle = (t: Tab): React.CSSProperties => ({
     padding: '10px 22px', borderRadius: 50, border: 'none', cursor: 'pointer',

@@ -34,7 +34,7 @@ export default function CookieConsent() {
         maxWidth: 600, lineHeight: 1.6, margin: 0,
       }}>
         We use essential cookies to make our site work. By continuing to browse, you agree to our use of cookies.
-        See our <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'privacy' })); }}
+        See our <a href="/privacy" onClick={(e) => { e.preventDefault(); window.location.href = '/?page=privacy'; window.dispatchEvent(new CustomEvent('navigate', { detail: 'privacy' })); }}
           style={{ color: 'var(--neon-dark)', textDecoration: 'underline' }}>Privacy Policy</a>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>

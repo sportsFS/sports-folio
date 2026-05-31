@@ -1,12 +1,21 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { hashPassword } from "./crypto";
+import { hashPassword, verifyPassword } from "./crypto";
 
 function validatePassword(password: string): void {
   if (password.length < 8) throw new Error("Password must be at least 8 characters");
   if (!/[a-zA-Z]/.test(password)) throw new Error("Password must contain at least one letter");
   if (!/[0-9]/.test(password)) throw new Error("Password must contain at least one number");
 }
+
+export const validateSession = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+    return { id: user._id, name: user.name, email: user.email, role: user.role };
+  },
+});
 
 export const register = mutation({
   args: {
@@ -47,8 +56,8 @@ export const login = mutation({
     if (!user) {
       throw new Error("Invalid email or password");
     }
-    const hashed = await hashPassword(args.password);
-    if (user.password !== hashed) {
+    const valid = await verifyPassword(args.password, user.password);
+    if (!valid) {
       throw new Error("Invalid email or password");
     }
     return { id: user._id, name: user.name, email: user.email, role: user.role };

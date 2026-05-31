@@ -16,9 +16,8 @@ export default function CartPage() {
   }, [cart]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shipping = subtotal > 999 ? 0 : 99;
-  const discount = Math.round(subtotal * 0.05);
-  const total = subtotal + shipping - discount;
+  const shipping = subtotal > 99 ? 0 : 9.99;
+  const total = subtotal + shipping;
 
   if (cart.length === 0) {
     return (
@@ -135,10 +134,6 @@ export default function CartPage() {
               label="Shipping"
               value={shipping === 0 ? <span style={{ color: 'var(--neon-dark)', fontWeight: 700 }}>FREE</span> : `$${shipping}`}
             />
-            <SummaryRow
-              label="Discount (5%)"
-              value={<span style={{ color: 'var(--neon-dark)' }}>-${discount.toLocaleString('en-US')}</span>}
-            />
 
             {/* Promo */}
             <div style={{ display: 'flex', gap: 8, margin: '20px 0' }}>
@@ -157,7 +152,7 @@ export default function CartPage() {
               <button
                 className="btn-outline"
                 style={{ padding: '10px 20px', fontSize: '0.8rem', flexShrink: 0 }}
-                onClick={() => showToast('Promo Applied!', 'Code CRICKET25 applied successfully')}
+                onClick={() => showToast('Coming Soon', 'Promo codes will be available soon!')}
               >
                 APPLY
               </button>

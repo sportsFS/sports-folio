@@ -54,12 +54,12 @@ export default function ShopPage() {
   }, [category, maxPrice, sort, searchQuery, products]);
 
   const filterOptions = [
-    { label: 'All Products', value: 'all', count: 20 },
-    { label: 'Cricket Bats', value: 'bats', count: 6 },
-    { label: 'Cricket Balls', value: 'balls', count: 3 },
-    { label: 'Protective Gear', value: 'protection', count: 5 },
-    { label: 'Footwear', value: 'footwear', count: 3 },
-    { label: 'Accessories', value: 'accessories', count: 3 },
+    { label: 'All Products', value: 'all', count: products.length },
+    { label: 'Cricket Bats', value: 'bats', count: products.filter(p => p.category === 'bats').length },
+    { label: 'Cricket Balls', value: 'balls', count: products.filter(p => p.category === 'balls').length },
+    { label: 'Protective Gear', value: 'protection', count: products.filter(p => p.category === 'protection').length },
+    { label: 'Footwear', value: 'footwear', count: products.filter(p => p.category === 'footwear').length },
+    { label: 'Accessories', value: 'accessories', count: products.filter(p => p.category === 'accessories').length },
   ];
 
   return (

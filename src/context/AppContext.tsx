@@ -83,12 +83,27 @@ function saveJSON(key: string, value: unknown) {
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState('home');
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<AuthUser | null>(() => loadJSON('cricket_session', null));
+
+  // Validate session against server on load
+  const sessionUser = useQuery(api.users.validateSession, user?.id ? { userId: user.id as any } : "skip");
+  useEffect(() => {
+    if (user && sessionUser === null) {
+      setUser(null);
+      saveJSON('cricket_session', null);
+      showToast('Session Expired', 'Please log in again');
+    }
+    if (user && sessionUser && (sessionUser.role !== user.role || sessionUser.name !== user.name)) {
+      const updated = { ...user, name: sessionUser.name, role: sessionUser.role };
+      setUser(updated);
+      saveJSON('cricket_session', updated);
+    }
+  }, [sessionUser]);
 
   // Convex hooks
   const productsData = useQuery(api.products.list);
@@ -118,6 +133,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       seedMutation();
     }
   }, [seedMutation]);
+
+  // Persist cart to localStorage
+  useEffect(() => {
+    saveJSON('cricket_cart', cart);
+  }, [cart]);
 
   const products: Product[] = useMemo(() => {
     if (!productsData) return [];
@@ -173,6 +193,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  // Listen for navigate events from cookie consent
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const page = (e as CustomEvent).detail;
+      if (page) showPage(page);
+    };
+    window.addEventListener('navigate', handler);
+    return () => window.removeEventListener('navigate', handler);
+  }, [showPage]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {

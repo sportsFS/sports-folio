@@ -21,11 +21,13 @@ export const createCheckoutSession = action({
   },
   handler: async (ctx, args) => {
     const stripe = getStripe();
+    const recalculatedTotal = args.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
     const orderId = await ctx.runMutation(internal.orders.placeOrderInternal, {
       userId: args.userId,
       userName: args.userName,
       items: args.items,
-      total: args.total,
+      total: recalculatedTotal,
     });
 
     const lineItems = args.items.map(item => ({
@@ -37,7 +39,7 @@ export const createCheckoutSession = action({
       quantity: item.qty,
     }));
 
-    const siteUrl = process.env.SITE_URL || "https://flexible-bulldog-411.convex.cloud";
+    const siteUrl = process.env.SITE_URL || "https://sportsfoliostore.com";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

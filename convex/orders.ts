@@ -9,18 +9,25 @@ export const list = query({
   },
   handler: async (ctx, args) => {
     if (args.isAdmin) {
+      if (!args.userId) return [];
+      const caller = await ctx.db.get(args.userId);
+      if (!caller || caller.role !== "admin") {
+        const orders = await ctx.db
+          .query("orders")
+          .withIndex("by_userId", q => q.eq("userId", args.userId!))
+          .order("desc")
+          .take(50);
+        return orders.map(o => ({
+          id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+          total: o.total, status: o.status, createdAt: o.createdAt,
+          paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
+        }));
+      }
       const orders = await ctx.db.query("orders").order("desc").take(200);
       return orders.map(o => ({
-        id: o._id,
-        userId: o.userId,
-        userName: o.userName,
-        items: o.items,
-        total: o.total,
-        status: o.status,
-        createdAt: o.createdAt,
-        paymentStatus: o.paymentStatus,
-        paymentIntent: o.paymentIntent,
-        stripeSessionId: o.stripeSessionId,
+        id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+        total: o.total, status: o.status, createdAt: o.createdAt,
+        paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
       }));
     }
     if (!args.userId) return [];
@@ -30,16 +37,9 @@ export const list = query({
       .order("desc")
       .take(50);
     return orders.map(o => ({
-      id: o._id,
-      userId: o.userId,
-      userName: o.userName,
-      items: o.items,
-      total: o.total,
-      status: o.status,
-      createdAt: o.createdAt,
-      paymentStatus: o.paymentStatus,
-      paymentIntent: o.paymentIntent,
-      stripeSessionId: o.stripeSessionId,
+      id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+      total: o.total, status: o.status, createdAt: o.createdAt,
+      paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
     }));
   },
 });

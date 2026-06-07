@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp, Order } from '../context/AppContext';
-import { useAction } from 'convex/react';
+import { useAction, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Product } from '../data/products';
 
@@ -8,10 +8,11 @@ type Tab = 'dashboard' | 'products' | 'orders' | 'users';
 
 const categories = [
   { value: 'bats', label: 'Cricket Bats' },
-  { value: 'balls', label: 'Cricket Balls' },
   { value: 'protection', label: 'Protective Gear' },
-  { value: 'footwear', label: 'Footwear' },
-  { value: 'accessories', label: 'Accessories' },
+  { value: 'gloves', label: 'Gloves & Wicket Keeping' },
+  { value: 'balls', label: 'Cricket Balls' },
+  { value: 'apparel', label: 'Apparel, Bags & Kits' },
+  { value: 'accessories', label: 'Accessories & Training Tools' },
 ];
 
 export default function AdminPage() {
@@ -80,7 +81,26 @@ export default function AdminPage() {
 function DashboardTab({ products, totalUsers, orders, showPage }: {
   products: Product[]; totalUsers: number; orders: Order[]; showPage: (p: string) => void;
 }) {
+  const { user } = useApp();
+  const migrateMutation = useMutation(api.migrateProducts.migrate);
+  const [syncing, setSyncing] = useState(false);
   const avgRating = products.length ? (products.reduce((s, p) => s + p.rating, 0) / products.length).toFixed(1) : '0';
+
+  async function handleSync() {
+    if (!user || syncing) return;
+    if (!confirm('Replace all products with the new product catalog? This cannot be undone.')) return;
+    setSyncing(true);
+    try {
+      const result = await migrateMutation({ userId: user.id as any }) as any;
+      alert(`Sync complete! Inserted ${result.inserted} products, removed ${result.deleted}. Refreshing...`);
+      window.location.reload();
+    } catch (err: any) {
+      alert('Sync failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20, marginBottom: 32 }}>
@@ -93,6 +113,9 @@ function DashboardTab({ products, totalUsers, orders, showPage }: {
         <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Quick Actions</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <button className="btn-neon" onClick={() => showPage('shop')}>View Store</button>
+          <button className="btn-outline" onClick={handleSync} disabled={syncing}>
+            {syncing ? 'Syncing...' : 'Sync Products'}
+          </button>
           <button className="btn-outline" onClick={() => showPage('home')}>Home</button>
         </div>
       </div>
@@ -155,7 +178,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   }
 
   const categoryLabel: Record<string, string> = {
-    bats: 'Bats', balls: 'Balls', protection: 'Protection', footwear: 'Footwear', accessories: 'Accessories',
+    bats: 'Bats', protection: 'Protection', gloves: 'Gloves & WK', balls: 'Balls', apparel: 'Apparel', accessories: 'Accessories',
   };
 
   return (

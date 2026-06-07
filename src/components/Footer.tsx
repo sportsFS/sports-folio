@@ -76,7 +76,7 @@ export default function Footer() {
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 20, color: '#FFF' }}>
             Categories
           </h4>
-          {['Cricket Bats', 'Cricket Balls', 'Protective Gear', 'Footwear', 'Accessories'].map(cat => (
+          {['Cricket Bats', 'Protective Gear', 'Gloves & WK', 'Cricket Balls', 'Apparel & Kits', 'Accessories'].map(cat => (
             <button key={cat} className="footer-link" onClick={() => showPage('shop')}>
               {cat}
             </button>

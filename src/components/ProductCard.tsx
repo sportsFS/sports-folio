@@ -28,9 +28,10 @@ export default function ProductCard({ product }: Props) {
 
   const categoryLabel: Record<string, string> = {
     bats: 'Cricket Bats',
-    balls: 'Cricket Balls',
     protection: 'Protective Gear',
-    footwear: 'Footwear',
+    gloves: 'Gloves & WK',
+    balls: 'Cricket Balls',
+    apparel: 'Apparel, Bags & Kits',
     accessories: 'Accessories',
   };
 

@@ -2,6 +2,8 @@ import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { hashPassword } from "./crypto";
 import { sendEmail } from "./email";
+import { generateToken } from "./sessions";
+import { internal } from "./_generated/api";
 
 function generateOtp(): string {
   const buf = new Uint32Array(1);
@@ -86,7 +88,13 @@ export const verifyOtp = mutation({
       role: "user",
     });
     await ctx.db.delete(otpRecord._id);
-    return { id: userId, name: otpRecord.name!, email, role: "user" as const };
+    const token = generateToken();
+    await ctx.db.insert("sessions", {
+      token,
+      userId,
+      createdAt: Date.now(),
+    });
+    return { token, id: userId, name: otpRecord.name!, email, role: "user" as const };
   },
 });
 
@@ -154,6 +162,7 @@ export const resetPassword = mutation({
     if (!user) throw new Error("User not found");
     await ctx.db.patch(user._id, { password: await hashPassword(args.newPassword) });
     await ctx.db.delete(otpRecord._id);
+    await ctx.runMutation(internal.sessions.clearUserSessions, { userId: user._id });
     await sendEmail(email, "Password Reset Successful - Sports Folio Store",
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#1a1a1a">Password Reset Successful</h2>

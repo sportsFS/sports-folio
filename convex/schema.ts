@@ -28,6 +28,16 @@ export default defineSchema({
     name: v.optional(v.string()),
     hashedPassword: v.optional(v.string()),
   }).index("by_email", ["email"]),
+  sessions: defineTable({
+    token: v.string(),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_token", ["token"])
+    .index("by_userId", ["userId"]),
+  loginAttempts: defineTable({
+    email: v.string(),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
   orders: defineTable({
     userId: v.id("users"),
     userName: v.string(),

@@ -6,10 +6,11 @@ import SearchBar from './SearchBar';
 const categoryLinks = [
   { label: 'All Products', value: 'all' },
   { label: 'Cricket Bats', value: 'bats' },
-  { label: 'Cricket Balls', value: 'balls' },
   { label: 'Protective Gear', value: 'protection' },
-  { label: 'Footwear', value: 'footwear' },
-  { label: 'Accessories', value: 'accessories' },
+  { label: 'Gloves & Wicket Keeping', value: 'gloves' },
+  { label: 'Cricket Balls', value: 'balls' },
+  { label: 'Apparel, Bags & Kits', value: 'apparel' },
+  { label: 'Accessories & Training', value: 'accessories' },
 ];
 
 export default function Header() {

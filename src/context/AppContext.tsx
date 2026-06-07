@@ -59,7 +59,7 @@ interface AppContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   sendOtp: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   products: Product[];
   addProduct: (p: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
@@ -88,22 +88,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<AuthUser | null>(() => loadJSON('cricket_session', null));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('cricket_token'));
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Validate session against server on load
-  const sessionUser = useQuery(api.users.validateSession, user?.id ? { userId: user.id as any } : "skip");
+  // Validate session token against server on load
+  const sessionUser = useQuery(api.sessions.validate, token ? { token } : "skip");
   useEffect(() => {
-    if (user && sessionUser === null) {
+    if (sessionUser === undefined) return;
+    if (token && sessionUser === null) {
+      localStorage.removeItem('cricket_token');
+      setToken(null);
       setUser(null);
-      saveJSON('cricket_session', null);
       showToast('Session Expired', 'Please log in again');
+    } else if (sessionUser) {
+      setUser(sessionUser);
     }
-    if (user && sessionUser && (sessionUser.role !== user.role || sessionUser.name !== user.name)) {
-      const updated = { ...user, name: sessionUser.name, role: sessionUser.role };
-      setUser(updated);
-      saveJSON('cricket_session', updated);
-    }
-  }, [sessionUser]);
+  }, [token, sessionUser]);
 
   // Convex hooks
   const productsData = useQuery(api.products.list);
@@ -207,14 +207,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     try {
       const result = await loginMutation({ email, password });
-      const session: AuthUser = {
-        id: result.id,
-        name: result.name,
-        email: result.email,
-        role: result.role,
-      };
-      setUser(session);
-      saveJSON('cricket_session', session);
+      localStorage.setItem('cricket_token', result.token);
+      setToken(result.token);
+      setUser({ id: result.id, name: result.name, email: result.email, role: result.role });
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Login failed' };
@@ -233,24 +228,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const verifyOtp = useCallback(async (email: string, code: string) => {
     try {
       const result = await verifyOtpMutation({ email, code });
-      const session: AuthUser = {
-        id: result.id,
-        name: result.name,
-        email: result.email,
-        role: result.role,
-      };
-      setUser(session);
-      saveJSON('cricket_session', session);
+      localStorage.setItem('cricket_token', result.token);
+      setToken(result.token);
+      setUser({ id: result.id, name: result.name, email: result.email, role: result.role });
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Verification failed' };
     }
   }, [verifyOtpMutation]);
 
-  const logout = useCallback(() => {
+  const logoutMutationFn = useMutation(api.sessions.logout);
+  const logout = useCallback(async () => {
+    const t = token;
+    localStorage.removeItem('cricket_token');
+    setToken(null);
     setUser(null);
-    saveJSON('cricket_session', null);
-  }, []);
+    if (t) {
+      try { await logoutMutationFn({ token: t }); } catch {}
+    }
+  }, [token, logoutMutationFn]);
 
   const addProduct = useCallback(async (p: Omit<Product, 'id'>) => {
     await addProductMutation({

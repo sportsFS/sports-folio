@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { hashPassword, verifyPassword } from "./crypto";
 import { generateToken } from "./sessions";
@@ -78,5 +78,15 @@ export const login = mutation({
     for (const a of oldAttempts) await ctx.db.delete(a._id);
 
     return { token, id: user._id, name: user.name, email: user.email, role: user.role };
+  },
+});
+
+export const list = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const caller = await ctx.db.get(args.userId);
+    if (!caller || caller.role !== "admin") throw new Error("Unauthorized");
+    const users = await ctx.db.query("users").collect();
+    return users.map(u => ({ id: u._id, name: u.name, email: u.email, role: u.role }));
   },
 });

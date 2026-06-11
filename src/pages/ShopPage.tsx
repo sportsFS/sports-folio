@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { useApp } from '../context/AppContext';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
 
@@ -20,18 +21,7 @@ export default function ShopPage() {
     }
   }, []);
 
-  // Trigger scroll reveals
-  useEffect(() => {
-    function triggerReveals() {
-      document.querySelectorAll('.reveal').forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight - 80) el.classList.add('visible');
-      });
-    }
-    triggerReveals();
-    window.addEventListener('scroll', triggerReveals);
-    return () => window.removeEventListener('scroll', triggerReveals);
-  }, [loaded]);
+  useScrollReveal([loaded]);
 
   // Skeleton loader
   useEffect(() => {

@@ -13,7 +13,7 @@ export default function MyOrdersPage() {
     if (result.success) {
       showToast('Order Cancelled', 'Your order has been cancelled');
     } else {
-      showToast('Error', result.error || 'Failed to cancel');
+      showToast('Error', result.error || 'Failed to cancel', 'error');
     }
   }
 

@@ -9,14 +9,21 @@ export const migrate = mutation({
     if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
 
     const existing = await ctx.db.query("products").collect();
-    for (const p of existing) {
-      await ctx.db.delete(p._id);
-    }
+    const existingByName = new Map(existing.map(p => [p.name, p]));
+
+    let inserted = 0, updated = 0;
 
     for (const product of PRODUCTS) {
-      await ctx.db.insert("products", product);
+      const match = existingByName.get(product.name);
+      if (match) {
+        await ctx.db.patch(match._id, product);
+        updated++;
+      } else {
+        await ctx.db.insert("products", product);
+        inserted++;
+      }
     }
 
-    return { inserted: PRODUCTS.length, deleted: existing.length };
+    return { inserted, updated, total: PRODUCTS.length };
   },
 });

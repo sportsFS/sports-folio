@@ -259,3 +259,79 @@ export const updateStatus = mutation({
     }
   },
 });
+
+export const processStripeEvent = internalMutation({
+  args: {
+    eventId: v.string(),
+    orderId: v.optional(v.string()),
+    paymentIntent: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("processedWebhooks")
+      .withIndex("by_eventId", q => q.eq("eventId", args.eventId))
+      .first();
+    if (existing) return { processed: false };
+
+    if (args.orderId) {
+      const order: any = await ctx.db.get(args.orderId as any);
+      if (order) {
+        await ctx.db.patch(args.orderId as any, {
+          paymentStatus: "paid",
+          paymentIntent: args.paymentIntent,
+        });
+        try {
+          const user: any = await ctx.db.get(order.userId);
+          if (user) {
+            const itemsHtml = order.items.map((i: any) =>
+              `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
+            ).join("");
+            await sendEmail(user.email, "Payment Confirmed - Sports Folio Store",
+              `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+                <h2 style="color:#1a1a1a">Payment Received!</h2>
+                <p style="color:#555">Thanks ${order.userName}, your payment of $${order.total.toFixed(2)} has been confirmed.</p>
+                <p style="color:#999;font-size:0.85rem">Order #${args.orderId}</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0">
+                  <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
+                  ${itemsHtml}
+                </table>
+                <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${order.total.toFixed(2)}</p>
+                <p style="color:#555;margin-top:16px">We'll notify you when your order ships!</p>
+              </div>`);
+          }
+        } catch (e) {
+          console.error("Failed to send payment confirmation email:", e);
+        }
+      }
+    }
+
+    await ctx.db.insert("processedWebhooks", {
+      eventId: args.eventId,
+      processedAt: Date.now(),
+    });
+
+    return { processed: true };
+  },
+});
+
+export const cleanupStaleOrders = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const caller = await ctx.db.get(args.userId);
+    if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
+
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    const stale = await ctx.db.query("orders")
+      .withIndex("by_status", q => q.eq("status", "pending"))
+      .collect();
+
+    let cleaned = 0;
+    for (const order of stale) {
+      const createdAt = new Date(order.createdAt).getTime();
+      if (createdAt < cutoff && !order.stripeSessionId) {
+        await ctx.db.patch(order._id, { status: "cancelled" });
+        cleaned++;
+      }
+    }
+    return { cleaned };
+  },
+});

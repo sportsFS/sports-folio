@@ -35,21 +35,18 @@ http.route({
       );
     }
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const orderId = session.metadata?.orderId;
-        if (orderId) {
-          await ctx.runMutation(internal.orders.fulfillOrder, {
-            orderId: orderId as any,
-            paymentIntent: (session.payment_intent as string) || undefined,
-          });
-        }
-        break;
-      }
-      case "payment_intent.payment_failed": {
-        break;
-      }
+    const session = event.type === "checkout.session.completed"
+      ? (event.data.object as Stripe.Checkout.Session)
+      : null;
+
+    const result = await ctx.runMutation(internal.orders.processStripeEvent, {
+      eventId: event.id,
+      orderId: session?.metadata?.orderId || undefined,
+      paymentIntent: (session?.payment_intent as string) || undefined,
+    });
+
+    if (!result.processed) {
+      return new Response("Already processed", { status: 200 });
     }
 
     return new Response("OK", { status: 200 });

@@ -1,19 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQty, showPage, showToast, isLoggedIn, placeOrder } = useApp();
   const [promoCode, setPromoCode] = useState('');
 
-  useEffect(() => {
-    function triggerReveals() {
-      document.querySelectorAll('.reveal').forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight - 80) el.classList.add('visible');
-      });
-    }
-    setTimeout(triggerReveals, 100);
-  }, [cart]);
+  useScrollReveal([cart]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = subtotal > 99 ? 0 : 9.99;

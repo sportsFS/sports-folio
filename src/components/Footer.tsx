@@ -30,26 +30,14 @@ export default function Footer() {
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             {['📘', '📸', '🐦', '📺'].map((icon, i) => (
-              <a key={i} href="#" style={{
+              <span key={i} title="Social link coming soon" style={{
                 width: 40, height: 40, borderRadius: 10,
                 border: '1px solid #333', display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                color: '#888', textDecoration: 'none', transition: 'all 0.3s ease',
-                fontSize: '1rem',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--neon)';
-                (e.currentTarget as HTMLElement).style.borderColor = 'var(--neon)';
-                (e.currentTarget as HTMLElement).style.color = '#000';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'transparent';
-                (e.currentTarget as HTMLElement).style.borderColor = '#333';
-                (e.currentTarget as HTMLElement).style.color = '#888';
-              }}
-              >
+                color: '#888', cursor: 'default', fontSize: '1rem',
+              }}>
                 {icon}
-              </a>
+              </span>
             ))}
           </div>
         </div>

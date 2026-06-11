@@ -14,12 +14,19 @@ import type * as http from "../http.js";
 import type * as migrateProducts from "../migrateProducts.js";
 import type * as orders from "../orders.js";
 import type * as otp from "../otp.js";
+import type * as productData from "../productData.js";
 import type * as products from "../products.js";
 import type * as seed from "../seed.js";
 import type * as sessions from "../sessions.js";
 import type * as stripe from "../stripe.js";
 import type * as upload from "../upload.js";
 import type * as users from "../users.js";
+
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   crypto: typeof crypto;
@@ -28,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   migrateProducts: typeof migrateProducts;
   orders: typeof orders;
   otp: typeof otp;
+  productData: typeof productData;
   products: typeof products;
   seed: typeof seed;
   sessions: typeof sessions;

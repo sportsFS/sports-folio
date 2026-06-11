@@ -11,10 +11,12 @@ export default function RegisterPage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!agreed) { setError('Please agree to the Privacy Policy and Terms of Service'); return; }
     if (!name || !email || !password || !confirm) { setError('Please fill in all fields'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
@@ -85,6 +87,20 @@ export default function RegisterPage() {
               <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Re-enter password" className="auth-input" style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.95rem' }} />
             </div>
 
+            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <input type="checkbox" id="agree" checked={agreed} onChange={e => setAgreed(e.target.checked)}
+                style={{ marginTop: 2, cursor: 'pointer', accentColor: 'var(--neon-dark)' }} />
+              <label htmlFor="agree" style={{ cursor: 'pointer', lineHeight: 1.5 }}>
+                I agree to the{' '}
+                <button type="button" onClick={() => showPage('privacy')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', fontWeight: 600, cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem', textDecoration: 'underline', padding: 0 }}>
+                  Privacy Policy
+                </button>
+                {' '}and{' '}
+                <button type="button" onClick={() => showPage('terms')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', fontWeight: 600, cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem', textDecoration: 'underline', padding: 0 }}>
+                  Terms of Service
+                </button>
+              </label>
+            </div>
             <button type="submit" className="btn-neon" style={{ width: '100%', padding: '14px' }} disabled={loading}>
               {loading ? 'SENDING OTP...' : 'SEND OTP →'}
             </button>

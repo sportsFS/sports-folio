@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp, Order } from '../context/AppContext';
-import { useAction, useMutation } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Product } from '../data/products';
 
@@ -18,6 +18,8 @@ const categories = [
 export default function AdminPage() {
   const { user, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
   const [tab, setTab] = useState<Tab>('dashboard');
+  const usersData = useQuery(api.users.list, user ? { userId: user.id as any } : "skip");
+  const totalUsers = usersData?.length ?? 0;
 
   if (!user || user.role !== 'admin') {
     return (
@@ -35,8 +37,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const totalUsers = 1;
 
   const tabStyle = (t: Tab): React.CSSProperties => ({
     padding: '10px 22px', borderRadius: 50, border: 'none', cursor: 'pointer',
@@ -71,7 +71,7 @@ export default function AdminPage() {
         {tab === 'dashboard' && <DashboardTab products={products} totalUsers={totalUsers} orders={orders} showPage={showPage} />}
         {tab === 'products' && <ProductsTab products={products} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />}
         {tab === 'orders' && <OrdersTab orders={orders} updateOrderStatus={updateOrderStatus} />}
-        {tab === 'users' && <UsersTab />}
+        {tab === 'users' && <UsersTab users={usersData || []} />}
       </section>
     </div>
   );
@@ -83,21 +83,37 @@ function DashboardTab({ products, totalUsers, orders, showPage }: {
 }) {
   const { user } = useApp();
   const migrateMutation = useMutation(api.migrateProducts.migrate);
+  const cleanupMutation = useMutation(api.orders.cleanupStaleOrders);
   const [syncing, setSyncing] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const avgRating = products.length ? (products.reduce((s, p) => s + p.rating, 0) / products.length).toFixed(1) : '0';
 
   async function handleSync() {
     if (!user || syncing) return;
-    if (!confirm('Replace all products with the new product catalog? This cannot be undone.')) return;
     setSyncing(true);
     try {
       const result = await migrateMutation({ userId: user.id as any }) as any;
-      alert(`Sync complete! Inserted ${result.inserted} products, removed ${result.deleted}. Refreshing...`);
+      alert(`Sync complete! ${result.inserted} new, ${result.updated} updated. Refreshing...`);
       window.location.reload();
     } catch (err: any) {
       alert('Sync failed: ' + (err.message || 'Unknown error'));
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleCleanup() {
+    if (!user || cleaning) return;
+    if (!confirm('Cancel all pending orders older than 30 minutes with no Stripe session?')) return;
+    setCleaning(true);
+    try {
+      const result = await cleanupMutation({ userId: user.id as any }) as any;
+      alert(`Cleaned up ${result.cleaned} stale order(s).`);
+      window.location.reload();
+    } catch (err: any) {
+      alert('Cleanup failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setCleaning(false);
     }
   }
 
@@ -115,6 +131,9 @@ function DashboardTab({ products, totalUsers, orders, showPage }: {
           <button className="btn-neon" onClick={() => showPage('shop')}>View Store</button>
           <button className="btn-outline" onClick={handleSync} disabled={syncing}>
             {syncing ? 'Syncing...' : 'Sync Products'}
+          </button>
+          <button className="btn-outline" onClick={handleCleanup} disabled={cleaning}>
+            {cleaning ? 'Cleaning...' : 'Cleanup Stale Orders'}
           </button>
           <button className="btn-outline" onClick={() => showPage('home')}>Home</button>
         </div>
@@ -389,11 +408,14 @@ function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrder
 }
 
 /* ── Users Tab ── */
-function UsersTab() {
-  const stored: { id: string; name: string; email: string; role: string }[] = (() => {
-    try { return JSON.parse(localStorage.getItem('cricket_users') || '[]'); } catch { return []; }
-  })();
-
+function UsersTab({ users }: { users: { id: string; name: string; email: string; role: string }[] }) {
+  if (users.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
+        <p>No users found</p>
+      </div>
+    );
+  }
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
@@ -405,7 +427,7 @@ function UsersTab() {
           </tr>
         </thead>
         <tbody>
-          {stored.map(u => (
+          {users.map(u => (
             <tr key={u.id} style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
               <td style={{ padding: '10px 8px', fontWeight: 600 }}>{u.name}</td>
               <td style={{ padding: '10px 8px', color: 'var(--text-secondary)' }}>{u.email}</td>

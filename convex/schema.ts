@@ -57,4 +57,8 @@ export default defineSchema({
   }).index("by_userId", ["userId"])
     .index("by_status", ["status"])
     .index("by_createdAt", ["createdAt"]),
+  processedWebhooks: defineTable({
+    eventId: v.string(),
+    processedAt: v.number(),
+  }).index("by_eventId", ["eventId"]),
 });

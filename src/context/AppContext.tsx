@@ -18,7 +18,8 @@ export interface Product {
 
 interface CartItem extends Product { qty: number }
 
-interface ToastData { msg: string; sub: string; visible: boolean }
+type ToastType = 'success' | 'error' | 'info';
+interface ToastData { msg: string; sub: string; type: ToastType; visible: boolean }
 
 export interface AuthUser { id: string; name: string; email: string; role: 'user' | 'admin' }
 
@@ -49,7 +50,7 @@ interface AppContextType {
   currentPage: string;
   showPage: (page: string) => void;
   toast: ToastData;
-  showToast: (msg: string, sub: string) => void;
+  showToast: (msg: string, sub: string, type?: ToastType) => void;
   presetCategory: string;
   setPresetCategory: (cat: string) => void;
   searchQuery: string;
@@ -86,7 +87,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState('home');
-  const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', visible: false });
+  const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', type: 'success', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('cricket_token'));
@@ -185,8 +186,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
-  const showToast = useCallback((msg: string, sub: string) => {
-    setToast({ msg, sub, visible: true });
+  const showToast = useCallback((msg: string, sub: string, type: ToastType = 'success') => {
+    setToast({ msg, sub, type, visible: true });
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
   }, []);
 
@@ -334,7 +335,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCart([]);
       window.location.href = result.url!;
     } catch (err: any) {
-      showToast('Checkout Failed', err.message || 'Something went wrong');
+      showToast('Checkout Failed', err.message || 'Something went wrong', 'error');
     }
   }, [user, cart, createCheckoutSession, showToast]);
 

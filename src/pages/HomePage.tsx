@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const flashItems = [
   '🔥 FLASH SALE — UP TO 50% OFF 🔥',
@@ -21,20 +22,7 @@ export default function HomePage() {
   const parallaxRef = useRef<HTMLDivElement>(null);
   const parallaxBgRef = useRef<HTMLDivElement>(null);
 
-  // Reveal on scroll
-  useEffect(() => {
-    function triggerReveals() {
-      document.querySelectorAll('.reveal').forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight - 80) {
-          el.classList.add('visible');
-        }
-      });
-    }
-    triggerReveals();
-    window.addEventListener('scroll', triggerReveals);
-    return () => window.removeEventListener('scroll', triggerReveals);
-  }, [productsLoaded]);
+  useScrollReveal([productsLoaded]);
 
   // Skeleton → Products
   useEffect(() => {

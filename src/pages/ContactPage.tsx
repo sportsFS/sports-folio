@@ -1,17 +1,7 @@
-import { useEffect } from 'react';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 export default function ContactPage() {
-  useEffect(() => {
-    function triggerReveals() {
-      document.querySelectorAll('.reveal').forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight - 80) el.classList.add('visible');
-      });
-    }
-    triggerReveals();
-    window.addEventListener('scroll', triggerReveals);
-    return () => window.removeEventListener('scroll', triggerReveals);
-  }, []);
+  useScrollReveal([]);
 
   return (
     <div style={{ paddingTop: 72 }}>

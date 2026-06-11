@@ -4,33 +4,32 @@ import { internal } from "./_generated/api";
 import Stripe from "stripe";
 
 function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) throw new Error("Stripe secret key is not configured");
+  return new Stripe(secretKey);
 }
 
 export const createCheckoutSession = action({
   args: {
-    userId: v.id("users"),
-    userName: v.string(),
+    token: v.string(),
     items: v.array(v.object({
-      productId: v.number(),
-      name: v.string(),
-      price: v.number(),
+      productId: v.id("products"),
       qty: v.number(),
     })),
-    total: v.number(),
   },
   handler: async (ctx, args) => {
     const stripe = getStripe();
-    const recalculatedTotal = args.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const user = await ctx.runQuery(internal.sessions.requireUserForAction, { token: args.token });
+    const checkout = await ctx.runQuery(internal.products.getCheckoutItems, { items: args.items });
 
     const orderId = await ctx.runMutation(internal.orders.placeOrderInternal, {
-      userId: args.userId,
-      userName: args.userName,
-      items: args.items,
-      total: recalculatedTotal,
+      userId: user.id,
+      userName: user.name,
+      items: checkout.lineItems,
+      total: checkout.total,
     });
 
-    const lineItems = args.items.map(item => ({
+    const lineItems = checkout.lineItems.map(item => ({
       price_data: {
         currency: "usd",
         product_data: { name: item.name },

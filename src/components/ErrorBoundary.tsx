@@ -33,7 +33,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               Something went wrong
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 24, lineHeight: 1.6 }}>
-              {this.state.error || 'An unexpected error occurred. Please try again.'}
+              An unexpected error occurred. Please try again.
             </p>
             <button
               className="btn-neon"

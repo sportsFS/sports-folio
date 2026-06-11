@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>Personal Information:</strong> Name, email address, phone number, shipping address, and billing details provided during registration or checkout.</li>
               <li><strong>Order Information:</strong> Products purchased, order history, payment details (processed securely via third-party payment gateways — we do not store full payment card numbers).</li>
-              <li><strong>Account Credentials:</strong> Hashed password used for authentication via our secure backend.</li>
+              <li><strong>Account Credentials:</strong> Password hash used for authentication via our backend.</li>
               <li><strong>Usage Data:</strong> Pages visited, products viewed, search queries, and interactions with our site to improve your experience.</li>
             </ul>
           </Section>
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           <Section title="3. Data Storage and Security">
             <p>Your data is stored securely using <strong>Convex</strong>, a real-time backend platform. We implement industry-standard security measures including:</p>
             <ul>
-              <li>Passwords are hashed using SHA-256 and never stored in plain text</li>
+              <li>Passwords are hashed with PBKDF2/SHA-256 and never stored in plain text</li>
               <li>All data transmission uses encrypted connections (HTTPS)</li>
               <li>Database access is restricted to authorized services only</li>
               <li>Your session is stored locally on your device and cleared on logout</li>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
               <li><strong>Convex</strong> — Database and authentication (data stored in US-based servers)</li>
               <li><strong>Resend</strong> — Transactional email delivery (OTP codes, order updates, password resets)</li>
               <li><strong>Vercel</strong> — Website hosting and CDN</li>
-              <li><strong>Stripe / Razorpay</strong> — Payment processing (we never see or store full card details)</li>
+              <li><strong>Stripe</strong> — Payment processing (we never see or store full card details)</li>
             </ul>
             <p>Each third party has its own privacy policy and data handling practices. We encourage you to review them.</p>
           </Section>

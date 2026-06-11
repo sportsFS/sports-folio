@@ -1,6 +1,7 @@
 export async function sendEmail(to: string, subject: string, html: string) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
+  const from = process.env.RESEND_FROM_EMAIL || "Sports Folio Store <delivered@resend.dev>";
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -8,7 +9,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Sports Folio Store <delivered@resend.dev>",
+      from,
       to,
       subject,
       html,

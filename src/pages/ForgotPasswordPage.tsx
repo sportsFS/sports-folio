@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     if (!code) { setError('Please enter the reset code'); return; }
-    if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (newPassword !== confirm) { setError('Passwords do not match'); return; }
     setLoading(true);
     const result = await resetPassword(email, code, newPassword);
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
 
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>New Password</label>
-              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 6 characters" className="auth-input" style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.95rem' }} />
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 8 characters, letters and numbers" className="auth-input" style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.95rem' }} />
             </div>
 
             <div style={{ marginBottom: 24 }}>

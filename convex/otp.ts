@@ -17,6 +17,29 @@ function validatePassword(password: string): void {
   if (!/[0-9]/.test(password)) throw new Error("Password must contain at least one number");
 }
 
+async function recordOtpFailure(ctx: any, email: string, type: "register" | "reset") {
+  await ctx.db.insert("otpAttempts", { email, type, createdAt: Date.now() });
+}
+
+async function assertOtpAttemptsAllowed(ctx: any, email: string, type: "register" | "reset") {
+  const attempts = await ctx.db
+    .query("otpAttempts")
+    .withIndex("by_email", (q: any) => q.eq("email", email))
+    .collect();
+  const recent = attempts.filter((a: any) => a.type === type && Date.now() - a.createdAt < 5 * 60 * 1000);
+  if (recent.length >= 5) throw new Error("Too many invalid code attempts. Please request a new code.");
+}
+
+async function clearOtpAttempts(ctx: any, email: string, type: "register" | "reset") {
+  const attempts = await ctx.db
+    .query("otpAttempts")
+    .withIndex("by_email", (q: any) => q.eq("email", email))
+    .collect();
+  for (const attempt of attempts) {
+    if (attempt.type === type) await ctx.db.delete(attempt._id);
+  }
+}
+
 export const sendOtp = mutation({
   args: {
     name: v.string(),
@@ -80,7 +103,11 @@ export const verifyOtp = mutation({
       await ctx.db.delete(otpRecord._id);
       throw new Error("Verification code has expired. Please request a new one.");
     }
-    if (otpRecord.code !== args.code) throw new Error("Invalid verification code.");
+    await assertOtpAttemptsAllowed(ctx, email, "register");
+    if (otpRecord.code !== args.code) {
+      await recordOtpFailure(ctx, email, "register");
+      throw new Error("Invalid verification code.");
+    }
     const userId = await ctx.db.insert("users", {
       name: otpRecord.name!,
       email,
@@ -88,11 +115,13 @@ export const verifyOtp = mutation({
       role: "user",
     });
     await ctx.db.delete(otpRecord._id);
+    await clearOtpAttempts(ctx, email, "register");
     const token = generateToken();
     await ctx.db.insert("sessions", {
       token,
       userId,
       createdAt: Date.now(),
+      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
     });
     return { token, id: userId, name: otpRecord.name!, email, role: "user" as const };
   },
@@ -112,7 +141,7 @@ export const sendResetOtp = mutation({
       .query("users")
       .withIndex("by_email", q => q.eq("email", email))
       .first();
-    if (!user) throw new Error("No account found with this email");
+    if (!user) return;
     const oldOtps = await ctx.db
       .query("otps")
       .withIndex("by_email", q => q.eq("email", email))
@@ -152,8 +181,12 @@ export const resetPassword = mutation({
       await ctx.db.delete(otpRecord._id);
       throw new Error("Reset code has expired. Please request a new one.");
     }
-    if (otpRecord.code !== args.code) throw new Error("Invalid reset code.");
     if (otpRecord.type !== "reset") throw new Error("Invalid reset code.");
+    await assertOtpAttemptsAllowed(ctx, email, "reset");
+    if (otpRecord.code !== args.code) {
+      await recordOtpFailure(ctx, email, "reset");
+      throw new Error("Invalid reset code.");
+    }
     validatePassword(args.newPassword);
     const user = await ctx.db
       .query("users")
@@ -162,6 +195,7 @@ export const resetPassword = mutation({
     if (!user) throw new Error("User not found");
     await ctx.db.patch(user._id, { password: await hashPassword(args.newPassword) });
     await ctx.db.delete(otpRecord._id);
+    await clearOtpAttempts(ctx, email, "reset");
     await ctx.runMutation(internal.sessions.clearUserSessions, { userId: user._id });
     await sendEmail(email, "Password Reset Successful - Sports Folio Store",
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">

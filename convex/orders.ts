@@ -1,28 +1,15 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { sendEmail } from "./email";
+import { requireAdminByToken, requireUserByToken } from "./sessions";
 
 export const list = query({
   args: {
-    userId: v.optional(v.id("users")),
-    isAdmin: v.boolean(),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.isAdmin) {
-      if (!args.userId) return [];
-      const caller = await ctx.db.get(args.userId);
-      if (!caller || caller.role !== "admin") {
-        const orders = await ctx.db
-          .query("orders")
-          .withIndex("by_userId", q => q.eq("userId", args.userId!))
-          .order("desc")
-          .take(50);
-        return orders.map(o => ({
-          id: o._id, userId: o.userId, userName: o.userName, items: o.items,
-          total: o.total, status: o.status, createdAt: o.createdAt,
-           paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
-         }));
-       }
+      const caller = await requireUserByToken(ctx, args.token);
+      if (caller.role === "admin") {
        const orders = await ctx.db.query("orders").order("desc").take(200);
        return orders.map(o => ({
          id: o._id, userId: o.userId, userName: o.userName, items: o.items,
@@ -30,17 +17,16 @@ export const list = query({
          paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
        }));
      }
-     if (!args.userId) return [];
-     const orders = await ctx.db
-       .query("orders")
-       .withIndex("by_userId", q => q.eq("userId", args.userId!))
-       .order("desc")
-       .take(50);
-     return orders.map(o => ({
-       id: o._id, userId: o.userId, userName: o.userName, items: o.items,
-       total: o.total, status: o.status, createdAt: o.createdAt,
-       paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
-     }));
+        const orders = await ctx.db
+          .query("orders")
+          .withIndex("by_userId", q => q.eq("userId", caller._id))
+          .order("desc")
+          .take(50);
+        return orders.map(o => ({
+          id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+          total: o.total, status: o.status, createdAt: o.createdAt,
+           paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
+         }));
   },
 });
 
@@ -49,7 +35,7 @@ export const placeOrderInternal = internalMutation({
     userId: v.id("users"),
     userName: v.string(),
     items: v.array(v.object({
-      productId: v.number(),
+      productId: v.string(),
       name: v.string(),
       price: v.number(),
       qty: v.number(),
@@ -134,24 +120,40 @@ export const fulfillOrder = internalMutation({
 
 export const placeOrder = mutation({
   args: {
-    userId: v.id("users"),
-    userName: v.string(),
+    token: v.string(),
     items: v.array(v.object({
-      productId: v.number(),
-      name: v.string(),
-      price: v.number(),
+      productId: v.id("products"),
       qty: v.number(),
     })),
-    total: v.number(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error("Unauthorized: user not found");
+    const user = await requireUserByToken(ctx, args.token);
+    if (args.items.length === 0) throw new Error("Cart is empty");
+    if (args.items.length > 50) throw new Error("Too many cart items");
+
+    const items = [];
+    let total = 0;
+    for (const item of args.items) {
+      if (!Number.isInteger(item.qty) || item.qty < 1 || item.qty > 25) {
+        throw new Error("Invalid quantity");
+      }
+      const product = await ctx.db.get(item.productId);
+      if (!product) throw new Error("Product not found");
+      if (product.price <= 0) throw new Error(`${product.name} is not available for checkout`);
+      items.push({
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        qty: item.qty,
+      });
+      total += product.price * item.qty;
+    }
+
     const orderId = await ctx.db.insert("orders", {
-      userId: args.userId,
-      userName: args.userName,
-      items: args.items,
-      total: args.total,
+      userId: user._id,
+      userName: user.name,
+      items,
+      total: Number(total.toFixed(2)),
       status: "pending",
       createdAt: new Date().toISOString(),
       paymentStatus: undefined,
@@ -159,29 +161,29 @@ export const placeOrder = mutation({
       paymentIntent: undefined,
     });
     try {
-      const itemsHtml = args.items.map(i =>
+      const itemsHtml = items.map(i =>
         `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
       ).join("");
       await sendEmail(user.email, "Order Confirmed - Sports Folio Store",
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#1a1a1a">Order Confirmed!</h2>
-          <p style="color:#555">Thanks ${args.userName}, your order has been placed.</p>
+          <p style="color:#555">Thanks ${user.name}, your order has been placed.</p>
           <p style="color:#999;font-size:0.85rem">Order #${orderId}</p>
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
             ${itemsHtml}
           </table>
-          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
+          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${total.toFixed(2)}</p>
         </div>`);
       await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - Sports Folio Store`,
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#1a1a1a">New Order Received</h2>
-          <p style="color:#555"><strong>${args.userName}</strong> placed order #${orderId}</p>
+          <p style="color:#555"><strong>${user.name}</strong> placed order #${orderId}</p>
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr style="background:#f4f4f4"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Price</th></tr>
             ${itemsHtml}
           </table>
-          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${args.total.toFixed(2)}</p>
+          <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${total.toFixed(2)}</p>
         </div>`);
     } catch (e) {
       console.error("Failed to send order emails:", e);
@@ -193,12 +195,13 @@ export const placeOrder = mutation({
 export const cancelOrder = mutation({
   args: {
     id: v.id("orders"),
-    userId: v.id("users"),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await requireUserByToken(ctx, args.token);
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
-    if (order.userId !== args.userId) throw new Error("Unauthorized");
+    if (order.userId !== user._id && user.role !== "admin") throw new Error("Unauthorized");
     if (order.status !== "pending") throw new Error("Cannot cancel an order that is already shipped or delivered");
     await ctx.db.patch(args.id, { status: "cancelled" });
     try {
@@ -218,14 +221,13 @@ export const cancelOrder = mutation({
 
 export const updateStatus = mutation({
   args: {
-    userId: v.id("users"),
+    token: v.string(),
     id: v.id("orders"),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered")),
     trackingNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const caller = await ctx.db.get(args.userId);
-    if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
+    await requireAdminByToken(ctx, args.token);
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
     const patch: any = { status: args.status };
@@ -314,10 +316,9 @@ export const processStripeEvent = internalMutation({
 });
 
 export const cleanupStaleOrders = mutation({
-  args: { userId: v.id("users") },
+  args: { token: v.string() },
   handler: async (ctx, args) => {
-    const caller = await ctx.db.get(args.userId);
-    if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
+    await requireAdminByToken(ctx, args.token);
 
     const cutoff = Date.now() - 30 * 60 * 1000;
     const stale = await ctx.db.query("orders")

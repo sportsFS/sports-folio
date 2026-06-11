@@ -32,6 +32,7 @@ export default defineSchema({
     token: v.string(),
     userId: v.id("users"),
     createdAt: v.number(),
+    expiresAt: v.optional(v.number()),
   }).index("by_token", ["token"])
     .index("by_userId", ["userId"]),
   loginAttempts: defineTable({
@@ -42,7 +43,7 @@ export default defineSchema({
     userId: v.id("users"),
     userName: v.string(),
     items: v.array(v.object({
-      productId: v.number(),
+      productId: v.union(v.string(), v.number()),
       name: v.string(),
       price: v.number(),
       qty: v.number(),
@@ -61,4 +62,9 @@ export default defineSchema({
     eventId: v.string(),
     processedAt: v.number(),
   }).index("by_eventId", ["eventId"]),
+  otpAttempts: defineTable({
+    email: v.string(),
+    type: v.union(v.literal("register"), v.literal("reset")),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
 });

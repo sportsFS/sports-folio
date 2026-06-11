@@ -1,7 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { hashPassword, verifyPassword } from "./crypto";
-import { generateToken } from "./sessions";
+import { generateToken, requireAdminByToken } from "./sessions";
 
 function validatePassword(password: string): void {
   if (password.length < 8) throw new Error("Password must be at least 8 characters");
@@ -69,6 +69,7 @@ export const login = mutation({
       token,
       userId: user._id,
       createdAt: Date.now(),
+      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
     });
 
     const oldAttempts = await ctx.db
@@ -82,10 +83,9 @@ export const login = mutation({
 });
 
 export const list = query({
-  args: { userId: v.id("users") },
+  args: { token: v.string() },
   handler: async (ctx, args) => {
-    const caller = await ctx.db.get(args.userId);
-    if (!caller || caller.role !== "admin") throw new Error("Unauthorized");
+    await requireAdminByToken(ctx, args.token);
     const users = await ctx.db.query("users").collect();
     return users.map(u => ({ id: u._id, name: u.name, email: u.email, role: u.role }));
   },

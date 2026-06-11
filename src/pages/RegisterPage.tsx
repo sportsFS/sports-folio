@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setError('');
     if (!agreed) { setError('Please agree to the Privacy Policy and Terms of Service'); return; }
     if (!name || !email || !password || !confirm) { setError('Please fill in all fields'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
     setLoading(true);
     const result = await sendOtp(name, email, password);
@@ -79,7 +79,7 @@ export default function RegisterPage() {
 
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 6 characters" className="auth-input" style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.95rem' }} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters, letters and numbers" className="auth-input" style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--card-border)', borderRadius: 10, background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.95rem' }} />
             </div>
 
             <div style={{ marginBottom: 24 }}>

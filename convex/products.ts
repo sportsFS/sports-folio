@@ -1,10 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-
-async function requireAdmin(ctx: any, userId: string) {
-  const user = await ctx.db.get(userId);
-  if (!user || user.role !== "admin") throw new Error("Unauthorized: admin access required");
-}
+import { requireAdminByToken } from "./sessions";
 
 export const list = query({
   args: {},
@@ -25,9 +21,42 @@ export const list = query({
   },
 });
 
+export const getCheckoutItems = internalQuery({
+  args: {
+    items: v.array(v.object({
+      productId: v.id("products"),
+      qty: v.number(),
+    })),
+  },
+  handler: async (ctx, args) => {
+    if (args.items.length === 0) throw new Error("Cart is empty");
+    if (args.items.length > 50) throw new Error("Too many cart items");
+
+    const lineItems = [];
+    let total = 0;
+    for (const item of args.items) {
+      if (!Number.isInteger(item.qty) || item.qty < 1 || item.qty > 25) {
+        throw new Error("Invalid quantity");
+      }
+      const product = await ctx.db.get(item.productId);
+      if (!product) throw new Error("Product not found");
+      if (product.price <= 0) throw new Error(`${product.name} is not available for checkout`);
+      lineItems.push({
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        qty: item.qty,
+      });
+      total += product.price * item.qty;
+    }
+
+    return { lineItems, total: Number(total.toFixed(2)) };
+  },
+});
+
 export const add = mutation({
   args: {
-    userId: v.id("users"),
+    token: v.string(),
     name: v.string(),
     price: v.number(),
     oldPrice: v.optional(v.number()),
@@ -40,8 +69,8 @@ export const add = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.userId);
-    const { userId, ...fields } = args;
+    await requireAdminByToken(ctx, args.token);
+    const { token, ...fields } = args;
     const id = await ctx.db.insert("products", fields);
     return id;
   },
@@ -49,7 +78,7 @@ export const add = mutation({
 
 export const update = mutation({
   args: {
-    userId: v.id("users"),
+    token: v.string(),
     id: v.id("products"),
     name: v.optional(v.string()),
     price: v.optional(v.number()),
@@ -63,19 +92,19 @@ export const update = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.userId);
-    const { userId, id, ...fields } = args;
+    await requireAdminByToken(ctx, args.token);
+    const { token, id, ...fields } = args;
     await ctx.db.patch(id, fields);
   },
 });
 
 export const remove = mutation({
   args: {
-    userId: v.id("users"),
+    token: v.string(),
     id: v.id("products"),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.userId);
+    await requireAdminByToken(ctx, args.token);
     await ctx.db.delete(args.id);
   },
 });

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
@@ -56,6 +56,7 @@ interface AppContextType {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   user: AuthUser | null;
+  authToken: string | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -115,26 +116,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loginMutation = useMutation(api.users.login);
   const sendOtpMutation = useMutation(api.otp.sendOtp);
   const verifyOtpMutation = useMutation(api.otp.verifyOtp);
-  const seedMutation = useMutation(api.seed.seed);
   const cancelOrderMutation = useMutation(api.orders.cancelOrder);
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
   const sendResetOtpMutation = useMutation(api.otp.sendResetOtp);
   const resetPasswordMutation = useMutation(api.otp.resetPassword);
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
 
-  const ordersData = useQuery(api.orders.list, {
-    userId: user?.id as any,
-    isAdmin: user?.role === 'admin' || false,
-  });
-
-  // Seed admin + products once on first load
-  const seeded = useRef(false);
-  useEffect(() => {
-    if (!seeded.current) {
-      seeded.current = true;
-      seedMutation();
-    }
-  }, [seedMutation]);
+  const ordersData = useQuery(api.orders.list, token ? { token } : "skip");
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -252,7 +240,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addProduct = useCallback(async (p: Omit<Product, 'id'>) => {
     await addProductMutation({
-      userId: user?.id as any,
+      token: token!,
       name: p.name,
       price: p.price,
       oldPrice: p.oldPrice,
@@ -264,11 +252,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: p.badgeClass,
       description: p.description,
     });
-  }, [addProductMutation, user]);
+  }, [addProductMutation, token]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
     await updateProductMutation({
-      userId: user?.id as any,
+      token: token!,
       id: id as any,
       name: updates.name,
       price: updates.price,
@@ -281,24 +269,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: updates.badgeClass,
       description: updates.description,
     });
-  }, [updateProductMutation, user]);
+  }, [updateProductMutation, token]);
 
   const deleteProduct = useCallback(async (id: string) => {
-    await deleteProductMutation({ userId: user?.id as any, id: id as any });
-  }, [deleteProductMutation, user]);
+    await deleteProductMutation({ token: token!, id: id as any });
+  }, [deleteProductMutation, token]);
 
   const cancelOrder = useCallback(async (id: string) => {
     try {
-      await cancelOrderMutation({ id: id as any, userId: user?.id as any });
+      await cancelOrderMutation({ id: id as any, token: token! });
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Cancellation failed' };
     }
-  }, [cancelOrderMutation, user]);
+  }, [cancelOrderMutation, token]);
 
   const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => {
-    await updateOrderStatusMutation({ userId: user?.id as any, id: id as any, status, trackingNumber });
-  }, [updateOrderStatusMutation, user]);
+    await updateOrderStatusMutation({ token: token!, id: id as any, status, trackingNumber });
+  }, [updateOrderStatusMutation, token]);
 
   const sendResetOtp = useCallback(async (email: string) => {
     try {
@@ -319,25 +307,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [resetPasswordMutation]);
 
   const placeOrder = useCallback(async () => {
-    if (!user || cart.length === 0) return;
+    if (!user || !token || cart.length === 0) return;
     try {
       const result = await createCheckoutSession({
-        userId: user.id as any,
-        userName: user.name,
+        token,
         items: cart.map(c => ({
           productId: c.id as any,
-          name: c.name,
-          price: c.price,
           qty: c.qty,
         })) as any,
-        total: cart.reduce((sum, c) => sum + c.price * c.qty, 0),
       });
       setCart([]);
       window.location.href = result.url!;
     } catch (err: any) {
       showToast('Checkout Failed', err.message || 'Something went wrong', 'error');
     }
-  }, [user, cart, createCheckoutSession, showToast]);
+  }, [user, token, cart, createCheckoutSession, showToast]);
 
   return (
     <AppContext.Provider value={{
@@ -345,7 +329,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
       searchQuery, setSearchQuery,
-      user, isLoggedIn, isAdmin, login, sendOtp, verifyOtp, logout,
+      user, authToken: token, isLoggedIn, isAdmin, login, sendOtp, verifyOtp, logout,
       products, addProduct, updateProduct, deleteProduct,
       orders, cancelOrder, updateOrderStatus, placeOrder, sendResetOtp, resetPassword,
     }}>

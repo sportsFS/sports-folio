@@ -1,12 +1,12 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { PRODUCTS } from "./productData";
+import { requireAdminByToken } from "./sessions";
 
 export const migrate = mutation({
-  args: { userId: v.id("users") },
+  args: { token: v.string() },
   handler: async (ctx, args) => {
-    const caller = await ctx.db.get(args.userId);
-    if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
+    await requireAdminByToken(ctx, args.token);
 
     const existing = await ctx.db.query("products").collect();
     const existingByName = new Map(existing.map(p => [p.name, p]));

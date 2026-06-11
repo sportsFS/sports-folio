@@ -53,6 +53,7 @@ export default defineSchema({
     stripeSessionId: v.optional(v.string()),
     paymentStatus: v.optional(v.union(v.literal("pending"), v.literal("paid"), v.literal("failed"))),
     paymentIntent: v.optional(v.string()),
+    trackingNumber: v.optional(v.string()),
   }).index("by_userId", ["userId"])
     .index("by_status", ["status"])
     .index("by_createdAt", ["createdAt"]),

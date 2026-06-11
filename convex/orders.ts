@@ -20,27 +20,27 @@ export const list = query({
         return orders.map(o => ({
           id: o._id, userId: o.userId, userName: o.userName, items: o.items,
           total: o.total, status: o.status, createdAt: o.createdAt,
-          paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
-        }));
-      }
-      const orders = await ctx.db.query("orders").order("desc").take(200);
-      return orders.map(o => ({
-        id: o._id, userId: o.userId, userName: o.userName, items: o.items,
-        total: o.total, status: o.status, createdAt: o.createdAt,
-        paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
-      }));
-    }
-    if (!args.userId) return [];
-    const orders = await ctx.db
-      .query("orders")
-      .withIndex("by_userId", q => q.eq("userId", args.userId!))
-      .order("desc")
-      .take(50);
-    return orders.map(o => ({
-      id: o._id, userId: o.userId, userName: o.userName, items: o.items,
-      total: o.total, status: o.status, createdAt: o.createdAt,
-      paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId,
-    }));
+           paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
+         }));
+       }
+       const orders = await ctx.db.query("orders").order("desc").take(200);
+       return orders.map(o => ({
+         id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+         total: o.total, status: o.status, createdAt: o.createdAt,
+         paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
+       }));
+     }
+     if (!args.userId) return [];
+     const orders = await ctx.db
+       .query("orders")
+       .withIndex("by_userId", q => q.eq("userId", args.userId!))
+       .order("desc")
+       .take(50);
+     return orders.map(o => ({
+       id: o._id, userId: o.userId, userName: o.userName, items: o.items,
+       total: o.total, status: o.status, createdAt: o.createdAt,
+       paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
+     }));
   },
 });
 
@@ -221,25 +221,38 @@ export const updateStatus = mutation({
     userId: v.id("users"),
     id: v.id("orders"),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered")),
+    trackingNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const caller = await ctx.db.get(args.userId);
     if (!caller || caller.role !== "admin") throw new Error("Unauthorized: admin access required");
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
-    await ctx.db.patch(args.id, { status: args.status });
+    const patch: any = { status: args.status };
+    if (args.trackingNumber !== undefined) patch.trackingNumber = args.trackingNumber;
+    await ctx.db.patch(args.id, patch);
     try {
       const user = await ctx.db.get(order.userId);
       if (user) {
-        const subject = args.status === "shipped" ? "Your order has shipped! - Sports Folio Store" : "Order delivered! - Sports Folio Store";
-        const message = args.status === "shipped" ? "Your order is on its way!" : "Your order has been delivered. Enjoy!";
-        const emoji = args.status === "shipped" ? "📦" : "✅";
-        await sendEmail(user.email, subject,
-          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
-            <h2 style="color:#1a1a1a">${emoji} ${message}</h2>
-            <p style="color:#555">Order #${args.id}</p>
-            <p style="color:#999;font-size:0.85rem">Status: <strong>${args.status.toUpperCase()}</strong></p>
-          </div>`);
+        if (args.status === "shipped") {
+          const trackingHtml = args.trackingNumber
+            ? `<p style="color:#555;margin-top:12px"><strong>Tracking Number:</strong> ${args.trackingNumber}</p>`
+            : "";
+          await sendEmail(user.email, "Your order has shipped! - Sports Folio Store",
+            `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+              <h2 style="color:#1a1a1a">📦 Your order is on its way!</h2>
+              <p style="color:#555">Order #${args.id}</p>
+              <p style="color:#999;font-size:0.85rem">Status: <strong>SHIPPED</strong></p>
+              ${trackingHtml}
+            </div>`);
+        } else if (args.status === "delivered") {
+          await sendEmail(user.email, "Order delivered! - Sports Folio Store",
+            `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+              <h2 style="color:#1a1a1a">✅ Your order has been delivered. Enjoy!</h2>
+              <p style="color:#555">Order #${args.id}</p>
+              <p style="color:#999;font-size:0.85rem">Status: <strong>DELIVERED</strong></p>
+            </div>`);
+        }
       }
     } catch (e) {
       console.error("Failed to send status email:", e);

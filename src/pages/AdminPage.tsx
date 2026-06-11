@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp, Order } from '../context/AppContext';
 import { useAction, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -306,7 +306,9 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
 }
 
 /* ── Orders Tab ── */
-function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrderStatus: (id: string, s: 'pending' | 'shipped' | 'delivered') => void }) {
+function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrderStatus: (id: string, s: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => void }) {
+  const [tracking, setTracking] = useState<Record<string, string>>({});
+
   const statusColor = (s: string) => {
     switch (s) {
       case 'pending': return '#FFA500';
@@ -315,6 +317,12 @@ function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrder
       default: return 'var(--text-secondary)';
     }
   };
+
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    orders.forEach(o => { if (o.trackingNumber) map[o.id] = o.trackingNumber; });
+    setTracking(prev => ({ ...map, ...prev }));
+  }, [orders]);
 
   if (orders.length === 0) {
     return (
@@ -336,6 +344,7 @@ function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrder
             <th style={{ padding: '12px 8px' }}>Total</th>
             <th style={{ padding: '12px 8px' }}>Date</th>
             <th style={{ padding: '12px 8px' }}>Status</th>
+            <th style={{ padding: '12px 8px' }}>Tracking</th>
           </tr>
         </thead>
         <tbody>
@@ -347,7 +356,7 @@ function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrder
               <td style={{ padding: '10px 8px' }}>${o.total.toLocaleString('en-US')}</td>
               <td style={{ padding: '10px 8px', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{new Date(o.createdAt).toLocaleDateString()}</td>
               <td style={{ padding: '10px 8px' }}>
-                <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value as 'pending' | 'shipped' | 'delivered')}
+                <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value as 'pending' | 'shipped' | 'delivered', tracking[o.id])}
                   style={{
                     padding: '6px 10px', borderRadius: 8, border: `2px solid ${statusColor(o.status)}`,
                     background: 'var(--input-bg)', color: statusColor(o.status), fontWeight: 600,
@@ -357,6 +366,19 @@ function OrdersTab({ orders, updateOrderStatus }: { orders: Order[]; updateOrder
                   <option value="shipped">Shipped</option>
                   <option value="delivered">Delivered</option>
                 </select>
+              </td>
+              <td style={{ padding: '10px 8px' }}>
+                <input
+                  value={tracking[o.id] || ''}
+                  onChange={e => setTracking(t => ({ ...t, [o.id]: e.target.value }))}
+                  placeholder="Tracking #"
+                  style={{
+                    width: 130, padding: '6px 10px', borderRadius: 8,
+                    border: '2px solid var(--card-border)',
+                    background: 'var(--input-bg)', color: 'var(--text)',
+                    fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem',
+                  }}
+                />
               </td>
             </tr>
           ))}

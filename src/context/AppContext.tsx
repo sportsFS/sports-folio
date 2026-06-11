@@ -35,6 +35,7 @@ export interface Order {
   paymentStatus?: 'pending' | 'paid' | 'failed';
   paymentIntent?: string;
   stripeSessionId?: string;
+  trackingNumber?: string;
 }
 
 interface AppContextType {
@@ -66,7 +67,7 @@ interface AppContextType {
   deleteProduct: (id: string) => Promise<void>;
   orders: Order[];
   cancelOrder: (id: string) => Promise<{ success: boolean; error?: string }>;
-  updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => Promise<void>;
+  updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => Promise<void>;
   placeOrder: () => Promise<void>;
   sendResetOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -294,8 +295,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cancelOrderMutation, user]);
 
-  const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered') => {
-    await updateOrderStatusMutation({ userId: user?.id as any, id: id as any, status });
+  const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => {
+    await updateOrderStatusMutation({ userId: user?.id as any, id: id as any, status, trackingNumber });
   }, [updateOrderStatusMutation, user]);
 
   const sendResetOtp = useCallback(async (email: string) => {

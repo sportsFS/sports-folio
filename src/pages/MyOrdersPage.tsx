@@ -79,6 +79,12 @@ export default function MyOrdersPage() {
                   </div>
                 </div>
 
+                {order.trackingNumber && (
+                  <div style={{ padding: '8px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <strong>Tracking:</strong>{' '}
+                    <span style={{ color: '#0088FF', fontFamily: 'monospace' }}>{order.trackingNumber}</span>
+                  </div>
+                )}
                 <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 12 }}>
                   {order.items.map((item, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

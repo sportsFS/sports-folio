@@ -18,6 +18,9 @@ export const createCheckoutSession = action({
     })),
   },
   handler: async (ctx, args) => {
+    if (process.env.DISABLE_ORDERS === "true") {
+      throw new Error("Orders are temporarily disabled. The store is under maintenance.");
+    }
     const stripe = getStripe();
     const user = await ctx.runQuery(internal.sessions.requireUserForAction, { token: args.token });
     const checkout = await ctx.runQuery(internal.products.getCheckoutItems, { items: args.items });

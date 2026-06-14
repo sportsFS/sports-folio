@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sports Folio Store — Under Maintenance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..900&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/favicon.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #0A0A0A;
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 48px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: #AAFF00;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #0A0A0A;
+    }
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+    }
+    .logo-text span { color: #AAFF00; }
+    .card {
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 24px;
+      padding: 48px 32px;
+    }
+    .icon-large {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      display: block;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    p {
+      font-size: 1rem;
+      color: #AAAAAA;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(170, 255, 0, 0.1);
+      border: 1px solid rgba(170, 255, 0, 0.3);
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #AAFF00;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 32px;
+    }
+    .pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #AAFF00;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .social-links {
+      margin-top: 32px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .social-links a {
+      color: #555555;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .social-links a:hover { color: #AAFF00; }
+    .loading-bar {
+      width: 200px;
+      height: 3px;
+      background: #2A2A2A;
+      border-radius: 4px;
+      margin: 24px auto 0;
+      overflow: hidden;
+    }
+    .loading-bar-fill {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, #AAFF00, #88DD00);
+      border-radius: 4px;
+      animation: loading 2s ease-in-out infinite;
+    }
+    @keyframes loading {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="logo">
+      <div class="logo-icon">SF</div>
+      <div class="logo-text">Sports <span>Folio</span> Store</div>
+    </a>
+
+    <div class="card">
+      <span class="icon-large">&#9917;</span>
+      <h1>Under Maintenance</h1>
+      <p>We're currently updating our store to serve you better.</p>
+      <p>Orders and purchases are temporarily unavailable.</p>
+      <p style="margin-top: 16px; font-size: 0.9rem;">We'll be back shortly.</p>
+
+      <div class="badge">
+        <span class="pulse"></span>
+        Scheduled Maintenance
+      </div>
+
+      <div class="loading-bar">
+        <div class="loading-bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="social-links">
+      <a href="mailto:hello@sportsfolio.store">Email</a>
+      <a href="https://www.sportsfoliostore.com/sitemap.xml">Sitemap</a>
+    </div>
+  </div>
+</body>
+</html>

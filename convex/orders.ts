@@ -1,14 +1,12 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { sendEmail } from "./email";
-import { requireAdminByToken, requireUserByToken } from "./sessions";
+import { requireAdmin, requireCurrentUser } from "./auth";
 
 export const list = query({
-  args: {
-    token: v.string(),
-  },
-  handler: async (ctx, args) => {
-      const caller = await requireUserByToken(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+      const caller = await requireCurrentUser(ctx);
       if (caller.role === "admin") {
        const orders = await ctx.db.query("orders").order("desc").take(200);
        return orders.map(o => ({
@@ -120,14 +118,13 @@ export const fulfillOrder = internalMutation({
 
 export const placeOrder = mutation({
   args: {
-    token: v.string(),
     items: v.array(v.object({
       productId: v.id("products"),
       qty: v.number(),
     })),
   },
   handler: async (ctx, args) => {
-    const user = await requireUserByToken(ctx, args.token);
+    const user = await requireCurrentUser(ctx);
     if (args.items.length === 0) throw new Error("Cart is empty");
     if (args.items.length > 50) throw new Error("Too many cart items");
 
@@ -195,10 +192,9 @@ export const placeOrder = mutation({
 export const cancelOrder = mutation({
   args: {
     id: v.id("orders"),
-    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireUserByToken(ctx, args.token);
+    const user = await requireCurrentUser(ctx);
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
     if (order.userId !== user._id && user.role !== "admin") throw new Error("Unauthorized");
@@ -221,13 +217,12 @@ export const cancelOrder = mutation({
 
 export const updateStatus = mutation({
   args: {
-    token: v.string(),
     id: v.id("orders"),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered")),
     trackingNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
+    await requireAdmin(ctx);
     const order = await ctx.db.get(args.id);
     if (!order) throw new Error("Order not found");
     const patch: any = { status: args.status };
@@ -316,9 +311,9 @@ export const processStripeEvent = internalMutation({
 });
 
 export const cleanupStaleOrders = mutation({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
 
     const cutoff = Date.now() - 30 * 60 * 1000;
     const stale = await ctx.db.query("orders")

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useAction } from 'convex/react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useClerk } from '@clerk/clerk-react';
+import { useQuery, useMutation, useAction, useConvexAuth } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
 export interface Product {
@@ -56,12 +57,8 @@ interface AppContextType {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   user: AuthUser | null;
-  authToken: string | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  sendOtp: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  verifyOtp: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   products: Product[];
   addProduct: (p: Omit<Product, 'id'>) => Promise<void>;
@@ -71,8 +68,6 @@ interface AppContextType {
   cancelOrder: (id: string) => Promise<{ success: boolean; error?: string }>;
   updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => Promise<void>;
   placeOrder: () => Promise<void>;
-  sendResetOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (email: string, code: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -85,44 +80,42 @@ function saveJSON(key: string, value: unknown) {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useConvexAuth();
+  const { signOut } = useClerk();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState('home');
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', type: 'success', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('cricket_token'));
-  const [user, setUser] = useState<AuthUser | null>(null);
-
-  // Validate session token against server on load
-  const sessionUser = useQuery(api.sessions.validate, token ? { token } : "skip");
-  useEffect(() => {
-    if (sessionUser === undefined) return;
-    if (token && sessionUser === null) {
-      localStorage.removeItem('cricket_token');
-      setToken(null);
-      setUser(null);
-      showToast('Session Expired', 'Please log in again');
-    } else if (sessionUser) {
-      setUser(sessionUser);
-    }
-  }, [token, sessionUser]);
+  const profileSyncStarted = useRef(false);
 
   // Convex hooks
   const productsData = useQuery(api.products.list);
   const addProductMutation = useMutation(api.products.add);
   const updateProductMutation = useMutation(api.products.update);
   const deleteProductMutation = useMutation(api.products.remove);
-  const loginMutation = useMutation(api.users.login);
-  const sendOtpMutation = useMutation(api.otp.sendOtp);
-  const verifyOtpMutation = useMutation(api.otp.verifyOtp);
+  const ensureCurrentUser = useMutation(api.users.ensureCurrent);
   const cancelOrderMutation = useMutation(api.orders.cancelOrder);
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
-  const sendResetOtpMutation = useMutation(api.otp.sendResetOtp);
-  const resetPasswordMutation = useMutation(api.otp.resetPassword);
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
 
-  const ordersData = useQuery(api.orders.list, token ? { token } : "skip");
+  const currentUserData = useQuery(api.users.current, isAuthenticated ? {} : "skip");
+  const user = (currentUserData || null) as AuthUser | null;
+  const ordersData = useQuery(api.orders.list, isAuthenticated && user ? {} : "skip");
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      profileSyncStarted.current = false;
+      return;
+    }
+    if (profileSyncStarted.current) return;
+    profileSyncStarted.current = true;
+    ensureCurrentUser().catch((err) => {
+      profileSyncStarted.current = false;
+      console.error('Failed to initialize Clerk user profile:', err);
+    });
+  }, [isAuthenticated, ensureCurrentUser]);
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -194,53 +187,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('navigate', handler);
   }, [showPage]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const result = await loginMutation({ email, password });
-      localStorage.setItem('cricket_token', result.token);
-      setToken(result.token);
-      setUser({ id: result.id, name: result.name, email: result.email, role: result.role });
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Login failed' };
-    }
-  }, [loginMutation]);
-
-  const sendOtp = useCallback(async (name: string, email: string, password: string) => {
-    try {
-      await sendOtpMutation({ name, email, password });
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to send OTP' };
-    }
-  }, [sendOtpMutation]);
-
-  const verifyOtp = useCallback(async (email: string, code: string) => {
-    try {
-      const result = await verifyOtpMutation({ email, code });
-      localStorage.setItem('cricket_token', result.token);
-      setToken(result.token);
-      setUser({ id: result.id, name: result.name, email: result.email, role: result.role });
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Verification failed' };
-    }
-  }, [verifyOtpMutation]);
-
-  const logoutMutationFn = useMutation(api.sessions.logout);
   const logout = useCallback(async () => {
-    const t = token;
-    localStorage.removeItem('cricket_token');
-    setToken(null);
-    setUser(null);
-    if (t) {
-      try { await logoutMutationFn({ token: t }); } catch {}
-    }
-  }, [token, logoutMutationFn]);
+    await signOut();
+    setCurrentPage('home');
+  }, [signOut]);
 
   const addProduct = useCallback(async (p: Omit<Product, 'id'>) => {
     await addProductMutation({
-      token: token!,
       name: p.name,
       price: p.price,
       oldPrice: p.oldPrice,
@@ -252,11 +205,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: p.badgeClass,
       description: p.description,
     });
-  }, [addProductMutation, token]);
+  }, [addProductMutation]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
     await updateProductMutation({
-      token: token!,
       id: id as any,
       name: updates.name,
       price: updates.price,
@@ -269,48 +221,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgeClass: updates.badgeClass,
       description: updates.description,
     });
-  }, [updateProductMutation, token]);
+  }, [updateProductMutation]);
 
   const deleteProduct = useCallback(async (id: string) => {
-    await deleteProductMutation({ token: token!, id: id as any });
-  }, [deleteProductMutation, token]);
+    await deleteProductMutation({ id: id as any });
+  }, [deleteProductMutation]);
 
   const cancelOrder = useCallback(async (id: string) => {
     try {
-      await cancelOrderMutation({ id: id as any, token: token! });
+      await cancelOrderMutation({ id: id as any });
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Cancellation failed' };
     }
-  }, [cancelOrderMutation, token]);
+  }, [cancelOrderMutation]);
 
   const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => {
-    await updateOrderStatusMutation({ token: token!, id: id as any, status, trackingNumber });
-  }, [updateOrderStatusMutation, token]);
-
-  const sendResetOtp = useCallback(async (email: string) => {
-    try {
-      await sendResetOtpMutation({ email });
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to send reset code' };
-    }
-  }, [sendResetOtpMutation]);
-
-  const resetPassword = useCallback(async (email: string, code: string, newPassword: string) => {
-    try {
-      await resetPasswordMutation({ email, code, newPassword });
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Password reset failed' };
-    }
-  }, [resetPasswordMutation]);
+    await updateOrderStatusMutation({ id: id as any, status, trackingNumber });
+  }, [updateOrderStatusMutation]);
 
   const placeOrder = useCallback(async () => {
-    if (!user || !token || cart.length === 0) return;
+    if (!user || cart.length === 0) return;
     try {
       const result = await createCheckoutSession({
-        token,
         items: cart.map(c => ({
           productId: c.id as any,
           qty: c.qty,
@@ -321,7 +254,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       showToast('Checkout Failed', err.message || 'Something went wrong', 'error');
     }
-  }, [user, token, cart, createCheckoutSession, showToast]);
+  }, [user, cart, createCheckoutSession, showToast]);
 
   return (
     <AppContext.Provider value={{
@@ -329,9 +262,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
       searchQuery, setSearchQuery,
-      user, authToken: token, isLoggedIn, isAdmin, login, sendOtp, verifyOtp, logout,
+      user, isLoggedIn, isAdmin, logout,
       products, addProduct, updateProduct, deleteProduct,
-      orders, cancelOrder, updateOrderStatus, placeOrder, sendResetOtp, resetPassword,
+      orders, cancelOrder, updateOrderStatus, placeOrder,
     }}>
       {children}
     </AppContext.Provider>

@@ -11,7 +11,6 @@ function getStripe() {
 
 export const createCheckoutSession = action({
   args: {
-    token: v.string(),
     items: v.array(v.object({
       productId: v.id("products"),
       qty: v.number(),
@@ -22,7 +21,7 @@ export const createCheckoutSession = action({
       throw new Error("Orders are temporarily disabled. The store is under maintenance.");
     }
     const stripe = getStripe();
-    const user = await ctx.runQuery(internal.sessions.requireUserForAction, { token: args.token });
+    const user = await ctx.runQuery(internal.users.currentForAction, {});
     const checkout = await ctx.runQuery(internal.products.getCheckoutItems, { items: args.items });
 
     const orderId = await ctx.runMutation(internal.orders.placeOrderInternal, {

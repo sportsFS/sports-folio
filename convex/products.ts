@@ -1,6 +1,6 @@
 import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdminByToken } from "./sessions";
+import { requireAdmin } from "./auth";
 
 export const list = query({
   args: {},
@@ -56,7 +56,6 @@ export const getCheckoutItems = internalQuery({
 
 export const add = mutation({
   args: {
-    token: v.string(),
     name: v.string(),
     price: v.number(),
     oldPrice: v.optional(v.number()),
@@ -69,16 +68,14 @@ export const add = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
-    const { token, ...fields } = args;
-    const id = await ctx.db.insert("products", fields);
+    await requireAdmin(ctx);
+    const id = await ctx.db.insert("products", args);
     return id;
   },
 });
 
 export const update = mutation({
   args: {
-    token: v.string(),
     id: v.id("products"),
     name: v.optional(v.string()),
     price: v.optional(v.number()),
@@ -92,19 +89,18 @@ export const update = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
-    const { token, id, ...fields } = args;
+    await requireAdmin(ctx);
+    const { id, ...fields } = args;
     await ctx.db.patch(id, fields);
   },
 });
 
 export const remove = mutation({
   args: {
-    token: v.string(),
     id: v.id("products"),
   },
   handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
+    await requireAdmin(ctx);
     await ctx.db.delete(args.id);
   },
 });

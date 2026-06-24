@@ -16,9 +16,9 @@ const categories = [
 ];
 
 export default function AdminPage() {
-  const { user, authToken, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
+  const { user, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
   const [tab, setTab] = useState<Tab>('dashboard');
-  const usersData = useQuery(api.users.list, authToken ? { token: authToken } : "skip");
+  const usersData = useQuery(api.users.list, user?.role === 'admin' ? {} : "skip");
   const totalUsers = usersData?.length ?? 0;
 
   if (!user || user.role !== 'admin') {
@@ -68,7 +68,7 @@ export default function AdminPage() {
           <button style={tabStyle('users')} onClick={() => setTab('users')}>👥 Users ({totalUsers})</button>
         </div>
 
-        {tab === 'dashboard' && <DashboardTab products={products} totalUsers={totalUsers} orders={orders} showPage={showPage} authToken={authToken} />}
+        {tab === 'dashboard' && <DashboardTab products={products} totalUsers={totalUsers} orders={orders} showPage={showPage} />}
         {tab === 'products' && <ProductsTab products={products} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />}
         {tab === 'orders' && <OrdersTab orders={orders} updateOrderStatus={updateOrderStatus} />}
         {tab === 'users' && <UsersTab users={usersData || []} />}
@@ -78,8 +78,8 @@ export default function AdminPage() {
 }
 
 /* ── Dashboard ── */
-function DashboardTab({ products, totalUsers, orders, showPage, authToken }: {
-  products: Product[]; totalUsers: number; orders: Order[]; showPage: (p: string) => void; authToken: string | null;
+function DashboardTab({ products, totalUsers, orders, showPage }: {
+  products: Product[]; totalUsers: number; orders: Order[]; showPage: (p: string) => void;
 }) {
   const migrateMutation = useMutation(api.migrateProducts.migrate);
   const cleanupMutation = useMutation(api.orders.cleanupStaleOrders);
@@ -88,10 +88,10 @@ function DashboardTab({ products, totalUsers, orders, showPage, authToken }: {
   const avgRating = products.length ? (products.reduce((s, p) => s + p.rating, 0) / products.length).toFixed(1) : '0';
 
   async function handleSync() {
-    if (!authToken || syncing) return;
+    if (syncing) return;
     setSyncing(true);
     try {
-      const result = await migrateMutation({ token: authToken }) as any;
+      const result = await migrateMutation({}) as any;
       alert(`Sync complete! ${result.inserted} new, ${result.updated} updated. Refreshing...`);
       window.location.reload();
     } catch (err: any) {
@@ -102,11 +102,11 @@ function DashboardTab({ products, totalUsers, orders, showPage, authToken }: {
   }
 
   async function handleCleanup() {
-    if (!authToken || cleaning) return;
+    if (cleaning) return;
     if (!confirm('Cancel all pending orders older than 30 minutes with no Stripe session?')) return;
     setCleaning(true);
     try {
-      const result = await cleanupMutation({ token: authToken }) as any;
+      const result = await cleanupMutation({}) as any;
       alert(`Cleaned up ${result.cleaned} stale order(s).`);
       window.location.reload();
     } catch (err: any) {
@@ -146,7 +146,6 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   products: Product[]; addProduct: (p: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, u: Partial<Product>) => void; deleteProduct: (id: string) => void;
 }) {
-  const { authToken } = useApp();
   const [modal, setModal] = useState<{ open: boolean; editId?: string }>({ open: false });
   const [form, setForm] = useState({ name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '', image: '/images/products/product.jpg', badge: '', badgeClass: '' });
   const [uploading, setUploading] = useState(false);
@@ -170,7 +169,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
     setUploading(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const url = await uploadAction({ token: authToken!, file: arrayBuffer, contentType: file.type }) as string;
+      const url = await uploadAction({ file: arrayBuffer, contentType: file.type }) as string;
       setForm(f => ({ ...f, image: url }));
     } catch (err) {
       alert('Upload failed. Try using an image URL instead.');

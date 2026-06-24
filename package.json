@@ -11,6 +11,7 @@
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.8",
     "clsx": "2.1.1",
     "convex": "^1.39.1",
     "react": "19.2.6",
@@ -26,7 +27,15 @@
     "@vitejs/plugin-react": "5.1.1",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
-    "vite": "7.3.2",
+    "vite": "7.3.5",
     "vite-plugin-singlefile": "2.3.0"
+  },
+  "overrides": {
+    "vite": {
+      "esbuild": "0.28.1"
+    },
+    "convex": {
+      "ws": "8.21.0"
+    }
   }
 }

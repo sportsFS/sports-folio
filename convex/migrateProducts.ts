@@ -1,12 +1,11 @@
 import { mutation } from "./_generated/server";
-import { v } from "convex/values";
 import { PRODUCTS } from "./productData";
-import { requireAdminByToken } from "./sessions";
+import { requireAdmin } from "./auth";
 
 export const migrate = mutation({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
 
     const existing = await ctx.db.query("products").collect();
     const existingByName = new Map(existing.map(p => [p.name, p]));

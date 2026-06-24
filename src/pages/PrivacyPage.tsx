@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>Personal Information:</strong> Name, email address, phone number, shipping address, and billing details provided during registration or checkout.</li>
               <li><strong>Order Information:</strong> Products purchased, order history, payment details (processed securely via third-party payment gateways — we do not store full payment card numbers).</li>
-              <li><strong>Account Credentials:</strong> Password hash used for authentication via our backend.</li>
+              <li><strong>Account Credentials:</strong> Authentication data managed by Clerk. We do not store your Clerk password in our Convex database.</li>
               <li><strong>Usage Data:</strong> Pages visited, products viewed, search queries, and interactions with our site to improve your experience.</li>
             </ul>
           </Section>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             <ul>
               <li>Process and fulfill your orders (including shipping confirmations and updates)</li>
               <li>Send transactional emails — order confirmations, shipment/delivery notifications, and cancellation receipts via <strong>Resend</strong></li>
-              <li>Send OTP codes for account registration and password resets</li>
+              <li>Verify accounts and support secure sign-in and account recovery through <strong>Clerk</strong></li>
               <li>Provide customer support and respond to inquiries</li>
               <li>Improve our website, products, and services</li>
               <li>Detect and prevent fraudulent or unauthorized activity</li>
@@ -48,18 +48,19 @@ export default function PrivacyPage() {
           <Section title="3. Data Storage and Security">
             <p>Your data is stored securely using <strong>Convex</strong>, a real-time backend platform. We implement industry-standard security measures including:</p>
             <ul>
-              <li>Passwords are hashed with PBKDF2/SHA-256 and never stored in plain text</li>
+              <li>Authentication and password security are handled by Clerk</li>
               <li>All data transmission uses encrypted connections (HTTPS)</li>
               <li>Database access is restricted to authorized services only</li>
-              <li>Your session is stored locally on your device and cleared on logout</li>
+              <li>Session tokens are validated by Clerk and Convex and cleared on logout</li>
             </ul>
           </Section>
 
           <Section title="4. Third-Party Services">
             <p>We use the following third-party services to operate our store:</p>
             <ul>
-              <li><strong>Convex</strong> — Database and authentication (data stored in US-based servers)</li>
-              <li><strong>Resend</strong> — Transactional email delivery (OTP codes, order updates, password resets)</li>
+              <li><strong>Clerk</strong> — Authentication, account verification, sessions, and account recovery</li>
+              <li><strong>Convex</strong> — Application database, authorization data, and order processing</li>
+              <li><strong>Resend</strong> — Transactional order and shipping email delivery</li>
               <li><strong>Vercel</strong> — Website hosting and CDN</li>
               <li><strong>Stripe</strong> — Payment processing (we never see or store full card details)</li>
             </ul>

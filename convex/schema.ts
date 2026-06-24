@@ -15,11 +15,13 @@ export default defineSchema({
     description: v.optional(v.string()),
   }).index("by_category", ["category"]),
   users: defineTable({
+    clerkId: v.optional(v.string()),
     name: v.string(),
     email: v.string(),
-    password: v.string(),
+    password: v.optional(v.string()),
     role: v.union(v.literal("user"), v.literal("admin")),
-  }).index("by_email", ["email"]),
+  }).index("by_email", ["email"])
+    .index("by_clerkId", ["clerkId"]),
   otps: defineTable({
     email: v.string(),
     code: v.string(),

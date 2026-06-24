@@ -1,91 +1,79 @@
-import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import { hashPassword, verifyPassword } from "./crypto";
-import { generateToken, requireAdminByToken } from "./sessions";
+import { internalQuery, mutation, query } from "./_generated/server";
+import { isAdminEmail, requireAdmin, requireCurrentUser, requireIdentity } from "./auth";
 
-function validatePassword(password: string): void {
-  if (password.length < 8) throw new Error("Password must be at least 8 characters");
-  if (!/[a-zA-Z]/.test(password)) throw new Error("Password must contain at least one letter");
-  if (!/[0-9]/.test(password)) throw new Error("Password must contain at least one number");
-}
+export const ensureCurrent = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const email = identity.email?.toLowerCase().trim();
+    if (!email) throw new Error("A verified email address is required");
 
-export const register = mutation({
-  args: {
-    name: v.string(),
-    email: v.string(),
-    password: v.string(),
-  },
-  handler: async (ctx, args) => {
-    validatePassword(args.password);
-    const existing = await ctx.db
+    const name = identity.name?.trim() || email.split("@")[0];
+    const existingByClerk = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", args.email.toLowerCase().trim()))
+      .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
       .first();
-    if (existing) {
-      throw new Error("An account with this email already exists");
+
+    if (existingByClerk) {
+      const role = isAdminEmail(email) ? "admin" as const : existingByClerk.role;
+      await ctx.db.patch(existingByClerk._id, { name, email, role, password: undefined });
+      return { id: existingByClerk._id, name, email, role };
     }
-    const hashed = await hashPassword(args.password);
+
+    const existingByEmail = await ctx.db
+      .query("users")
+      .withIndex("by_email", q => q.eq("email", email))
+      .first();
+
+    if (existingByEmail) {
+      const role = isAdminEmail(email) ? "admin" as const : existingByEmail.role;
+      await ctx.db.patch(existingByEmail._id, {
+        clerkId: identity.subject,
+        name,
+        email,
+        role,
+        password: undefined,
+      });
+      return { id: existingByEmail._id, name, email, role };
+    }
+
+    const role = isAdminEmail(email) ? "admin" as const : "user" as const;
     const userId = await ctx.db.insert("users", {
-      name: args.name.trim(),
-      email: args.email.toLowerCase().trim(),
-      password: hashed,
-      role: "user",
+      clerkId: identity.subject,
+      name,
+      email,
+      role,
     });
-    return { id: userId, name: args.name.trim(), email: args.email.toLowerCase().trim(), role: "user" as const };
+    return { id: userId, name, email, role };
   },
 });
 
-export const login = mutation({
-  args: {
-    email: v.string(),
-    password: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const email = args.email.toLowerCase().trim();
-
-    const recentAttempts = await ctx.db
-      .query("loginAttempts")
-      .withIndex("by_email", q => q.eq("email", email))
-      .collect();
-    const recentCount = recentAttempts.filter(a => Date.now() - a.createdAt < 60000).length;
-    if (recentCount >= 5) throw new Error("Too many login attempts. Please try again later.");
-
+export const current = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
       .first();
-    if (!user) {
-      await ctx.db.insert("loginAttempts", { email, createdAt: Date.now() });
-      throw new Error("Invalid email or password");
-    }
-    const valid = await verifyPassword(args.password, user.password);
-    if (!valid) {
-      await ctx.db.insert("loginAttempts", { email, createdAt: Date.now() });
-      throw new Error("Invalid email or password");
-    }
+    if (!user) return null;
+    return { id: user._id, name: user.name, email: user.email, role: user.role };
+  },
+});
 
-    const token = generateToken();
-    await ctx.db.insert("sessions", {
-      token,
-      userId: user._id,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7,
-    });
-
-    const oldAttempts = await ctx.db
-      .query("loginAttempts")
-      .withIndex("by_email", q => q.eq("email", email))
-      .collect();
-    for (const a of oldAttempts) await ctx.db.delete(a._id);
-
-    return { token, id: user._id, name: user.name, email: user.email, role: user.role };
+export const currentForAction = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireCurrentUser(ctx);
+    return { id: user._id, name: user.name, email: user.email, role: user.role };
   },
 });
 
 export const list = query({
-  args: { token: v.string() },
-  handler: async (ctx, args) => {
-    await requireAdminByToken(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
     const users = await ctx.db.query("users").collect();
     return users.map(u => ({ id: u._id, name: u.name, email: u.email, role: u.role }));
   },

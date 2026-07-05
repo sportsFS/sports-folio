@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { useApp } from '../context/AppContext';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { productMatchesCategory, SHOP_FILTER_CATEGORIES } from '../data/catalog';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
 
@@ -31,9 +32,7 @@ export default function ShopPage() {
   }, [category, maxPrice]);
 
   const filtered = useMemo(() => {
-    let result = products.filter(p =>
-      (category === 'all' || p.category === category) && p.price <= maxPrice
-    );
+    let result = products.filter(p => productMatchesCategory(p, category) && p.price <= maxPrice);
     if (searchQuery) {
       result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
@@ -43,15 +42,10 @@ export default function ShopPage() {
     return result;
   }, [category, maxPrice, sort, searchQuery, products]);
 
-  const filterOptions = [
-    { label: 'All Products', value: 'all', count: products.length },
-    { label: 'Cricket Bats', value: 'bats', count: products.filter(p => p.category === 'bats').length },
-    { label: 'Protective Gear', value: 'protection', count: products.filter(p => p.category === 'protection').length },
-    { label: 'Gloves & WK', value: 'gloves', count: products.filter(p => p.category === 'gloves').length },
-    { label: 'Cricket Balls', value: 'balls', count: products.filter(p => p.category === 'balls').length },
-    { label: 'Apparel, Bags & Kits', value: 'apparel', count: products.filter(p => p.category === 'apparel').length },
-    { label: 'Accessories & Training', value: 'accessories', count: products.filter(p => p.category === 'accessories').length },
-  ];
+  const filterOptions = SHOP_FILTER_CATEGORIES.map(option => ({
+    ...option,
+    count: products.filter(p => productMatchesCategory(p, option.value)).length,
+  }));
 
   return (
     <div style={{ paddingTop: 72 }}>
@@ -61,10 +55,10 @@ export default function ShopPage() {
           🛒 Shop
         </div>
         <h2 className="reveal section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
-          All Cricket Equipment
+          Sports Gear Store
         </h2>
         <p className="reveal" style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-          Browse our complete collection of premium cricket gear
+          Browse cricket gear, game categories, jerseys, awards, DTF, and training essentials
         </p>
       </section>
 

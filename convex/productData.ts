@@ -124,9 +124,9 @@ export const PRODUCTS: ProductInput[] = [
   { name: "BIG CAMPUS", price: 0, image: "/images/products/youth-kits-big-campus.webp", category: "apparel", rating: 4.2, reviews: 15, description: "Youth campus kit for school cricketers." },
   { name: "17 BIL CLUBBLITE", price: 79.99, image: "/images/products/youth-kits-17-bil-clubblite.webp", category: "apparel", rating: 4.3, reviews: 22, description: "Youth club kit with lightweight gear." },
   { name: "FIPCO KIDS KIT", price: 29, image: "/images/products/youth-kits-fipco-kids-kit.webp", category: "apparel", rating: 4.0, reviews: 56, description: "Fipco junior kit — perfect for young beginners." },
-  { name: "ADIDAS INDIAN JERSEY", price: 34.99, image: "/images/products/team-sportswear-adidas-indian-jersey.webp", category: "apparel", rating: 4.6, reviews: 234, badge: "Bestseller", description: "Official style Indian cricket jersey by Adidas." },
-  { name: "CSK JERSEY", price: 29.99, image: "/images/products/team-sportswear-csk-jersey.webp", category: "apparel", rating: 4.5, reviews: 189, description: "CSK fan jersey for the Yellow Army." },
-  { name: "MI JERSEY", price: 10, image: "/images/products/team-sportswear-mi-jersey.webp", category: "apparel", rating: 4.4, reviews: 156, description: "Mumbai Indians fan jersey for MI supporters." },
+  { name: "ADIDAS INDIAN JERSEY", price: 34.99, image: "/images/products/team-sportswear-adidas-indian-jersey.webp", category: "jerseys", rating: 4.6, reviews: 234, badge: "Bestseller", description: "Official style Indian cricket jersey by Adidas." },
+  { name: "CSK JERSEY", price: 29.99, image: "/images/products/team-sportswear-csk-jersey.webp", category: "jerseys", rating: 4.5, reviews: 189, description: "CSK fan jersey for the Yellow Army." },
+  { name: "MI JERSEY", price: 10, image: "/images/products/team-sportswear-mi-jersey.webp", category: "jerseys", rating: 4.4, reviews: 156, description: "Mumbai Indians fan jersey for MI supporters." },
 
   // ===== ACCESSORIES & TRAINING TOOLS =====
   { name: "WAX DOGM", price: 100, image: "/images/products/accessories-bat-care-wax-dogm.webp", category: "accessories", rating: 4.4, reviews: 34, description: "Premium bat wax for maintaining your bat's finish." },

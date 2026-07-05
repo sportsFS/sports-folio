@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { Product } from '../data/products';
 import { useApp } from '../context/AppContext';
+import { findSuggestedAddOn, getProductCategoryLabel } from '../data/catalog';
 
 interface Props {
   product: Product;
 }
 
 export default function ProductCard({ product }: Props) {
-  const { addToCart, showToast, isLoggedIn, showPage } = useApp();
+  const { addToCart, showToast, isLoggedIn, showPage, products, cart } = useApp();
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
+  const [showAddOn, setShowAddOn] = useState(false);
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
+  const suggestedAddOn = findSuggestedAddOn(product, products, cart);
   const stars = '★'.repeat(Math.floor(product.rating));
 
   function handleAddToCart() {
@@ -23,17 +26,16 @@ export default function ProductCard({ product }: Props) {
     addToCart(product);
     showToast(product.name, 'Added to your cart successfully!');
     setAdded(true);
+    setShowAddOn(Boolean(suggestedAddOn));
     setTimeout(() => setAdded(false), 1500);
   }
 
-  const categoryLabel: Record<string, string> = {
-    bats: 'Cricket Bats',
-    protection: 'Protective Gear',
-    gloves: 'Gloves & WK',
-    balls: 'Cricket Balls',
-    apparel: 'Apparel, Bags & Kits',
-    accessories: 'Accessories',
-  };
+  function handleAddOn() {
+    if (!suggestedAddOn) return;
+    addToCart(suggestedAddOn);
+    showToast(suggestedAddOn.name, 'Add-on added to your cart');
+    setShowAddOn(false);
+  }
 
   return (
     <div className="product-card reveal visible">
@@ -94,7 +96,7 @@ export default function ProductCard({ product }: Props) {
           fontWeight: 600, textTransform: 'uppercase',
           letterSpacing: 1, marginBottom: 8,
         }}>
-          {categoryLabel[product.category] || product.category}
+          {getProductCategoryLabel(product)}
         </div>
         <h3 style={{
           fontSize: '1.05rem', fontWeight: 700,
@@ -124,6 +126,15 @@ export default function ProductCard({ product }: Props) {
         <button className={`card-add-btn ${added ? 'added' : ''}`} onClick={handleAddToCart}>
           {added ? '✓ ADDED' : '🛒 ADD TO CART'}
         </button>
+        {showAddOn && suggestedAddOn && (
+          <div className="product-addon-panel">
+            <div>
+              <strong>Complete the kit</strong>
+              <span>Add {suggestedAddOn.name} for ${suggestedAddOn.price.toLocaleString('en-US')}</span>
+            </div>
+            <button onClick={handleAddOn}>Add ball</button>
+          </div>
+        )}
       </div>
     </div>
   );

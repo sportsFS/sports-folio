@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { HERO_GAME_CATEGORIES } from '../data/catalog';
 
 const flashItems = [
   '🔥 FLASH SALE — UP TO 50% OFF 🔥',
@@ -14,9 +15,10 @@ const flashItems = [
 ];
 
 const brands = ['SS Cricket', 'SG Sports', 'MRF', 'Gray-Nicolls', 'Kookaburra', 'GM Cricket', 'New Balance', 'Adidas Cricket', 'Puma Cricket', 'DSC'];
+const motionPosterLogos = ['Cricket', 'Badminton', 'Pickleball'];
 
 export default function HomePage() {
-  const { showPage, showToast, products } = useApp();
+  const { showPage, showToast, products, setPresetCategory } = useApp();
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [email, setEmail] = useState('');
   const parallaxRef = useRef<HTMLDivElement>(null);
@@ -63,6 +65,11 @@ export default function HomePage() {
     e.preventDefault();
     showToast('Subscribed! 🎉', 'Welcome to the Crease Club!');
     setEmail('');
+  }
+
+  function shopGameCategory(category: string) {
+    setPresetCategory(category);
+    showPage('shop');
   }
 
   return (
@@ -119,12 +126,12 @@ export default function HomePage() {
             fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7,
             marginBottom: 32, maxWidth: 550, marginLeft: 'auto', marginRight: 'auto',
           }}>
-            Premium sports equipment for every athlete — from cricket to football, 
-            tennis to training. Gear up and play your best.
+            Premium sports equipment for every athlete, from cricket to badminton,
+            pickleball, soccer, volleyball, and training. Gear up and play your best.
           </p>
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
-            <button className="btn-neon" onClick={() => showPage('shop')}>SHOP NOW →</button>
+            <button className="btn-neon" onClick={() => shopGameCategory('cricket')}>SHOP NOW -&gt;</button>
             <button className="btn-outline" onClick={() => showPage('shop')}
               style={{ borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}>
               EXPLORE MORE
@@ -132,10 +139,11 @@ export default function HomePage() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="hero-cat-link" onClick={() => showPage('shop')}>⚽ Football</button>
-            <button className="hero-cat-link" onClick={() => showPage('shop')}>🏏 Cricket</button>
-            <button className="hero-cat-link" onClick={() => showPage('shop')}>🏀 Basketball</button>
-            <button className="hero-cat-link" onClick={() => showPage('shop')}>🎾 Tennis</button>
+            {HERO_GAME_CATEGORIES.map(game => (
+              <button key={game.value} className="hero-cat-link" onClick={() => shopGameCategory(game.value)}>
+                {game.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -148,6 +156,32 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* ====== SHOP BY GAME ====== */}
+      <section style={{ padding: '86px 40px', background: 'var(--bg)' }}>
+        <div className="section-header reveal" style={{ textAlign: 'center', marginBottom: 44 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px',
+            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
+            borderRadius: 50, fontWeight: 700, fontSize: '0.78rem', color: 'var(--neon-dark)',
+            textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16,
+          }}>Shop by game</div>
+          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.35rem', fontWeight: 850, marginBottom: 12, color: 'var(--text)' }}>
+            Find Gear by Sport
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 620, margin: '0 auto', lineHeight: 1.7 }}>
+            Cricket leads the catalog today, with dedicated paths ready for badminton, pickleball, soccer, and volleyball.
+          </p>
+        </div>
+        <div className="game-category-grid">
+          {HERO_GAME_CATEGORIES.map(game => (
+            <button key={game.value} className="game-category-card reveal" onClick={() => shopGameCategory(game.value)}>
+              <span>{game.label}</span>
+              <small>Shop {game.label}</small>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* ====== TRENDING PRODUCTS ====== */}
       <section style={{ padding: '100px 40px', background: 'var(--section-alt)' }}>
@@ -188,14 +222,21 @@ export default function HomePage() {
                        radial-gradient(ellipse at 70% 50%, rgba(170,255,0,0.1) 0%, transparent 60%)`,
           willChange: 'transform',
         }} />
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', color: 'white', padding: '0 20px' }}>
-          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(1.8rem,4vw,3rem)', fontWeight: 900, marginBottom: 16 }}>
-            GEAR UP FOR <span style={{ color: 'var(--neon)', textShadow: '0 0 30px var(--neon-glow)' }}>VICTORY</span>
-          </h2>
-          <p style={{ color: '#AAA', fontSize: '1.1rem', marginBottom: 32 }}>
-            Professional grade equipment trusted by national level players
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', color: 'white', padding: '0 20px', width: '100%' }}>
+          <p style={{ color: 'var(--neon)', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>
+            SPORTSFOLIO game brands
           </p>
-          <button className="btn-neon" onClick={() => showPage('shop')}>EXPLORE PRO RANGE</button>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(1.8rem,4vw,3rem)', fontWeight: 900, marginBottom: 22 }}>
+            Motion Poster for <span style={{ color: 'var(--neon)', textShadow: '0 0 30px var(--neon-glow)' }}>Match Day</span>
+          </h2>
+          <div className="motion-logo-row" aria-label="Cricket, Badminton, and Pickleball brand logos">
+            {[...motionPosterLogos, ...motionPosterLogos].map((label, i) => (
+              <button key={`${label}-${i}`} className="motion-logo-mark" onClick={() => shopGameCategory(label.toLowerCase())}>
+                <span>SF</span>
+                <strong>{label}</strong>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

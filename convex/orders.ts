@@ -55,7 +55,7 @@ export const placeOrderInternal = internalMutation({
     try {
       const user = await ctx.db.get(args.userId);
       if (user) {
-        await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - Sports Folio Store (pending payment)`,
+        await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - SPORTSFOLIO (pending payment)`,
           `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
             <h2 style="color:#1a1a1a">New Order Received (Awaiting Payment)</h2>
             <p style="color:#555"><strong>${args.userName}</strong> started order #${orderId}</p>
@@ -97,7 +97,7 @@ export const fulfillOrder = internalMutation({
         const itemsHtml = order.items.map(i =>
           `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
         ).join("");
-        await sendEmail(user.email, "Payment Confirmed - Sports Folio Store",
+        await sendEmail(user.email, "Payment Confirmed - SPORTSFOLIO",
           `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
             <h2 style="color:#1a1a1a">Payment Received!</h2>
             <p style="color:#555">Thanks ${order.userName}, your payment of $${order.total.toFixed(2)} has been confirmed.</p>
@@ -161,7 +161,7 @@ export const placeOrder = mutation({
       const itemsHtml = items.map(i =>
         `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
       ).join("");
-      await sendEmail(user.email, "Order Confirmed - Sports Folio Store",
+      await sendEmail(user.email, "Order Confirmed - SPORTSFOLIO",
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#1a1a1a">Order Confirmed!</h2>
           <p style="color:#555">Thanks ${user.name}, your order has been placed.</p>
@@ -172,7 +172,7 @@ export const placeOrder = mutation({
           </table>
           <p style="font-size:1.2rem;font-weight:bold;text-align:right">Total: $${total.toFixed(2)}</p>
         </div>`);
-      await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - Sports Folio Store`,
+      await sendEmail("hello@sportsfolio.store", `New Order #${orderId} - SPORTSFOLIO`,
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#1a1a1a">New Order Received</h2>
           <p style="color:#555"><strong>${user.name}</strong> placed order #${orderId}</p>
@@ -203,7 +203,7 @@ export const cancelOrder = mutation({
     try {
       const user = await ctx.db.get(order.userId);
       if (user) {
-        await sendEmail(user.email, "Order Cancelled - Sports Folio Store",
+        await sendEmail(user.email, "Order Cancelled - SPORTSFOLIO",
           `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
             <h2 style="color:#1a1a1a">Order Cancelled</h2>
             <p style="color:#555">Your order #${args.id} has been cancelled.</p>
@@ -235,7 +235,7 @@ export const updateStatus = mutation({
           const trackingHtml = args.trackingNumber
             ? `<p style="color:#555;margin-top:12px"><strong>Tracking Number:</strong> ${args.trackingNumber}</p>`
             : "";
-          await sendEmail(user.email, "Your order has shipped! - Sports Folio Store",
+          await sendEmail(user.email, "Your order has shipped! - SPORTSFOLIO",
             `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
               <h2 style="color:#1a1a1a">📦 Your order is on its way!</h2>
               <p style="color:#555">Order #${args.id}</p>
@@ -243,7 +243,7 @@ export const updateStatus = mutation({
               ${trackingHtml}
             </div>`);
         } else if (args.status === "delivered") {
-          await sendEmail(user.email, "Order delivered! - Sports Folio Store",
+          await sendEmail(user.email, "Order delivered! - SPORTSFOLIO",
             `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
               <h2 style="color:#1a1a1a">✅ Your order has been delivered. Enjoy!</h2>
               <p style="color:#555">Order #${args.id}</p>
@@ -282,7 +282,7 @@ export const processStripeEvent = internalMutation({
             const itemsHtml = order.items.map((i: any) =>
               `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.price.toFixed(2)}</td></tr>`
             ).join("");
-            await sendEmail(user.email, "Payment Confirmed - Sports Folio Store",
+            await sendEmail(user.email, "Payment Confirmed - SPORTSFOLIO",
               `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
                 <h2 style="color:#1a1a1a">Payment Received!</h2>
                 <p style="color:#555">Thanks ${order.userName}, your payment of $${order.total.toFixed(2)} has been confirmed.</p>

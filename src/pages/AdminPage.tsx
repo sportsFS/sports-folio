@@ -3,17 +3,11 @@ import { useApp, Order } from '../context/AppContext';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Product } from '../data/products';
+import { ADMIN_PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/catalog';
 
 type Tab = 'dashboard' | 'products' | 'orders' | 'users';
 
-const categories = [
-  { value: 'bats', label: 'Cricket Bats' },
-  { value: 'protection', label: 'Protective Gear' },
-  { value: 'gloves', label: 'Gloves & Wicket Keeping' },
-  { value: 'balls', label: 'Cricket Balls' },
-  { value: 'apparel', label: 'Apparel, Bags & Kits' },
-  { value: 'accessories', label: 'Accessories & Training Tools' },
-];
+const categories = ADMIN_PRODUCT_CATEGORIES;
 
 export default function AdminPage() {
   const { user, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
@@ -195,9 +189,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
     setModal({ open: false });
   }
 
-  const categoryLabel: Record<string, string> = {
-    bats: 'Bats', protection: 'Protection', gloves: 'Gloves & WK', balls: 'Balls', apparel: 'Apparel', accessories: 'Accessories',
-  };
+  const categoryLabel: Record<string, string> = PRODUCT_CATEGORY_LABELS;
 
   return (
     <div>

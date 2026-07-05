@@ -23,7 +23,7 @@ export default function PrivacyPage() {
 
         <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
           <Section title="1. Information We Collect">
-            <p>When you use Sports Folio Store, we may collect the following information:</p>
+            <p>When you use SPORTSFOLIO, we may collect the following information:</p>
             <ul>
               <li><strong>Personal Information:</strong> Name, email address, phone number, shipping address, and billing details provided during registration or checkout.</li>
               <li><strong>Order Information:</strong> Products purchased, order history, payment details (processed securely via third-party payment gateways — we do not store full payment card numbers).</li>

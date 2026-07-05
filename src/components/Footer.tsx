@@ -1,8 +1,21 @@
 import { useApp } from '../context/AppContext';
 import logo from '../assets/logo.png';
+import { SHOP_FILTER_CATEGORIES } from '../data/catalog';
+
+const socials = [
+  { label: 'Instagram', href: 'https://www.instagram.com/sportsfoliostore', glyph: 'IG' },
+  { label: 'Facebook', href: 'https://www.facebook.com/sportsfoliostore', glyph: 'FB' },
+  { label: 'WhatsApp', href: 'https://wa.me/', glyph: 'WA' },
+  { label: 'Email', href: 'mailto:hello@sportsfolio.store', glyph: '@' },
+];
 
 export default function Footer() {
-  const { showPage } = useApp();
+  const { showPage, setPresetCategory } = useApp();
+
+  function showShopCategory(category: string) {
+    setPresetCategory(category);
+    showPage('shop');
+  }
 
   return (
     <footer>
@@ -20,24 +33,33 @@ export default function Footer() {
               background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10,
             }}
           >
-            <img src={logo} alt="Sports Folio" style={{ height: 40 }} />
+            <img src={logo} alt="SPORTSFOLIO" style={{ height: 40 }} />
             <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: '#fff' }}>
-              Sports Folio Store
+              SPORTSFOLIO
             </span>
           </button>
           <p style={{ color: '#888', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: 20 }}>
             India's most trusted destination for premium cricket equipment. Gear up with the best — play like a champion.
           </p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {['📘', '📸', '🐦', '📺'].map((icon, i) => (
-              <span key={i} title="Social link coming soon" style={{
-                width: 40, height: 40, borderRadius: 10,
-                border: '1px solid #333', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                color: '#888', cursor: 'default', fontSize: '1rem',
-              }}>
-                {icon}
-              </span>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {socials.map(social => (
+              <a
+                key={social.label}
+                href={social.href}
+                aria-label={social.label}
+                target={social.href.startsWith('http') ? '_blank' : undefined}
+                rel={social.href.startsWith('http') ? 'noreferrer' : undefined}
+                style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  border: '1px solid #333', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  color: '#D8D8D8', cursor: 'pointer', fontSize: '0.78rem',
+                  fontWeight: 800, textDecoration: 'none',
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                {social.glyph}
+              </a>
             ))}
           </div>
         </div>
@@ -64,9 +86,9 @@ export default function Footer() {
           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 20, color: '#FFF' }}>
             Categories
           </h4>
-          {['Cricket Bats', 'Protective Gear', 'Gloves & WK', 'Cricket Balls', 'Apparel & Kits', 'Accessories'].map(cat => (
-            <button key={cat} className="footer-link" onClick={() => showPage('shop')}>
-              {cat}
+          {SHOP_FILTER_CATEGORIES.filter(cat => ['cricket', 'badminton', 'pickleball', 'soccer', 'volleyball', 'jerseys', 'awards', 'dtf'].includes(cat.value)).map(cat => (
+            <button key={cat.value} className="footer-link" onClick={() => showShopCategory(cat.value)}>
+              {cat.label}
             </button>
           ))}
         </div>
@@ -87,8 +109,8 @@ export default function Footer() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontSize: '0.8rem', color: '#666', flexWrap: 'wrap', gap: 12,
       }}>
-        <span>© 2026 Sports Folio Store. All rights reserved.</span>
-        <span>Made with 🏏 for cricket lovers</span>
+        <span>© 2026 SPORTSFOLIO. All rights reserved.</span>
+        <span>Built for every match day</span>
       </div>
     </footer>
   );

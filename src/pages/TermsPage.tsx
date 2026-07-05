@@ -23,7 +23,7 @@ export default function TermsPage() {
 
         <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
           <Section title="1. Acceptance of Terms">
-            <p>By accessing or using Sports Folio Store ("we", "us", "our"), you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, please do not use our website or services.</p>
+            <p>By accessing or using SPORTSFOLIO ("we", "us", "our"), you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, please do not use our website or services.</p>
           </Section>
 
           <Section title="2. Eligibility">
@@ -84,11 +84,11 @@ export default function TermsPage() {
           </Section>
 
           <Section title="8. Intellectual Property">
-            <p>All content on this website — including product images, logos, text, graphics, and software — is the property of Sports Folio Store or its licensors and is protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without our explicit written permission.</p>
+            <p>All content on this website — including product images, logos, text, graphics, and software — is the property of SPORTSFOLIO or its licensors and is protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without our explicit written permission.</p>
           </Section>
 
           <Section title="9. Limitation of Liability">
-            <p>Sports Folio Store shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our website or products. Our total liability for any claim shall not exceed the amount you paid for the specific product giving rise to the claim.</p>
+            <p>SPORTSFOLIO shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our website or products. Our total liability for any claim shall not exceed the amount you paid for the specific product giving rise to the claim.</p>
           </Section>
 
           <Section title="10. User Conduct">

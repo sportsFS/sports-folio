@@ -2,16 +2,19 @@ import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import logo from '../assets/logo.png';
 import SearchBar from './SearchBar';
+import { SHOP_FILTER_CATEGORIES } from '../data/catalog';
 
-const categoryLinks = [
-  { label: 'All Products', value: 'all' },
-  { label: 'Cricket Bats', value: 'bats' },
-  { label: 'Protective Gear', value: 'protection' },
-  { label: 'Gloves & Wicket Keeping', value: 'gloves' },
-  { label: 'Cricket Balls', value: 'balls' },
-  { label: 'Apparel, Bags & Kits', value: 'apparel' },
-  { label: 'Accessories & Training', value: 'accessories' },
-];
+const categoryLinks = SHOP_FILTER_CATEGORIES;
+
+function CartIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="20" r="1.6" />
+      <circle cx="18" cy="20" r="1.6" />
+      <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H7" />
+    </svg>
+  );
+}
 
 export default function Header() {
   const { theme, toggleTheme, cartCount, currentPage, showPage, setPresetCategory, user, isLoggedIn, isAdmin, logout } = useApp();
@@ -62,9 +65,11 @@ export default function Header() {
           background: 'none', border: 'none', cursor: 'pointer',
         }}
       >
-        <img src={logo} alt="Sports Folio" style={{ height: 40 }} />
-        <span className="header-logo-text" style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
-          Sports Folio Store
+        <span className="header-logo-mark">
+          <img src={logo} alt="SPORTSFOLIO" />
+        </span>
+        <span className="header-logo-text" style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 900, fontSize: '1.2rem', color: 'var(--text)', letterSpacing: '0.02em' }}>
+          SPORTSFOLIO
         </span>
       </button>
 
@@ -104,7 +109,7 @@ export default function Header() {
                     border: 'none', fontFamily: 'Space Grotesk, sans-serif',
                   } as React.CSSProperties}
                 >
-                  Shop {shopOpen ? '▲' : '▼'}
+                  Shop {shopOpen ? '^' : 'v'}
                 </button>
                 {shopOpen && (
                   <div className="shop-dropdown-menu">
@@ -144,6 +149,7 @@ export default function Header() {
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
+          className="theme-toggle"
           style={{
             width: 56, height: 28,
             background: theme === 'dark' ? '#333' : 'var(--input-bg)',
@@ -161,7 +167,7 @@ export default function Header() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '0.7rem', transition: 'all 0.3s ease',
           }}>
-            {theme === 'dark' ? '🌙' : '☀️'}
+            {theme === 'dark' ? 'D' : 'L'}
           </span>
         </button>
 
@@ -169,7 +175,7 @@ export default function Header() {
         {!isLoggedIn && (
           <button
             onClick={() => navClick('login')}
-            className="btn-neon"
+            className="btn-neon desktop-auth-action"
             style={{ padding: '8px 18px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
           >
             Sign In
@@ -179,6 +185,7 @@ export default function Header() {
         {/* Cart Button */}
         <button
           onClick={() => navClick('cart')}
+          className="cart-button"
           style={{
             position: 'relative', width: 44, height: 44,
             borderRadius: 12,
@@ -189,7 +196,7 @@ export default function Header() {
             transition: 'all 0.3s ease', flexShrink: 0,
           }}
         >
-          🛒
+          <CartIcon />
           {cartCount > 0 && (
             <span className="cart-pop" style={{
               position: 'absolute', top: -6, right: -6,
@@ -257,7 +264,7 @@ export default function Header() {
                     border: 'none', fontFamily: 'Space Grotesk, sans-serif',
                     textAlign: 'left', width: '100%',
                   } as React.CSSProperties}>
-                    Shop {shopOpen ? '▲' : '▼'}
+                    Shop {shopOpen ? '^' : 'v'}
                   </button>
                   {shopOpen && (
                     <div style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -298,10 +305,29 @@ export default function Header() {
       )}
 
       <style>{`
+        .header-logo-mark {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+          background: #050505;
+          border: 1px solid rgba(170,255,0,0.24);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .header-logo-mark img {
+          width: 34px;
+          height: 34px;
+          object-fit: contain;
+          display: block;
+        }
         .shop-dropdown-menu {
           position: absolute; top: 100%; left: 0;
           background: var(--card-bg); border: 1px solid var(--card-border);
           border-radius: 12px; padding: 6px; min-width: 180px;
+          max-height: min(70vh, 520px); overflow-y: auto;
           z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
           animation: fadeDown 0.2s ease;
         }
@@ -324,9 +350,31 @@ export default function Header() {
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-trigger { display: flex !important; }
+          .desktop-auth-action,
+          .theme-toggle { display: none !important; }
+          .header-logo-text {
+            display: inline !important;
+            font-size: 0.95rem !important;
+          }
+          .header-logo-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+          }
+          .header-logo-mark img {
+            width: 29px;
+            height: 29px;
+          }
+          .cart-button {
+            width: 42px !important;
+            height: 42px !important;
+          }
         }
         @media (max-width: 600px) {
-          .header-logo-text { display: none; }
+          .header-logo-text { display: inline !important; }
+        }
+        @media (max-width: 390px) {
+          .header-logo-text { display: none !important; }
         }
       `}</style>
     </header>

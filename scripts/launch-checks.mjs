@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+
+const read = path => fs.readFileSync(path, 'utf8');
+
+const ci = read('.github/workflows/ci.yml');
+const orders = read('convex/orders.ts');
+const products = read('convex/products.ts');
+const stripe = read('convex/stripe.ts');
+
+assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
+
+assert.doesNotMatch(orders, /export const placeOrder\s*=\s*mutation\(/, 'unpaid public order mutation must stay removed');
+assert.match(orders, /export const placeOrderInternal\s*=\s*internalMutation\(/, 'Stripe-only order creation must stay internal');
+
+for (const name of ['add', 'update', 'remove']) {
+  assert.match(products, new RegExp(`export const ${name} = mutation[\\s\\S]*?await requireAdmin\\(ctx\\)`), `${name} product mutation must require admin`);
+}
+
+assert.match(orders, /withIndex\("by_userId",\s*q\s*=>\s*q\.eq\("userId",\s*caller\._id\)\)/, 'non-admin order list must be scoped to caller');
+
+assert.match(stripe, /internal\.products\.getCheckoutItems/, 'Stripe checkout must use server-side product lookup');
+assert.doesNotMatch(stripe, /price:\s*item\.price/, 'Stripe checkout must not trust client item prices');
+
+console.log('launch checks passed');

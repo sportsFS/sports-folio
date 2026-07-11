@@ -51,8 +51,8 @@ function AppContent() {
         <div style={{ display: showPageDisplay('shop') }}><ShopPage /></div>
         <div style={{ display: showPageDisplay('contact') }}><ContactPage /></div>
         <div style={{ display: showPageDisplay('cart') }}><CartPage /></div>
-        <div style={{ display: showPageDisplay('login') }}><LoginPage /></div>
-        <div style={{ display: showPageDisplay('register') }}><RegisterPage /></div>
+        {currentPage === 'login' && <LoginPage />}
+        {currentPage === 'register' && <RegisterPage />}
         <div style={{ display: showPageDisplay('admin') }}><AdminPage /></div>
         <div style={{ display: showPageDisplay('my-orders') }}><MyOrdersPage /></div>
         <div style={{ display: showPageDisplay('forgot-password') }}><ForgotPasswordPage /></div>

@@ -14,7 +14,18 @@ const flashItems = [
   '🏆 PREMIUM BATS STARTING $199 🏆',
 ];
 
-const brands = ['SS Cricket', 'SG Sports', 'MRF', 'Gray-Nicolls', 'Kookaburra', 'GM Cricket', 'New Balance', 'Adidas Cricket', 'Puma Cricket', 'DSC'];
+const brands = [
+  { name: 'SS Cricket', short: 'SS', logo: '/images/brands/ss-cricket.png' },
+  { name: 'SG Sports', short: 'SG', logo: '/images/brands/sg-sports.png' },
+  { name: 'MRF', short: 'MRF', logo: '/images/brands/mrf.png' },
+  { name: 'Gray-Nicolls', short: 'GN', logo: '/images/brands/gray-nicolls.png' },
+  { name: 'Kookaburra', short: 'KB', logo: '/images/brands/kookaburra.png' },
+  { name: 'GM Cricket', short: 'GM', logo: '/images/brands/gm-cricket.png' },
+  { name: 'New Balance', short: 'NB', logo: '/images/brands/new-balance.png' },
+  { name: 'Adidas Cricket', short: 'ADI', logo: '/images/brands/adidas-cricket.png' },
+  { name: 'Puma Cricket', short: 'PUMA', logo: '/images/brands/puma-cricket.png' },
+  { name: 'DSC', short: 'DSC', logo: '/images/brands/dsc.png' },
+];
 const motionPosterLogos = ['Cricket', 'Badminton', 'Pickleball'];
 
 export default function HomePage() {
@@ -290,12 +301,17 @@ export default function HomePage() {
         </div>
         <div className="brands-track">
           {[...brands, ...brands].map((brand, i) => (
-            <span key={i} style={{
-              fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 700,
-              color: 'var(--text-secondary)', opacity: 0.5, whiteSpace: 'nowrap',
-              transition: 'all 0.3s ease',
-            }}>
-              {brand}
+            <span key={`${brand.name}-${i}`} className="brand-logo-item" aria-label={brand.name}>
+              <img
+                src={brand.logo}
+                alt={brand.name}
+                className="brand-logo-image"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                  event.currentTarget.nextElementSibling?.removeAttribute('hidden');
+                }}
+              />
+              <span className="brand-logo-fallback" hidden>{brand.short}</span>
             </span>
           ))}
         </div>

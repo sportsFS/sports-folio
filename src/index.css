@@ -586,8 +586,44 @@ header.scrolled {
 .brands-track {
   display: flex;
   animation: brandsScroll 15s linear infinite;
-  gap: 60px;
+  gap: 34px;
   align-items: center;
+}
+
+.brand-logo-item {
+  min-width: 132px;
+  height: 58px;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  background: var(--card-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  opacity: 0.72;
+  transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+
+.brand-logo-item:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  border-color: var(--neon);
+}
+
+.brand-logo-image {
+  max-width: 100px;
+  max-height: 34px;
+  object-fit: contain;
+  display: block;
+  filter: grayscale(1);
+}
+
+.brand-logo-fallback {
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 @keyframes brandsScroll {

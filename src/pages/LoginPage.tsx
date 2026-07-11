@@ -10,18 +10,10 @@ export default function LoginPage() {
     if (isSignedIn) showPage('home');
   }, [isSignedIn, showPage]);
 
-  useEffect(() => {
-    const handleHash = () => {
-      if (window.location.hash.startsWith('#sign-up')) showPage('register');
-    };
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, [showPage]);
-
   return (
     <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '40px 20px', display: 'flex', justifyContent: 'center' }}>
-        <SignIn routing="hash" signUpUrl="#sign-up" />
+        <SignIn routing="path" path="/login" signUpUrl="/register" />
       </div>
     </div>
   );

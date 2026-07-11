@@ -71,6 +71,16 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType>({} as AppContextType);
+const pages = new Set(['home', 'shop', 'contact', 'cart', 'login', 'register', 'admin', 'my-orders', 'forgot-password', 'privacy', 'terms', 'shipping']);
+
+function pageFromPath(pathname: string) {
+  const page = pathname.replace(/^\/+/, '').split('/')[0] || 'home';
+  return pages.has(page) ? page : 'home';
+}
+
+function pathForPage(page: string) {
+  return page === 'home' ? '/' : `/${page}`;
+}
 
 function loadJSON<T>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
@@ -84,7 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const { signOut } = useClerk();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', type: 'success', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,7 +184,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const showPage = useCallback((page: string) => {
     setCurrentPage(page);
+    const path = pathForPage(page);
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const syncPage = () => setCurrentPage(pageFromPath(window.location.pathname));
+    window.addEventListener('popstate', syncPage);
+    return () => window.removeEventListener('popstate', syncPage);
   }, []);
 
   // Listen for navigate events from cookie consent

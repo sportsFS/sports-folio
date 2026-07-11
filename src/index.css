@@ -585,6 +585,7 @@ header.scrolled {
 /* BRANDS */
 .brands-track {
   display: flex;
+  width: max-content;
   animation: brandsScroll 15s linear infinite;
   gap: 0;
   align-items: center;

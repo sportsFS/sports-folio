@@ -586,13 +586,16 @@ header.scrolled {
 .brands-track {
   display: flex;
   animation: brandsScroll 15s linear infinite;
-  gap: 34px;
+  gap: 0;
   align-items: center;
+  will-change: transform;
 }
 
 .brand-logo-item {
+  flex: 0 0 auto;
   min-width: 150px;
   height: 70px;
+  margin-right: 34px;
   border: 1px solid var(--card-border);
   border-radius: 14px;
   background: var(--card-bg);

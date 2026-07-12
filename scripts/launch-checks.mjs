@@ -9,6 +9,9 @@ const products = read('convex/products.ts');
 const stripe = read('convex/stripe.ts');
 const main = read('src/main.tsx');
 const vercel = read('vercel.json');
+const authPages = ['LoginPage', 'RegisterPage', 'ForgotPasswordPage']
+  .map(name => read(`src/pages/${name}.tsx`))
+  .join('\n');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -28,5 +31,7 @@ assert.match(main, /signInForceRedirectUrl="\/"/, 'sign-in must stay on the curr
 assert.match(main, /signUpForceRedirectUrl="\/"/, 'sign-up must stay on the current host');
 assert.match(vercel, /www\.sportsfoliostore\.com[\s\S]*https:\/\/sportsfoliostore\.com\/:path\*/, 'www must redirect to Clerk primary domain');
 assert.match(vercel, /"source": "\/"[\s\S]*"destination": "https:\/\/sportsfoliostore\.com\/"/, 'www root must redirect to Clerk primary domain');
+assert.doesNotMatch(authPages, /routing="hash"/, 'Clerk OTP routes must not share the app URL');
+assert.match(authPages, /routing="path" path="\/register"/, 'Clerk registration must own its OTP sub-routes');
 
 console.log('launch checks passed');

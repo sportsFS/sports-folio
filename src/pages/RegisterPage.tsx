@@ -30,7 +30,7 @@ export default function RegisterPage() {
   return (
     <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '40px 20px', display: 'flex', justifyContent: 'center' }}>
-        <SignUp routing="hash" signInUrl="/login" />
+        <SignUp routing="path" path="/register" signInUrl="/login" />
       </div>
     </div>
   );

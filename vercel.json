@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.sportsfoliostore.com" }],
+      "destination": "https://sportsfoliostore.com/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/images/(.*)", "destination": "/images/$1" },
     { "source": "/favicon.png", "destination": "/favicon.png" },

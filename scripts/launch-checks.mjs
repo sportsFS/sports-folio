@@ -8,6 +8,7 @@ const orders = read('convex/orders.ts');
 const products = read('convex/products.ts');
 const stripe = read('convex/stripe.ts');
 const main = read('src/main.tsx');
+const vercel = read('vercel.json');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -25,5 +26,6 @@ assert.doesNotMatch(stripe, /price:\s*item\.price/, 'Stripe checkout must not tr
 
 assert.match(main, /signInForceRedirectUrl="\/"/, 'sign-in must stay on the current host');
 assert.match(main, /signUpForceRedirectUrl="\/"/, 'sign-up must stay on the current host');
+assert.match(vercel, /www\.sportsfoliostore\.com[\s\S]*https:\/\/sportsfoliostore\.com\/:path\*/, 'www must redirect to Clerk primary domain');
 
 console.log('launch checks passed');

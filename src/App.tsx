@@ -23,7 +23,7 @@ import NotFoundPage from './pages/NotFoundPage';
 const KNOWN_PAGES = ['home', 'shop', 'contact', 'cart', 'login', 'register', 'admin', 'my-orders', 'forgot-password', 'privacy', 'terms', 'shipping'];
 
 function AppContent() {
-  const { currentPage, showPage, showToast } = useApp();
+  const { currentPage, showPage, showToast, authError, logout } = useApp();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -39,6 +39,23 @@ function AppContent() {
 
   function showPageDisplay(page: string) {
     return currentPage === page ? 'block' : 'none';
+  }
+
+  if (authError) {
+    return (
+      <main style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <div style={{ width: '100%', maxWidth: 460, padding: 24, textAlign: 'center' }}>
+          <h1 style={{ fontSize: 24, marginBottom: 12, color: 'var(--text)' }}>Account sync failed</h1>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>
+            You are signed in, but the store could not connect your account to the backend.
+          </p>
+          <p style={{ color: '#b00020', fontSize: 13, marginBottom: 20 }}>{authError}</p>
+          <button className="btn-neon" type="button" onClick={() => void logout()}>
+            Sign out and retry
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (

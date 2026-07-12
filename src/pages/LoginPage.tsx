@@ -19,7 +19,7 @@ export default function LoginPage() {
             You signed in, but the store could not connect your account to the backend. Please try again.
           </p>
           <p style={{ color: '#b00020', fontSize: 13, marginBottom: 20 }}>{authError}</p>
-          <button className="btn" type="button" onClick={() => void logout()}>
+          <button className="btn-neon" type="button" onClick={() => void logout()}>
             Sign out and retry
           </button>
         </div>

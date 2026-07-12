@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useClerk } from '@clerk/clerk-react';
+import { useClerk, useUser } from '@clerk/clerk-react';
 import { useQuery, useMutation, useAction, useConvexAuth } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
@@ -93,6 +93,7 @@ function saveJSON(key: string, value: unknown) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useClerk();
+  const { isSignedIn } = useUser();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
@@ -115,6 +116,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const currentUserData = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const user = (currentUserData || null) as AuthUser | null;
   const ordersData = useQuery(api.orders.list, isAuthenticated && user ? {} : "skip");
+
+  useEffect(() => {
+    if (!isSignedIn || isAuthenticated) return;
+    const timeout = window.setTimeout(() => {
+      setAuthError('Backend authentication timed out. Confirm the Clerk Convex integration is active, then sign out and retry.');
+    }, 10_000);
+    return () => window.clearTimeout(timeout);
+  }, [isSignedIn, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {

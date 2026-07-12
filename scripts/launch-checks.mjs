@@ -7,6 +7,7 @@ const ci = read('.github/workflows/ci.yml');
 const orders = read('convex/orders.ts');
 const products = read('convex/products.ts');
 const stripe = read('convex/stripe.ts');
+const main = read('src/main.tsx');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -21,5 +22,8 @@ assert.match(orders, /withIndex\("by_userId",\s*q\s*=>\s*q\.eq\("userId",\s*call
 
 assert.match(stripe, /internal\.products\.getCheckoutItems/, 'Stripe checkout must use server-side product lookup');
 assert.doesNotMatch(stripe, /price:\s*item\.price/, 'Stripe checkout must not trust client item prices');
+
+assert.match(main, /signInForceRedirectUrl="\/"/, 'sign-in must stay on the current host');
+assert.match(main, /signUpForceRedirectUrl="\/"/, 'sign-up must stay on the current host');
 
 console.log('launch checks passed');

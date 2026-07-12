@@ -15,7 +15,11 @@ if (!clerkPublishableKey) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider
+      publishableKey={clerkPublishableKey}
+      signInForceRedirectUrl="/"
+      signUpForceRedirectUrl="/"
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <App />
       </ConvexProviderWithClerk>

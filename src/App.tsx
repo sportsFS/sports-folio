@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import Preloader from './components/Preloader';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
@@ -44,7 +43,6 @@ function AppContent() {
 
   return (
     <>
-      <Preloader />
       <Header />
       <main style={{ background: 'var(--bg)', transition: 'background 0.5s ease' }}>
         <div style={{ display: showPageDisplay('home') }}><HomePage /></div>

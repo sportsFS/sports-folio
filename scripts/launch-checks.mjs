@@ -27,5 +27,6 @@ assert.doesNotMatch(stripe, /price:\s*item\.price/, 'Stripe checkout must not tr
 assert.match(main, /signInForceRedirectUrl="\/"/, 'sign-in must stay on the current host');
 assert.match(main, /signUpForceRedirectUrl="\/"/, 'sign-up must stay on the current host');
 assert.match(vercel, /www\.sportsfoliostore\.com[\s\S]*https:\/\/sportsfoliostore\.com\/:path\*/, 'www must redirect to Clerk primary domain');
+assert.match(vercel, /"source": "\/"[\s\S]*"destination": "https:\/\/sportsfoliostore\.com\/"/, 'www root must redirect to Clerk primary domain');
 
 console.log('launch checks passed');

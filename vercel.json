@@ -1,6 +1,12 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.sportsfoliostore.com" }],
+      "destination": "https://sportsfoliostore.com/",
+      "permanent": false
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.sportsfoliostore.com" }],
       "destination": "https://sportsfoliostore.com/:path*",

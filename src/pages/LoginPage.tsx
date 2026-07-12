@@ -1,4 +1,4 @@
-import { SignIn, useUser } from '@clerk/clerk-react';
+import { SignIn, useUser } from '@clerk/react';
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 

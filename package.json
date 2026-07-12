@@ -12,7 +12,7 @@
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.61.8",
+    "@clerk/react": "^6.12.2",
     "clsx": "2.1.1",
     "convex": "^1.39.1",
     "react": "19.2.6",

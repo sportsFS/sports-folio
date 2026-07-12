@@ -57,6 +57,7 @@ interface AppContextType {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   user: AuthUser | null;
+  authError: string | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
   logout: () => Promise<void>;
@@ -98,6 +99,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', type: 'success', visible: false });
   const [presetCategory, setPresetCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
   const profileSyncStarted = useRef(false);
 
   // Convex hooks
@@ -117,12 +119,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isAuthenticated) {
       profileSyncStarted.current = false;
+      setAuthError(null);
       return;
     }
     if (profileSyncStarted.current) return;
     profileSyncStarted.current = true;
+    setAuthError(null);
     ensureCurrentUser().catch((err) => {
       profileSyncStarted.current = false;
+      setAuthError(err instanceof Error ? err.message : 'Could not initialize your account.');
       console.error('Failed to initialize Clerk user profile:', err);
     });
   }, [isAuthenticated, ensureCurrentUser]);
@@ -280,7 +285,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
       searchQuery, setSearchQuery,
-      user, isLoggedIn, isAdmin, logout,
+      user, authError, isLoggedIn, isAdmin, logout,
       products, addProduct, updateProduct, deleteProduct,
       orders, cancelOrder, updateOrderStatus, placeOrder,
     }}>

@@ -4,11 +4,11 @@ import { useApp } from '../context/AppContext';
 
 export default function LoginPage() {
   const { isSignedIn } = useUser();
-  const { showPage } = useApp();
+  const { showPage, user } = useApp();
 
   useEffect(() => {
-    if (isSignedIn) showPage('home');
-  }, [isSignedIn, showPage]);
+    if (isSignedIn && user) showPage('home');
+  }, [isSignedIn, showPage, user]);
 
   return (
     <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

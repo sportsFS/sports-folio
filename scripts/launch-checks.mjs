@@ -13,6 +13,7 @@ const authPages = ['LoginPage', 'RegisterPage', 'ForgotPasswordPage']
   .map(name => read(`src/pages/${name}.tsx`))
   .join('\n');
 const preloader = read('src/components/Preloader.tsx');
+const header = read('src/components/Header.tsx');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -38,5 +39,6 @@ assert.match(vercel, /"source": "\/"[\s\S]*"destination": "https:\/\/sportsfolio
 assert.doesNotMatch(authPages, /routing="hash"/, 'Clerk OTP routes must not share the app URL');
 assert.match(authPages, /routing="path" path="\/register"/, 'Clerk registration must own its OTP sub-routes');
 assert.match(preloader, /sessionStorage\.getItem\(SESSION_KEY\)/, 'entry loader must only show once per tab');
+assert.match(header, /!isAuthLoading && !isLoggedIn/, 'header must not flash signed-out actions while auth restores');
 
 console.log('launch checks passed');

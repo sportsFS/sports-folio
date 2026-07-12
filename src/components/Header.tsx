@@ -17,7 +17,7 @@ function CartIcon() {
 }
 
 export default function Header() {
-  const { theme, toggleTheme, cartCount, currentPage, showPage, setPresetCategory, user, isLoggedIn, isAdmin, logout } = useApp();
+  const { theme, toggleTheme, cartCount, currentPage, showPage, setPresetCategory, user, isAuthLoading, isLoggedIn, isAdmin, logout } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
@@ -45,10 +45,10 @@ export default function Header() {
     { label: 'Shop', page: 'shop' },
     { label: 'Contact Us', page: 'contact' },
   ];
-  if (!isLoggedIn) {
+  if (!isAuthLoading && !isLoggedIn) {
     navItems.push({ label: 'Login', page: 'login' });
     navItems.push({ label: 'Register', page: 'register' });
-  } else {
+  } else if (!isAuthLoading) {
     if (isAdmin) navItems.push({ label: 'Admin Panel', page: 'admin' });
     navItems.push({ label: 'My Orders', page: 'my-orders' });
     navItems.push({ label: `Hi, ${user!.name.split(' ')[0]}`, page: '', type: 'user' });
@@ -172,7 +172,9 @@ export default function Header() {
         </button>
 
         {/* Sign In Pill — always visible */}
-        {!isLoggedIn && (
+        {isAuthLoading ? (
+          <span className="header-auth-placeholder desktop-auth-action" aria-hidden="true" />
+        ) : !isLoggedIn && (
           <button
             onClick={() => navClick('login')}
             className="btn-neon desktop-auth-action"
@@ -342,6 +344,12 @@ export default function Header() {
         .shop-dropdown-item:hover {
           background: rgba(170,255,0,0.15);
           color: var(--neon-dark);
+        }
+        .header-auth-placeholder {
+          width: 84px;
+          height: 34px;
+          border-radius: 50px;
+          background: var(--input-bg);
         }
         @keyframes fadeDown {
           from { opacity: 0; transform: translateY(-8px); }

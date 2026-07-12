@@ -58,6 +58,7 @@ interface AppContextType {
   setSearchQuery: (q: string) => void;
   user: AuthUser | null;
   authError: string | null;
+  isAuthLoading: boolean;
   isLoggedIn: boolean;
   isAdmin: boolean;
   logout: () => Promise<void>;
@@ -91,9 +92,9 @@ function saveJSON(key: string, value: unknown) {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const { signOut } = useClerk();
-  const { isSignedIn } = useUser();
+  const { isLoaded, isSignedIn } = useUser();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
@@ -158,6 +159,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const isLoggedIn = user !== null;
   const isAdmin = user?.role === 'admin';
+  const isAuthLoading = !isLoaded || isLoading || Boolean(
+    isSignedIn && (!isAuthenticated || currentUserData === undefined || (currentUserData === null && !authError))
+  );
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
@@ -294,7 +298,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentPage, showPage, toast, showToast,
       presetCategory, setPresetCategory,
       searchQuery, setSearchQuery,
-      user, authError, isLoggedIn, isAdmin, logout,
+      user, authError, isAuthLoading, isLoggedIn, isAdmin, logout,
       products, addProduct, updateProduct, deleteProduct,
       orders, cancelOrder, updateOrderStatus, placeOrder,
     }}>

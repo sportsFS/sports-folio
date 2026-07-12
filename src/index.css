@@ -58,6 +58,65 @@ body {
   transition: background 0.5s ease, color 0.5s ease;
 }
 
+/* ENTRY LOADER */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: #000;
+  animation: preloaderExit 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.preloader-logo {
+  width: min(180px, 42vw);
+  height: auto;
+  margin-bottom: 28px;
+  animation: preloaderPulse 1s ease-in-out infinite;
+}
+
+.preloader-bar {
+  width: min(220px, 54vw);
+  height: 3px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #333;
+}
+
+.preloader-bar-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--neon);
+  box-shadow: 0 0 10px var(--neon-glow);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: preloaderFill 1.2s ease-out forwards;
+}
+
+@keyframes preloaderPulse {
+  0%, 100% { filter: drop-shadow(0 0 10px var(--neon-glow)); }
+  50% { filter: drop-shadow(0 0 28px var(--neon-glow)); }
+}
+
+@keyframes preloaderFill {
+  to { transform: scaleX(1); }
+}
+
+@keyframes preloaderExit {
+  0%, 78% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #preloader { animation-duration: 180ms; }
+  .preloader-logo, .preloader-bar-fill { animation: none; }
+  .preloader-bar-fill { transform: scaleX(1); }
+}
+
 /* SKELETON */
 .skeleton {
   background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);

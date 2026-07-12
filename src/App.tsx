@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import Toast from './components/Toast';
 import BackToTop from './components/BackToTop';
 import CookieConsent from './components/CookieConsent';
+import Preloader from './components/Preloader';
 import HomePage from './pages/HomePage';
 import ShopPage from './pages/ShopPage';
 import ContactPage from './pages/ContactPage';
@@ -87,6 +88,7 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <Preloader />
       <AppProvider>
         <AppContent />
       </AppProvider>

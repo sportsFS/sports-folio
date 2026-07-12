@@ -22,6 +22,9 @@ for (const name of ['add', 'update', 'remove']) {
   assert.match(products, new RegExp(`export const ${name} = mutation[\\s\\S]*?await requireAdmin\\(ctx\\)`), `${name} product mutation must require admin`);
 }
 
+assert.match(products, /export const seed = internalMutation/, 'catalog seed must stay internal');
+assert.match(products, /query\("products"\)\.first\(\)/, 'catalog seed must not duplicate products');
+
 assert.match(orders, /withIndex\("by_userId",\s*q\s*=>\s*q\.eq\("userId",\s*caller\._id\)\)/, 'non-admin order list must be scoped to caller');
 
 assert.match(stripe, /internal\.products\.getCheckoutItems/, 'Stripe checkout must use server-side product lookup');

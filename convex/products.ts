@@ -1,6 +1,7 @@
-import { mutation, query, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./auth";
+import { PRODUCTS } from "./productData";
 
 export const list = query({
   args: {},
@@ -51,6 +52,15 @@ export const getCheckoutItems = internalQuery({
     }
 
     return { lineItems, total: Number(total.toFixed(2)) };
+  },
+});
+
+export const seed = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    if (await ctx.db.query("products").first()) return { inserted: 0 };
+    for (const product of PRODUCTS) await ctx.db.insert("products", product);
+    return { inserted: PRODUCTS.length };
   },
 });
 

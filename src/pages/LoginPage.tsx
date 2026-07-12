@@ -30,7 +30,7 @@ export default function LoginPage() {
   return (
     <div style={{ paddingTop: 72, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '40px 20px', display: 'flex', justifyContent: 'center' }}>
-        <SignIn routing="path" path="/login" signUpUrl="/register" />
+        <SignIn routing="hash" signUpUrl="/register" />
       </div>
     </div>
   );

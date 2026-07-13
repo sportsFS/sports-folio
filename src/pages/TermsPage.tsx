@@ -18,7 +18,7 @@ export default function TermsPage() {
           Terms & Conditions
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 40 }}>
-          Last Updated: May 25, 2026
+          Last Updated: July 13, 2026
         </p>
 
         <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
@@ -67,19 +67,20 @@ export default function TermsPage() {
 
           <Section title="6. Shipping and Delivery">
             <ul>
-              <li>Shipping costs and estimated delivery times are displayed at checkout</li>
-              <li>We are not responsible for delays caused by shipping carriers or customs clearance</li>
-              <li>Risk of loss and title for items passes to you upon delivery to the carrier</li>
-              <li>For complete details, see our <button onClick={() => showPage('shipping')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>Shipping & Returns Policy</button></li>
+              <li>Delivery is available only to complete Canadian addresses collected during Stripe Checkout</li>
+              <li>Delivery charges are displayed in USD before payment</li>
+              <li>The store owner will provide delivery updates and an expected timeframe after receiving the order</li>
+              <li>For complete details, see our <button onClick={() => showPage('shipping')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>Shipping, Exchange &amp; Replacement Policy</button></li>
             </ul>
           </Section>
 
-          <Section title="7. Returns and Refunds">
+          <Section title="7. Exchanges and Replacements">
             <ul>
-              <li>Orders can be cancelled only while in <strong>pending</strong> status (before shipment)</li>
-              <li>Once shipped or delivered, orders cannot be cancelled — only returned after delivery per our return policy</li>
-              <li>Refunds are processed to the original payment method within 5-10 business days after we receive the returned item</li>
-              <li>For complete details, see our <button onClick={() => showPage('shipping')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>Shipping & Returns Policy</button></li>
+              <li>Paid orders cannot be cancelled through the website</li>
+              <li>Eligible exchange or replacement requests must be submitted within 30 days of delivery</li>
+              <li>Items must meet the eligibility and inspection requirements in our policy</li>
+              <li><strong>No cash refunds except where required by law</strong></li>
+              <li>For complete details, see our <button onClick={() => showPage('shipping')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>Shipping, Exchange &amp; Replacement Policy</button></li>
             </ul>
           </Section>
 

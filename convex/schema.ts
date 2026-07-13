@@ -13,6 +13,9 @@ export default defineSchema({
     badge: v.optional(v.string()),
     badgeClass: v.optional(v.string()),
     description: v.optional(v.string()),
+    stockQuantity: v.optional(v.number()),
+    reservedQuantity: v.optional(v.number()),
+    isActive: v.optional(v.boolean()),
   }).index("by_category", ["category"]),
   users: defineTable({
     clerkId: v.optional(v.string()),
@@ -51,12 +54,44 @@ export default defineSchema({
       qty: v.number(),
     })),
     total: v.number(),
+    shippingAmount: v.optional(v.number()),
+    shippingAddress: v.optional(v.object({
+      name: v.string(),
+      line1: v.string(),
+      line2: v.optional(v.string()),
+      city: v.optional(v.string()),
+      state: v.optional(v.string()),
+      postalCode: v.optional(v.string()),
+      country: v.string(),
+    })),
     status: v.union(v.literal("pending"), v.literal("shipped"), v.literal("delivered"), v.literal("cancelled")),
     createdAt: v.string(),
     stripeSessionId: v.optional(v.string()),
     paymentStatus: v.optional(v.union(v.literal("pending"), v.literal("paid"), v.literal("failed"))),
     paymentIntent: v.optional(v.string()),
     trackingNumber: v.optional(v.string()),
+    reservationExpiresAt: v.optional(v.number()),
+    inventoryStatus: v.optional(v.union(
+      v.literal("reserved"),
+      v.literal("sold"),
+      v.literal("released"),
+      v.literal("error")
+    )),
+    deliveredAt: v.optional(v.string()),
+    returnRequest: v.optional(v.object({
+      type: v.union(v.literal("exchange"), v.literal("replacement")),
+      reason: v.string(),
+      status: v.union(
+        v.literal("requested"),
+        v.literal("approved"),
+        v.literal("rejected"),
+        v.literal("received"),
+        v.literal("completed")
+      ),
+      requestedAt: v.string(),
+      updatedAt: v.optional(v.string()),
+      adminNote: v.optional(v.string()),
+    })),
   }).index("by_userId", ["userId"])
     .index("by_status", ["status"])
     .index("by_createdAt", ["createdAt"]),

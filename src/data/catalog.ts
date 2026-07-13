@@ -83,6 +83,8 @@ export function findSuggestedAddOn(product: Product, products: Product[], cart: 
   return products.find(candidate =>
     candidate.category === 'balls' &&
     candidate.price > 0 &&
+    candidate.isActive !== false &&
+    (candidate.availableQuantity ?? 0) > 0 &&
     candidate.id !== product.id &&
     !cartIds.has(candidate.id)
   ) || null;

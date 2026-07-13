@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQty, showPage, showToast, isLoggedIn, placeOrder } = useApp();
+  const { cart, products, removeFromCart, updateQty, showPage, showToast, isLoggedIn, placeOrder } = useApp();
   const [promoCode, setPromoCode] = useState('');
 
   useScrollReveal([cart]);
@@ -11,6 +11,10 @@ export default function CartPage() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = subtotal > 99 ? 0 : 9.99;
   const total = subtotal + shipping;
+  const inventoryIssues = cart.filter(item => {
+    const current = products.find(product => product.id === item.id);
+    return !current || current.isActive === false || (current.availableQuantity ?? 0) < item.qty;
+  });
 
   if (cart.length === 0) {
     return (
@@ -66,6 +70,11 @@ export default function CartPage() {
                   <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)' }}>
                     ${(item.price * item.qty).toLocaleString('en-US')}
                   </div>
+                  {(products.find(product => product.id === item.id)?.availableQuantity ?? 0) < item.qty && (
+                    <div style={{ color: '#b42318', fontSize: '0.75rem', fontWeight: 700, marginTop: 5 }}>
+                      Only {products.find(product => product.id === item.id)?.availableQuantity ?? 0} available
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                   {/* Qty control */}
@@ -80,6 +89,7 @@ export default function CartPage() {
                     </span>
                     <button
                       onClick={() => updateQty(item.id, 1)}
+                      disabled={item.qty >= (products.find(product => product.id === item.id)?.availableQuantity ?? 0)}
                       className="qty-btn"
                       style={{ width: 36, height: 36, border: 'none', background: 'var(--input-bg)', color: 'var(--text)', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }}
                     >+</button>
@@ -119,7 +129,7 @@ export default function CartPage() {
             borderRadius: 20, padding: 32, position: 'sticky', top: 100,
           }}>
             <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.2rem', fontWeight: 700, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
-              Order Summary
+              Order Summary (USD)
             </h3>
 
             <SummaryRow label={`Subtotal (${cart.reduce((s, i) => s + i.qty, 0)} items)`} value={`$${subtotal.toLocaleString('en-US')}`} />
@@ -127,6 +137,12 @@ export default function CartPage() {
               label="Shipping"
               value={shipping === 0 ? <span style={{ color: 'var(--neon-dark)', fontWeight: 700 }}>FREE</span> : `$${shipping}`}
             />
+
+            {inventoryIssues.length > 0 && (
+              <div role="alert" style={{ margin: '16px 0', padding: 12, borderRadius: 8, background: '#fdeaea', color: '#9a2c2c', fontSize: '0.8rem', fontWeight: 600 }}>
+                Update or remove unavailable items before checkout.
+              </div>
+            )}
 
             {/* Promo */}
             <div style={{ display: 'flex', gap: 8, margin: '20px 0' }}>
@@ -160,6 +176,7 @@ export default function CartPage() {
             <button
               className="btn-neon"
               style={{ width: '100%', marginTop: 20 }}
+              disabled={inventoryIssues.length > 0}
               onClick={async () => {
                 if (!isLoggedIn) {
                   showToast('Login Required', 'Please login to checkout');

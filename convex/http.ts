@@ -41,14 +41,34 @@ http.route({
       );
     }
 
-    const session = event.type === "checkout.session.completed"
-      ? (event.data.object as Stripe.Checkout.Session)
-      : null;
+    if (event.type !== "checkout.session.completed" && event.type !== "checkout.session.expired") {
+      return new Response("Ignored", { status: 200 });
+    }
+    const eventType = event.type as "checkout.session.completed" | "checkout.session.expired";
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    if (event.type === "checkout.session.completed" && session?.payment_status !== "paid") {
+      return new Response("Payment not completed", { status: 200 });
+    }
+
+    const shipping = session.collected_information?.shipping_details ?? (session as any).shipping_details;
+    const address = shipping?.address;
+    const shippingAddress = shipping?.name && address?.line1 && address.country === "CA" ? {
+      name: shipping.name,
+      line1: address.line1,
+      ...(address.line2 ? { line2: address.line2 } : {}),
+      ...(address.city ? { city: address.city } : {}),
+      ...(address.state ? { state: address.state } : {}),
+      ...(address.postal_code ? { postalCode: address.postal_code } : {}),
+      country: address.country,
+    } : undefined;
 
     const result = await ctx.runMutation(internal.orders.processStripeEvent, {
       eventId: event.id,
+      eventType,
       orderId: session?.metadata?.orderId || undefined,
       paymentIntent: (session?.payment_intent as string) || undefined,
+      shippingAddress,
     });
 
     if (!result.processed) {

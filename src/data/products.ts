@@ -10,6 +10,10 @@ export interface Product {
   badge?: string;
   badgeClass?: string;
   description?: string;
+  stockQuantity?: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
+  isActive?: boolean;
 }
 
 // Products are now managed in Convex

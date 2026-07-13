@@ -15,6 +15,10 @@ export interface Product {
   badge?: string;
   badgeClass?: string;
   description?: string;
+  stockQuantity?: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
+  isActive?: boolean;
 }
 
 interface CartItem extends Product { qty: number }
@@ -32,12 +36,32 @@ export interface Order {
   userName: string;
   items: OrderItem[];
   total: number;
+  shippingAmount?: number;
+  shippingAddress?: {
+    name: string;
+    line1: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country: string;
+  };
   status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   paymentStatus?: 'pending' | 'paid' | 'failed';
   paymentIntent?: string;
   stripeSessionId?: string;
   trackingNumber?: string;
+  inventoryStatus?: 'reserved' | 'sold' | 'released' | 'error';
+  deliveredAt?: string;
+  returnRequest?: {
+    type: 'exchange' | 'replacement';
+    reason: string;
+    status: 'requested' | 'approved' | 'rejected' | 'received' | 'completed';
+    requestedAt: string;
+    updatedAt?: string;
+    adminNote?: string;
+  };
 }
 
 interface AppContextType {
@@ -67,7 +91,7 @@ interface AppContextType {
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   orders: Order[];
-  cancelOrder: (id: string) => Promise<{ success: boolean; error?: string }>;
+  requestReturn: (id: string, type: 'exchange' | 'replacement', reason: string) => Promise<{ success: boolean; error?: string }>;
   updateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => Promise<void>;
   placeOrder: () => Promise<void>;
 }
@@ -110,7 +134,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateProductMutation = useMutation(api.products.update);
   const deleteProductMutation = useMutation(api.products.remove);
   const ensureCurrentUser = useMutation(api.users.ensureCurrent);
-  const cancelOrderMutation = useMutation(api.orders.cancelOrder);
+  const requestReturnMutation = useMutation(api.orders.requestReturn);
   const updateOrderStatusMutation = useMutation(api.orders.updateStatus);
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
 
@@ -172,9 +196,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToCart = useCallback((product: Product) => {
+    const available = product.availableQuantity ?? 0;
+    if (product.isActive === false || available < 1) return;
     setCart(prev => {
       const existing = prev.find(c => c.id === product.id);
-      if (existing) return prev.map(c => c.id === product.id ? { ...c, qty: c.qty + 1 } : c);
+      if (existing) return prev.map(c => c.id === product.id ? { ...c, qty: Math.min(c.qty + 1, available) } : c);
       return [...prev, { ...product, qty: 1 }];
     });
   }, []);
@@ -187,11 +213,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCart(prev => {
       const item = prev.find(c => c.id === id);
       if (!item) return prev;
+      const currentProduct = products.find(product => product.id === id);
+      const available = currentProduct?.availableQuantity ?? 0;
       const newQty = item.qty + delta;
-      if (newQty <= 0) return prev.filter(c => c.id !== id);
-      return prev.map(c => c.id === id ? { ...c, qty: newQty } : c);
+      const nextQty = Math.min(newQty, available);
+      if (nextQty <= 0) return prev.filter(c => c.id !== id);
+      return prev.map(c => c.id === id ? { ...c, qty: nextQty } : c);
     });
-  }, []);
+  }, [products]);
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
@@ -240,6 +269,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badge: p.badge,
       badgeClass: p.badgeClass,
       description: p.description,
+      stockQuantity: p.stockQuantity ?? 0,
+      isActive: p.isActive ?? true,
     });
   }, [addProductMutation]);
 
@@ -256,6 +287,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badge: updates.badge,
       badgeClass: updates.badgeClass,
       description: updates.description,
+      stockQuantity: updates.stockQuantity,
+      isActive: updates.isActive,
     });
   }, [updateProductMutation]);
 
@@ -263,14 +296,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await deleteProductMutation({ id: id as any });
   }, [deleteProductMutation]);
 
-  const cancelOrder = useCallback(async (id: string) => {
+  const requestReturn = useCallback(async (id: string, type: 'exchange' | 'replacement', reason: string) => {
     try {
-      await cancelOrderMutation({ id: id as any });
+      await requestReturnMutation({ id: id as any, type, reason });
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Cancellation failed' };
+      return { success: false, error: err.message || 'Return request failed' };
     }
-  }, [cancelOrderMutation]);
+  }, [requestReturnMutation]);
 
   const updateOrderStatus = useCallback(async (id: string, status: 'pending' | 'shipped' | 'delivered', trackingNumber?: string) => {
     await updateOrderStatusMutation({ id: id as any, status, trackingNumber });
@@ -300,7 +333,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       searchQuery, setSearchQuery,
       user, authError, isAuthLoading, isLoggedIn, isAdmin, logout,
       products, addProduct, updateProduct, deleteProduct,
-      orders, cancelOrder, updateOrderStatus, placeOrder,
+      orders, requestReturn, updateOrderStatus, placeOrder,
     }}>
       {children}
     </AppContext.Provider>

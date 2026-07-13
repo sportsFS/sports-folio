@@ -8,6 +8,7 @@ import './AdminPage.css';
 
 type Tab = 'dashboard' | 'products' | 'orders' | 'users';
 type UserRow = { id: string; name: string; email: string; role: string };
+type ReturnStatus = NonNullable<Order['returnRequest']>['status'];
 type ProductForm = {
   name: string;
   category: string;
@@ -19,15 +20,18 @@ type ProductForm = {
   badge: string;
   badgeClass: string;
   description: string;
+  stockQuantity: string;
+  isActive: boolean;
 };
 
 const categories = ADMIN_PRODUCT_CATEGORIES;
-const currency = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' });
+const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 function emptyProductForm(): ProductForm {
   return {
     name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '',
     image: '/images/products/product.jpg', badge: '', badgeClass: '', description: '',
+    stockQuantity: '0', isActive: true,
   };
 }
 
@@ -35,6 +39,8 @@ export default function AdminPage() {
   const { user, showPage, products, addProduct, updateProduct, deleteProduct, orders, updateOrderStatus } = useApp();
   const [tab, setTab] = useState<Tab>('dashboard');
   const usersData = useQuery(api.users.list, user?.role === 'admin' ? {} : 'skip');
+  const adminProductsData = useQuery(api.products.listAdmin, user?.role === 'admin' ? {} : 'skip');
+  const adminProducts = (adminProductsData ?? products) as Product[];
 
   if (!user || user.role !== 'admin') {
     return (
@@ -51,7 +57,7 @@ export default function AdminPage() {
 
   const navItems: { id: Tab; label: string; count?: number }[] = [
     { id: 'dashboard', label: 'Overview' },
-    { id: 'products', label: 'Products', count: products.length },
+    { id: 'products', label: 'Products', count: adminProducts.length },
     { id: 'orders', label: 'Orders', count: orders.length },
     { id: 'users', label: 'Customers', count: usersData?.length },
   ];
@@ -99,7 +105,7 @@ export default function AdminPage() {
 
           {tab === 'dashboard' && (
             <DashboardTab
-              products={products}
+              products={adminProducts}
               totalUsers={usersData?.length}
               orders={orders}
               showPage={showPage}
@@ -107,7 +113,7 @@ export default function AdminPage() {
             />
           )}
           {tab === 'products' && (
-            <ProductsTab products={products} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />
+            <ProductsTab products={adminProducts} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />
           )}
           {tab === 'orders' && <OrdersTab orders={orders} updateOrderStatus={updateOrderStatus} />}
           {tab === 'users' && <UsersTab users={usersData} />}
@@ -132,6 +138,7 @@ function DashboardTab({ products, totalUsers, orders, showPage, selectTab }: {
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
   const shippedOrders = orders.filter(order => order.status === 'shipped').length;
   const needsPrice = products.filter(product => product.price <= 0).length;
+  const outOfStock = products.filter(product => (product.isActive ?? true) && (product.availableQuantity ?? 0) <= 0).length;
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
@@ -151,7 +158,7 @@ function DashboardTab({ products, totalUsers, orders, showPage, selectTab }: {
   }
 
   async function handleCleanup() {
-    if (activeOperation || !confirm('Cancel pending orders older than 30 minutes that never reached Stripe?')) return;
+    if (activeOperation || !confirm('Release all expired unpaid checkout reservations?')) return;
     setActiveOperation('cleanup');
     setNotice(null);
     try {
@@ -167,7 +174,7 @@ function DashboardTab({ products, totalUsers, orders, showPage, selectTab }: {
   return (
     <div className="admin-view">
       <dl className="admin-summary" aria-label="Store summary">
-        <SummaryItem label="Products" value={products.length} detail={`${needsPrice} need pricing`} warning={needsPrice > 0} />
+        <SummaryItem label="Products" value={products.length} detail={`${outOfStock} out of stock`} warning={outOfStock > 0} />
         <SummaryItem label="Customers" value={totalUsers ?? '—'} detail="Registered accounts" />
         <SummaryItem label="Orders" value={orders.length} detail={`${pendingOrders} awaiting action`} warning={pendingOrders > 0} />
         <SummaryItem label="Paid revenue" value={currency.format(paidRevenue)} detail={`${shippedOrders} currently shipped`} />
@@ -204,8 +211,8 @@ function DashboardTab({ products, totalUsers, orders, showPage, selectTab }: {
           <div className="admin-panel-heading"><div><h2 id="store-actions-title">Store controls</h2><p>Maintenance and catalog actions</p></div></div>
           <div className="admin-health-list">
             <button type="button" onClick={() => selectTab('products')}>
-              <span><strong>Catalog pricing</strong><small>Products unavailable at checkout</small></span>
-              <span className={needsPrice ? 'admin-health-warning' : 'admin-health-good'}>{needsPrice || 'Ready'}</span>
+              <span><strong>Catalog availability</strong><small>Out of stock or missing a price</small></span>
+              <span className={needsPrice || outOfStock ? 'admin-health-warning' : 'admin-health-good'}>{needsPrice + outOfStock || 'Ready'}</span>
             </button>
             <button type="button" onClick={() => selectTab('orders')}>
               <span><strong>Fulfilment queue</strong><small>Orders waiting for action</small></span>
@@ -249,6 +256,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
       return matchesCategory && matchesQuery;
     });
   }, [products, query, category]);
+  const editingProduct = modal.editId ? products.find(product => product.id === modal.editId) : undefined;
 
   useEffect(() => {
     if (!modal.open) return;
@@ -277,6 +285,8 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
       badge: product.badge ?? '',
       badgeClass: product.badgeClass ?? '',
       description: product.description ?? '',
+      stockQuantity: String(product.stockQuantity ?? 0),
+      isActive: product.isActive ?? true,
     });
     setFormError('');
     setModal({ open: true, editId: product.id });
@@ -310,9 +320,11 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
     event.preventDefault();
     const price = Number(form.price);
     const rating = Number(form.rating);
+    const stockQuantity = Number(form.stockQuantity);
     if (!form.name.trim()) return setFormError('Enter a product name.');
     if (!Number.isFinite(price) || price <= 0) return setFormError('Enter a price greater than $0.');
     if (!Number.isFinite(rating) || rating < 0 || rating > 5) return setFormError('Rating must be between 0 and 5.');
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0) return setFormError('Stock must be a non-negative whole number.');
     if (!form.image.trim()) return setFormError('Add a product image.');
 
     const oldPrice = Number(form.oldPrice);
@@ -327,6 +339,8 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
       badge: form.badge.trim() || undefined,
       badgeClass: form.badgeClass || undefined,
       description: form.description.trim() || undefined,
+      stockQuantity,
+      isActive: form.isActive,
     };
 
     setSaving(true);
@@ -377,7 +391,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
         {filteredProducts.length ? (
           <div className="admin-table-wrap">
             <table className="admin-table admin-product-table">
-              <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Rating</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Inventory</th><th>Status</th><th>Rating</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {filteredProducts.map(product => (
                   <tr key={product.id}>
@@ -389,7 +403,14 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
                     </td>
                     <td>{PRODUCT_CATEGORY_LABELS[product.category] || product.category}</td>
                     <td><strong>{currency.format(product.price)}</strong>{product.oldPrice ? <small>{currency.format(product.oldPrice)}</small> : null}</td>
-                    <td>{product.price > 0 ? <span className="admin-badge admin-badge-active">Active</span> : <span className="admin-badge admin-badge-warning">Needs price</span>}</td>
+                    <td><strong>{product.availableQuantity ?? 0} available</strong><small>{product.stockQuantity ?? 0} on hand, {product.reservedQuantity ?? 0} reserved</small></td>
+                    <td>{product.isActive === false
+                      ? <span className="admin-badge admin-badge-neutral">Inactive</span>
+                      : product.price <= 0
+                        ? <span className="admin-badge admin-badge-warning">Needs price</span>
+                        : (product.availableQuantity ?? 0) <= 0
+                          ? <span className="admin-badge admin-badge-warning">Out of stock</span>
+                          : <span className="admin-badge admin-badge-active">Active</span>}</td>
                     <td>{product.rating.toFixed(1)} <span className="admin-muted">({product.reviews ?? 0})</span></td>
                     <td>
                       <div className="admin-row-actions">
@@ -417,12 +438,14 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
               <div className="admin-form-grid">
                 <label className="admin-field admin-field-full"><span>Product name</span><input autoFocus required value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} /></label>
                 <label className="admin-field"><span>Category</span><select value={form.category} onChange={event => setForm(current => ({ ...current, category: event.target.value }))}>{categories.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-                <label className="admin-field"><span>Price (CAD)</span><input required min="0.01" step="0.01" type="number" value={form.price} onChange={event => setForm(current => ({ ...current, price: event.target.value }))} /></label>
+                <label className="admin-field"><span>Price (USD)</span><input required min="0.01" step="0.01" type="number" value={form.price} onChange={event => setForm(current => ({ ...current, price: event.target.value }))} /></label>
+                <label className="admin-field"><span>Stock on hand</span><input required min="0" step="1" type="number" value={form.stockQuantity} onChange={event => setForm(current => ({ ...current, stockQuantity: event.target.value }))} />{editingProduct && <small>{editingProduct.reservedQuantity ?? 0} currently reserved in active checkouts</small>}</label>
                 <label className="admin-field"><span>Compare-at price</span><input min="0" step="0.01" type="number" value={form.oldPrice} onChange={event => setForm(current => ({ ...current, oldPrice: event.target.value }))} /></label>
                 <label className="admin-field"><span>Rating</span><input min="0" max="5" step="0.1" type="number" value={form.rating} onChange={event => setForm(current => ({ ...current, rating: event.target.value }))} /></label>
                 <label className="admin-field"><span>Review count</span><input min="0" step="1" type="number" value={form.reviews} onChange={event => setForm(current => ({ ...current, reviews: event.target.value }))} /></label>
                 <label className="admin-field"><span>Badge</span><input placeholder="Bestseller" value={form.badge} onChange={event => setForm(current => ({ ...current, badge: event.target.value }))} /></label>
                 <label className="admin-field"><span>Badge style</span><select value={form.badgeClass} onChange={event => setForm(current => ({ ...current, badgeClass: event.target.value }))}><option value="">Standard</option><option value="hot">Hot</option></select></label>
+                <label className="admin-availability-field admin-field-full"><input type="checkbox" checked={form.isActive} onChange={event => setForm(current => ({ ...current, isActive: event.target.checked }))} /><span><strong>Visible in storefront</strong><small>Turn this off to hide the product without deleting it.</small></span></label>
                 <label className="admin-field admin-field-full"><span>Description</span><textarea rows={3} value={form.description} onChange={event => setForm(current => ({ ...current, description: event.target.value }))} /></label>
               </div>
 
@@ -462,6 +485,10 @@ function OrdersTab({ orders, updateOrderStatus }: {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [returnUpdatingId, setReturnUpdatingId] = useState<string | null>(null);
+  const [returnStatuses, setReturnStatuses] = useState<Record<string, ReturnStatus>>({});
+  const [returnNotes, setReturnNotes] = useState<Record<string, string>>({});
+  const updateReturnMutation = useMutation(api.orders.updateReturnRequest);
   const filteredOrders = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return [...orders]
@@ -476,6 +503,18 @@ function OrdersTab({ orders, updateOrderStatus }: {
     setTracking(current => ({ ...existingTracking, ...current }));
   }, [orders]);
 
+  useEffect(() => {
+    const existingStatuses: Record<string, ReturnStatus> = {};
+    const existingNotes: Record<string, string> = {};
+    orders.forEach(order => {
+      if (!order.returnRequest) return;
+      existingStatuses[order.id] = order.returnRequest.status;
+      existingNotes[order.id] = order.returnRequest.adminNote ?? '';
+    });
+    setReturnStatuses(current => ({ ...existingStatuses, ...current }));
+    setReturnNotes(current => ({ ...existingNotes, ...current }));
+  }, [orders]);
+
   async function saveOrder(order: Order, nextStatus: 'pending' | 'shipped' | 'delivered') {
     setUpdatingId(order.id);
     try {
@@ -484,6 +523,22 @@ function OrdersTab({ orders, updateOrderStatus }: {
       alert(error instanceof Error ? error.message : 'Order could not be updated.');
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function saveReturn(order: Order) {
+    if (!order.returnRequest) return;
+    setReturnUpdatingId(order.id);
+    try {
+      await updateReturnMutation({
+        id: order.id as any,
+        status: returnStatuses[order.id] ?? order.returnRequest.status,
+        adminNote: returnNotes[order.id]?.trim() || undefined,
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Return request could not be updated.');
+    } finally {
+      setReturnUpdatingId(null);
     }
   }
 
@@ -501,15 +556,16 @@ function OrdersTab({ orders, updateOrderStatus }: {
         {filteredOrders.length ? (
           <div className="admin-table-wrap">
             <table className="admin-table admin-order-table">
-              <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Tracking</th></tr></thead>
+              <thead><tr><th>Order</th><th>Customer</th><th>Delivery address</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Tracking</th><th>Exchange / replacement</th></tr></thead>
               <tbody>
                 {filteredOrders.map(order => (
                   <tr key={order.id}>
                     <td className="admin-mono">#{order.id.slice(0, 8)}<small>{formatDate(order.createdAt)}</small></td>
                     <td><strong>{order.userName}</strong></td>
+                    <td>{order.shippingAddress ? <address className="admin-address"><strong>{order.shippingAddress.name}</strong><span>{formatAddress(order.shippingAddress)}</span></address> : <span className="admin-muted">Unavailable</span>}</td>
                     <td className="admin-items-cell">{order.items.map(item => `${item.name} ×${item.qty}`).join(', ')}</td>
                     <td><strong>{currency.format(order.total)}</strong></td>
-                    <td><PaymentBadge status={order.paymentStatus} /></td>
+                    <td><PaymentBadge status={order.paymentStatus} />{order.inventoryStatus === 'error' && <small className="admin-inventory-error">Inventory review required</small>}</td>
                     <td>
                       {order.status === 'cancelled' ? <StatusBadge status="cancelled" /> : (
                         <select
@@ -528,6 +584,19 @@ function OrdersTab({ orders, updateOrderStatus }: {
                         <input value={tracking[order.id] || ''} disabled={order.status === 'cancelled'} onChange={event => setTracking(current => ({ ...current, [order.id]: event.target.value }))} placeholder="Tracking number" aria-label={`Tracking number for order ${order.id}`} />
                         <button className="admin-button admin-button-small admin-button-secondary" disabled={order.status === 'cancelled' || updatingId === order.id} onClick={() => void saveOrder(order, order.status as 'pending' | 'shipped' | 'delivered')}>{updatingId === order.id ? 'Saving…' : 'Save'}</button>
                       </div>
+                    </td>
+                    <td>
+                      {order.returnRequest ? (
+                        <div className="admin-return-control">
+                          <strong>{order.returnRequest.type}</strong>
+                          <small>{order.returnRequest.reason}</small>
+                          <select value={returnStatuses[order.id] ?? order.returnRequest.status} disabled={returnUpdatingId === order.id} onChange={event => setReturnStatuses(current => ({ ...current, [order.id]: event.target.value as ReturnStatus }))} aria-label={`Return status for order ${order.id}`}>
+                            <option value="requested">Requested</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="received">Received</option><option value="completed">Completed</option>
+                          </select>
+                          <input value={returnNotes[order.id] ?? ''} maxLength={500} disabled={returnUpdatingId === order.id} onChange={event => setReturnNotes(current => ({ ...current, [order.id]: event.target.value }))} placeholder="Customer instructions" aria-label={`Return instructions for order ${order.id}`} />
+                          <button className="admin-button admin-button-small admin-button-secondary" disabled={returnUpdatingId === order.id} onClick={() => void saveReturn(order)}>{returnUpdatingId === order.id ? 'Saving...' : 'Save request'}</button>
+                        </div>
+                      ) : <span className="admin-muted">None</span>}
                     </td>
                   </tr>
                 ))}
@@ -603,4 +672,8 @@ function initials(name: string) {
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatAddress(address: NonNullable<Order['shippingAddress']>) {
+  return [address.line1, address.line2, [address.city, address.state].filter(Boolean).join(', '), address.postalCode, address.country].filter(Boolean).join(', ');
 }

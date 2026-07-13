@@ -15,10 +15,10 @@ export default function ShippingPage() {
           Policies
         </div>
         <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 8, color: 'var(--text)' }}>
-          Shipping & Returns Policy
+          Shipping, Exchange &amp; Replacement Policy
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 40 }}>
-          Last Updated: May 25, 2026
+          Last Updated: July 13, 2026
         </p>
 
         <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
@@ -31,31 +31,30 @@ export default function ShippingPage() {
           </Section>
 
           <Section title="2. Shipping Methods and Rates">
-            <p>Shipping costs and estimated delivery times are calculated and displayed at checkout based on your location and selected shipping method.</p>
+            <p>Delivery is available only to Canadian addresses. The delivery charge is displayed in USD at checkout before payment.</p>
             <ul>
-              <li><strong>Standard Shipping:</strong> 5-8 business days — Calculated at checkout</li>
-              <li><strong>Express Shipping:</strong> 2-3 business days — Calculated at checkout</li>
+              <li><strong>Canada delivery:</strong> $9.99 USD for orders of $99 USD or less</li>
+              <li><strong>Free Canada delivery:</strong> Orders over $99 USD</li>
+              <li>The store owner will confirm the expected delivery timing after the order is received</li>
             </ul>
           </Section>
 
           <Section title="3. Order Tracking">
-            <p>Once your order is shipped, you will receive a shipment confirmation email with tracking information. You can use this tracking number to monitor your package's delivery progress.</p>
+            <p>When your order is prepared for delivery, you will receive an order update by email. Tracking or delivery-reference information will be provided when available.</p>
           </Section>
 
           <Section title="4. Shipping Restrictions">
             <ul>
-              <li>We currently ship to addresses within <strong>Canada and the United States</strong></li>
-              <li>We do not ship to PO Boxes or APO/FPO addresses</li>
-              <li>International customers are responsible for any customs duties, taxes, or import fees</li>
-              <li>We reserve the right to refuse shipping to certain addresses</li>
+              <li>We currently deliver only to addresses within <strong>Canada</strong></li>
+              <li>A complete Canadian street address and postal code must be provided during Stripe Checkout</li>
+              <li>Orders cannot be completed using a delivery address outside Canada</li>
             </ul>
           </Section>
 
           <Section title="5. Delayed or Lost Packages">
             <ul>
-              <li>We are not responsible for delays caused by shipping carriers, weather, or customs clearance</li>
-              <li>If your package has not arrived within the estimated timeframe, please contact the carrier directly with your tracking number</li>
-              <li>If your package is lost in transit, contact us at <strong>hello@sportsfolio.store</strong> and we will assist with a resolution</li>
+              <li>Delivery timing may be affected by weather, access restrictions, or other circumstances outside our control</li>
+              <li>If your order has not arrived within the confirmed timeframe, contact us at <strong>hello@sportsfolio.store</strong></li>
             </ul>
           </Section>
 
@@ -66,21 +65,20 @@ export default function ShippingPage() {
           <hr style={{ border: 'none', borderTop: '2px solid var(--neon)', margin: '48px 0' }} />
 
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.5rem', fontWeight: 700, marginBottom: 20, color: 'var(--text)' }}>
-            Returns &amp; Cancellation Policy
+            Exchange, Replacement &amp; Cancellation Policy
           </h2>
 
           <Section title="7. Order Cancellation">
             <ul>
-              <li>Orders can be cancelled only while in <strong>pending</strong> status (before shipment)</li>
-              <li>To cancel, go to <strong>My Orders</strong> in your account and click the Cancel button</li>
-              <li>Once an order has been <strong>shipped</strong> or <strong>delivered</strong>, it cannot be cancelled through the website</li>
-              <li>For assistance with shipped orders, contact our support team</li>
-              <li>A cancellation confirmation email will be sent to your registered email address</li>
+              <li>Unpaid checkout sessions expire automatically and do not become confirmed orders</li>
+              <li>Paid orders cannot be cancelled through the website</li>
+              <li>Contact us immediately if you need help before an order is dispatched; we cannot guarantee that fulfilment can be stopped</li>
+              <li>After delivery, eligible items may be submitted for an exchange or replacement under the process below</li>
             </ul>
           </Section>
 
           <Section title="8. Return Eligibility">
-            <p>We accept returns within <strong>30 days</strong> of delivery for most items. To be eligible for a return:</p>
+            <p>We accept exchange or replacement requests within <strong>30 days</strong> of delivery for most items. To be eligible:</p>
             <ul>
               <li>Items must be unused, unworn, and in their original packaging</li>
               <li>Protective gear (helmets, gloves, pads) must be in hygienic condition</li>
@@ -89,31 +87,33 @@ export default function ShippingPage() {
             </ul>
           </Section>
 
-          <Section title="9. How to Initiate a Return">
+          <Section title="9. How to Request an Exchange or Replacement">
             <ol style={{ paddingLeft: 20 }}>
-              <li>Contact us at <strong>hello@sportsfolio.store</strong> within 30 days of delivery</li>
-              <li>Provide your order number and the item(s) you wish to return</li>
-              <li>We will provide a return authorization and shipping instructions</li>
+              <li>Open <strong>My Orders</strong> within 30 days of delivery</li>
+              <li>Select the delivered order and choose exchange or replacement</li>
+              <li>Describe the item and reason for the request</li>
+              <li>Wait for the store owner to approve the request and provide return instructions</li>
               <li>Pack the item securely in its original packaging</li>
-              <li>Ship the item back using the provided instructions</li>
+              <li>Return the item using the approved instructions</li>
             </ol>
           </Section>
 
-          <Section title="10. Refund Processing">
+          <Section title="10. Exchange and Replacement Resolution">
             <ul>
-              <li>Once we receive and inspect your return, we will notify you of the approval or rejection</li>
-              <li>Approved refunds will be processed to the original payment method within <strong>5-10 business days</strong></li>
-              <li>Shipping costs are non-refundable unless the return is due to our error or a defective item</li>
+              <li>Requests are reviewed before a return is accepted</li>
+              <li>Approved items are exchanged or replaced after they are received and inspected</li>
+              <li><strong>No cash refunds except where required by law</strong></li>
               <li>You are responsible for return shipping costs unless the item is defective or incorrect</li>
+              <li>Exchange and replacement availability depends on current inventory</li>
             </ul>
           </Section>
 
           <Section title="11. Damaged or Defective Items">
-            <p>If you receive a damaged or defective item, please contact us immediately at <strong>hello@sportsfolio.store</strong> with your order number and photos of the damage. We will arrange a replacement or full refund, including return shipping costs.</p>
+            <p>If you receive a damaged, defective, or incorrect item, submit a replacement request from <strong>My Orders</strong> and contact us at <strong>hello@sportsfolio.store</strong> with your order number and photos. We will arrange an eligible replacement or exchange and cover the reasonable return cost.</p>
           </Section>
 
-          <Section title="12. Exchanges">
-            <p>We currently do not offer direct exchanges. If you need a different size or product, please return the original item for a refund and place a new order.</p>
+          <Section title="12. Exchanges and Replacements">
+            <p>Approved exchanges and replacements are subject to product availability. If the requested item is unavailable, the store owner will contact you to agree on another eligible exchange or replacement. No cash refunds are provided except where required by law.</p>
           </Section>
         </div>
 

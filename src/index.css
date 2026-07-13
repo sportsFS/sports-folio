@@ -409,6 +409,16 @@ header.scrolled {
   color: var(--neon);
 }
 
+.card-add-btn:disabled {
+  background: var(--card-border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.card-add-btn:disabled::before { display: none; }
+
 .product-addon-panel {
   margin-top: 12px;
   padding: 12px;

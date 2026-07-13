@@ -15,9 +15,15 @@ export default function ProductCard({ product }: Props) {
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const suggestedAddOn = findSuggestedAddOn(product, products, cart);
+  const availableQuantity = product.availableQuantity ?? 0;
+  const isAvailable = product.isActive !== false && product.price > 0 && availableQuantity > 0;
   const stars = '★'.repeat(Math.floor(product.rating));
 
   function handleAddToCart() {
+    if (!isAvailable) {
+      showToast('Out of stock', `${product.name} is not currently available`, 'error');
+      return;
+    }
     if (!isLoggedIn) {
       showToast('Login Required', 'Please login to add items to cart');
       showPage('login');
@@ -40,17 +46,17 @@ export default function ProductCard({ product }: Props) {
   return (
     <div className="product-card reveal visible">
       {/* Badge */}
-      {product.badge && (
+      {(!isAvailable || product.badge) && (
         <div style={{
           position: 'absolute', top: 16, left: 16,
           padding: '6px 14px',
-          background: product.badgeClass === 'hot' ? '#FF3333' : 'var(--neon)',
-          color: product.badgeClass === 'hot' ? 'white' : 'var(--black)',
+          background: !isAvailable || product.badgeClass === 'hot' ? '#FF3333' : 'var(--neon)',
+          color: !isAvailable || product.badgeClass === 'hot' ? 'white' : 'var(--black)',
           fontWeight: 700, fontSize: '0.75rem',
           borderRadius: 50, zIndex: 5,
           textTransform: 'uppercase', letterSpacing: '0.5px',
         }}>
-          {product.badge}
+          {!isAvailable ? 'Out of stock' : product.badge}
         </div>
       )}
 
@@ -123,8 +129,13 @@ export default function ProductCard({ product }: Props) {
           </div>
           <span style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
         </div>
-        <button className={`card-add-btn ${added ? 'added' : ''}`} onClick={handleAddToCart}>
-          {added ? '✓ ADDED' : '🛒 ADD TO CART'}
+        {isAvailable && availableQuantity <= 5 && (
+          <p style={{ color: '#8a5200', fontSize: '0.78rem', fontWeight: 700, margin: '-6px 0 10px' }}>
+            Only {availableQuantity} left
+          </p>
+        )}
+        <button className={`card-add-btn ${added ? 'added' : ''}`} onClick={handleAddToCart} disabled={!isAvailable}>
+          {!isAvailable ? 'OUT OF STOCK' : added ? '✓ ADDED' : '🛒 ADD TO CART'}
         </button>
         {showAddOn && suggestedAddOn && (
           <div className="product-addon-panel">

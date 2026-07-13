@@ -18,7 +18,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 40 }}>
-          Last Updated: May 25, 2026
+          Last Updated: July 13, 2026
         </p>
 
         <div style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>

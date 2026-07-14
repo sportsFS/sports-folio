@@ -6,7 +6,6 @@ export default function SearchBar() {
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState(searchQuery);
   const inputRef = useRef<HTMLInputElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (expanded && inputRef.current) {
@@ -32,10 +31,6 @@ export default function SearchBar() {
     setExpanded(false);
   }
 
-  function handleBlur(event: React.FocusEvent<HTMLInputElement>) {
-    if (!wrapperRef.current?.contains(event.relatedTarget as Node | null)) closeSearch();
-  }
-
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter') {
       setSearchQuery(query.trim());
@@ -53,7 +48,6 @@ export default function SearchBar() {
 
   return (
     <div
-      ref={wrapperRef}
       className={`search-bar-wrapper ${expanded ? 'expanded' : ''}`}
     >
       <button className="search-icon-btn" onClick={handleExpand} aria-label="Search">
@@ -72,7 +66,6 @@ export default function SearchBar() {
             placeholder="Search gear..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            onBlur={handleBlur}
             onKeyDown={handleKeyDown}
           />
           {query && (

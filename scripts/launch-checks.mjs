@@ -78,6 +78,7 @@ assert.match(productQuickView, /<dialog/, 'quick view must use the native dialog
 assert.match(productQuickView, /findSuggestedAddOns[\s\S]*selectedAddOnIds[\s\S]*addToCart/, 'quick view must use configured add-ons when adding to cart');
 assert.match(productCard + homePage, /ProductQuickView/g, 'shop and home product cards must expose quick view');
 assert.match(searchBar, /function closeSearch\(\)[\s\S]*setSearchQuery\(''\)[\s\S]*setExpanded\(false\)/, 'closing search must clear the shared product query');
+assert.doesNotMatch(searchBar, /onBlur=\{handleBlur\}/, 'opening a product must not clear search through input blur');
 assert.match(shopPage, /function selectCategory[\s\S]*setSearchQuery\(''\)[\s\S]*setCategory/, 'choosing a category must clear stale search filters');
 assert.match(homePage, /isPaused[\s\S]*setInterval[\s\S]*4000[\s\S]*onFocusCapture/, 'testimonials must auto-advance and pause during interaction');
 assert.match(shopPage, /product\.rating >= minimumRating[\s\S]*slice\(0, visibleCount\)/, 'shop rating filter and incremental product loading must remain functional');

@@ -54,7 +54,7 @@ export default function ProductCard({ product }: Props) {
     <div className="product-card reveal visible">
       {/* Badge */}
       {(!isAvailable || product.badge) && (
-        <div style={{
+        <div className="product-card-badge" style={{
           position: 'absolute', top: 16, left: 16,
           padding: '6px 14px',
           background: !isAvailable || product.badgeClass === 'hot' ? '#FF3333' : 'var(--neon)',
@@ -104,8 +104,8 @@ export default function ProductCard({ product }: Props) {
       </button>
 
       {/* Body */}
-      <div style={{ padding: 20 }}>
-        <div style={{
+      <div className="product-card-body" style={{ padding: 20 }}>
+        <div className="product-card-category" style={{
           fontSize: '0.75rem',
           color: 'var(--neon-dark)',
           fontWeight: 600, textTransform: 'uppercase',
@@ -113,31 +113,31 @@ export default function ProductCard({ product }: Props) {
         }}>
           {getProductCategoryLabel(product)}
         </div>
-        <h3 style={{
+        <h3 className="product-card-name" style={{
           fontSize: '1.05rem', fontWeight: 700,
           marginBottom: 8, lineHeight: 1.4,
           color: 'var(--text)',
         }}>
           <button type="button" className="product-card-title-button" onClick={() => setShowQuickView(true)}>{product.name}</button>
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: '0.85rem' }}>
+        <div className="product-card-rating" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: '0.85rem' }}>
           <span style={{ color: '#FFD700', letterSpacing: 2 }}>{stars}</span>
           <span style={{ color: 'var(--text)' }}>{product.rating}</span>
           <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({product.reviews ?? 0})</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div className="product-card-pricing" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
+            <span className="product-card-price" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
               {cadFormatter.format(product.price)}
             </span>
             {product.oldPrice && (
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>
+              <span className="product-card-old-price" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>
                 {cadFormatter.format(product.oldPrice)}
               </span>
             )}
           </div>
           {discount > 0 && (
-            <span style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
+            <span className="product-card-discount" style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
           )}
         </div>
         {isAvailable && availableQuantity <= 5 && (

@@ -313,16 +313,16 @@ const testimonialData = [
 
 function TestimonialsCarousel() {
   const [index, setIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const testimonial = testimonialData[index];
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (isPaused) return;
     const timer = window.setInterval(() => {
       setIndex(current => (current + 1) % testimonialData.length);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [isPlaying]);
+  }, [isPaused]);
 
   function showPrevious() {
     setIndex(current => (current - 1 + testimonialData.length) % testimonialData.length);
@@ -333,7 +333,14 @@ function TestimonialsCarousel() {
   }
 
   return (
-    <div className="home-testimonial" aria-live="polite">
+    <div
+      className="home-testimonial"
+      aria-live="polite"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={() => setIsPaused(false)}
+    >
       <blockquote key={testimonial.name}>
         <p>{testimonial.text}</p>
         <div className="home-review-author">
@@ -348,13 +355,6 @@ function TestimonialsCarousel() {
         <span>{index + 1} / {testimonialData.length}</span>
         <div>
           <button onClick={showPrevious} aria-label="Previous customer review">&larr;</button>
-          <button
-            onClick={() => setIsPlaying(current => !current)}
-            aria-label={isPlaying ? 'Pause customer reviews' : 'Play customer reviews'}
-            title={isPlaying ? 'Pause' : 'Play'}
-          >
-            <span aria-hidden="true">{isPlaying ? '||' : '>'}</span>
-          </button>
           <button onClick={showNext} aria-label="Next customer review">&rarr;</button>
         </div>
       </div>

@@ -9,6 +9,10 @@ function getStripe() {
   return new Stripe(secretKey);
 }
 
+function paymentFinished(session: Stripe.Checkout.Session) {
+  return session.payment_status === "paid" || session.status === "complete";
+}
+
 export const createCheckoutSession = action({
   args: {
     items: v.array(v.object({
@@ -63,7 +67,7 @@ export const createCheckoutSession = action({
         }],
         expires_at: Math.floor(reservationExpiresAt / 1000),
         success_url: `${siteUrl}/?order=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${siteUrl}/?page=cart`,
+        cancel_url: `${siteUrl}/my-orders?checkout=cancelled`,
         metadata: { orderId: orderId.toString() },
       });
 
@@ -79,5 +83,52 @@ export const createCheckoutSession = action({
       await ctx.runMutation(internal.orders.releaseCheckoutReservation, { orderId });
       throw error;
     }
+  },
+});
+
+export const resumeCheckoutSession = action({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const checkout = await ctx.runQuery(internal.orders.getCheckoutForAction, args);
+    if (checkout.paymentStatus !== "pending" || checkout.status !== "pending" || checkout.inventoryStatus !== "reserved") {
+      throw new Error("This checkout is no longer awaiting payment");
+    }
+
+    const session = await getStripe().checkout.sessions.retrieve(checkout.stripeSessionId);
+    if (paymentFinished(session)) throw new Error("Payment is already being confirmed");
+    if (session.status === "expired") {
+      await ctx.runMutation(internal.orders.releaseCheckoutReservation, { orderId: args.orderId });
+      throw new Error("This checkout expired and its reserved stock was released");
+    }
+    if (session.status !== "open" || !session.url) throw new Error("This checkout cannot be resumed");
+    return { url: session.url };
+  },
+});
+
+export const cancelCheckoutSession = action({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const checkout = await ctx.runQuery(internal.orders.getCheckoutForAction, args);
+    if (checkout.paymentStatus === "paid") throw new Error("Paid orders cannot be cancelled here");
+    if (checkout.status === "cancelled" && checkout.inventoryStatus === "released") return { cancelled: true };
+    if (checkout.status !== "pending" || checkout.inventoryStatus !== "reserved") {
+      throw new Error("This checkout cannot be cancelled");
+    }
+
+    const stripe = getStripe();
+    let session = await stripe.checkout.sessions.retrieve(checkout.stripeSessionId);
+    if (paymentFinished(session)) throw new Error("Payment is already being confirmed");
+    if (session.status === "open") {
+      try {
+        session = await stripe.checkout.sessions.expire(session.id);
+      } catch {
+        session = await stripe.checkout.sessions.retrieve(session.id);
+      }
+    }
+    if (paymentFinished(session)) throw new Error("Payment is already being confirmed");
+    if (session.status !== "expired") throw new Error("Stripe could not cancel this checkout");
+
+    await ctx.runMutation(internal.orders.releaseCheckoutReservation, { orderId: args.orderId });
+    return { cancelled: true };
   },
 });

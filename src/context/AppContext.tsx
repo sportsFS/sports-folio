@@ -54,6 +54,7 @@ export interface Order {
   stripeSessionId?: string;
   trackingNumber?: string;
   inventoryStatus?: 'reserved' | 'sold' | 'released' | 'error';
+  reservationExpiresAt?: number;
   deliveredAt?: string;
   returnRequest?: {
     type: 'exchange' | 'replacement';

@@ -1,4 +1,6 @@
 import { CSSProperties, FormEvent, useState } from 'react';
+import { useAction } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useApp } from '../context/AppContext';
 
 type ReturnForm = {
@@ -11,6 +13,34 @@ export default function MyOrdersPage() {
   const { orders, requestReturn, showPage, showToast } = useApp();
   const [returnForm, setReturnForm] = useState<ReturnForm | null>(null);
   const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [checkoutAction, setCheckoutAction] = useState<{ orderId: string; type: 'resume' | 'cancel' } | null>(null);
+  const resumeCheckout = useAction(api.stripe.resumeCheckoutSession);
+  const cancelCheckout = useAction(api.stripe.cancelCheckoutSession);
+
+  async function handleResumePayment(orderId: string) {
+    if (checkoutAction) return;
+    setCheckoutAction({ orderId, type: 'resume' });
+    try {
+      const result = await resumeCheckout({ orderId: orderId as any });
+      window.location.assign(result.url);
+    } catch (error) {
+      showToast('Unable to continue payment', error instanceof Error ? error.message : 'Please try again.', 'error');
+      setCheckoutAction(null);
+    }
+  }
+
+  async function handleCancelCheckout(orderId: string) {
+    if (checkoutAction || !confirm('Cancel this unpaid checkout and release its reserved items?')) return;
+    setCheckoutAction({ orderId, type: 'cancel' });
+    try {
+      await cancelCheckout({ orderId: orderId as any });
+      showToast('Checkout cancelled', 'Reserved inventory has been released.');
+    } catch (error) {
+      showToast('Unable to cancel checkout', error instanceof Error ? error.message : 'Please try again.', 'error');
+    } finally {
+      setCheckoutAction(null);
+    }
+  }
 
   async function handleReturnSubmit(event: FormEvent) {
     event.preventDefault();
@@ -57,6 +87,9 @@ export default function MyOrdersPage() {
             {orders.slice().reverse().map(order => {
               const isEditingReturn = returnForm?.orderId === order.id;
               const canRequestReturn = order.paymentStatus === 'paid' && order.status === 'delivered' && !order.returnRequest;
+              const awaitingPayment = order.paymentStatus === 'pending' && order.status === 'pending' && order.inventoryStatus === 'reserved' && Boolean(order.stripeSessionId);
+              const checkoutExpired = Boolean(order.reservationExpiresAt && order.reservationExpiresAt <= Date.now());
+              const isCheckoutBusy = checkoutAction?.orderId === order.id;
               return (
                 <article key={order.id} style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 8, padding: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
@@ -67,7 +100,7 @@ export default function MyOrdersPage() {
                       </p>
                     </div>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem', padding: '4px 14px', borderRadius: 50, border: '1px solid', ...statusStyles[order.status], opacity: 0.9 }}>
-                      {order.status.toUpperCase()}
+                      {awaitingPayment ? 'AWAITING PAYMENT' : order.status.toUpperCase()}
                     </span>
                   </div>
 
@@ -103,6 +136,25 @@ export default function MyOrdersPage() {
                     <span style={{ color: 'var(--text)' }}>Total</span>
                     <span style={{ color: 'var(--neon-dark)' }}>${order.total.toFixed(2)} CAD</span>
                   </div>
+
+                  {awaitingPayment && (
+                    <div style={{ marginTop: 18, padding: 16, borderRadius: 8, border: '1px solid #d99a2b', background: 'rgba(217,154,43,0.09)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                      <div>
+                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{checkoutExpired ? 'Payment window expired' : 'Payment not completed'}</strong>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: 4 }}>
+                          {checkoutExpired
+                            ? 'Release these items to make them available again.'
+                            : order.reservationExpiresAt
+                              ? `Items are reserved until ${new Date(order.reservationExpiresAt).toLocaleString('en-CA')}.`
+                              : 'Items are temporarily reserved while this checkout remains open.'}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {!checkoutExpired && <button className="btn-neon" disabled={isCheckoutBusy} style={{ padding: '9px 15px' }} onClick={() => void handleResumePayment(order.id)}>{checkoutAction?.orderId === order.id && checkoutAction.type === 'resume' ? 'Opening...' : 'Continue payment'}</button>}
+                        <button disabled={isCheckoutBusy} onClick={() => void handleCancelCheckout(order.id)} style={{ padding: '9px 15px', border: '1px solid var(--card-border)', borderRadius: 6, background: 'transparent', color: 'var(--text)', cursor: isCheckoutBusy ? 'wait' : 'pointer', fontWeight: 700 }}>{checkoutAction?.orderId === order.id && checkoutAction.type === 'cancel' ? 'Cancelling...' : checkoutExpired ? 'Release reservation' : 'Cancel checkout'}</button>
+                      </div>
+                    </div>
+                  )}
 
                   {order.returnRequest && (
                     <div style={{ marginTop: 18, padding: 16, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--card-border)' }}>

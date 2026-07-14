@@ -1,4 +1,4 @@
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { sendEmail } from "./email";
 import { requireAdmin, requireCurrentUser } from "./auth";
@@ -51,7 +51,7 @@ export const list = query({
          id: o._id, userId: o.userId, userName: o.userName, items: o.items,
          total: o.total, shippingAmount: o.shippingAmount, shippingAddress: o.shippingAddress, status: o.status, createdAt: o.createdAt,
          paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
-         inventoryStatus: o.inventoryStatus, deliveredAt: o.deliveredAt, returnRequest: o.returnRequest,
+         inventoryStatus: o.inventoryStatus, reservationExpiresAt: o.reservationExpiresAt, deliveredAt: o.deliveredAt, returnRequest: o.returnRequest,
        }));
      }
         const orders = await ctx.db
@@ -63,8 +63,24 @@ export const list = query({
           id: o._id, userId: o.userId, userName: o.userName, items: o.items,
           total: o.total, shippingAmount: o.shippingAmount, shippingAddress: o.shippingAddress, status: o.status, createdAt: o.createdAt,
            paymentStatus: o.paymentStatus, paymentIntent: o.paymentIntent, stripeSessionId: o.stripeSessionId, trackingNumber: o.trackingNumber,
-           inventoryStatus: o.inventoryStatus, deliveredAt: o.deliveredAt, returnRequest: o.returnRequest,
+           inventoryStatus: o.inventoryStatus, reservationExpiresAt: o.reservationExpiresAt, deliveredAt: o.deliveredAt, returnRequest: o.returnRequest,
          }));
+  },
+});
+
+export const getCheckoutForAction = internalQuery({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const caller = await requireCurrentUser(ctx);
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.userId !== caller._id) throw new Error("Order not found");
+    if (!order.stripeSessionId) throw new Error("Checkout session not found");
+    return {
+      stripeSessionId: order.stripeSessionId,
+      paymentStatus: order.paymentStatus,
+      status: order.status,
+      inventoryStatus: order.inventoryStatus,
+    };
   },
 });
 

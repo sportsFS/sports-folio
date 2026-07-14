@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Product } from '../data/products';
 import { useApp } from '../context/AppContext';
 import { findSuggestedAddOns, getProductCategoryLabel } from '../data/catalog';
+import ProductQuickView from './ProductQuickView';
 
 interface Props {
   product: Product;
@@ -18,6 +19,7 @@ export default function ProductCard({ product }: Props) {
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [showAddOn, setShowAddOn] = useState(false);
+  const [showQuickView, setShowQuickView] = useState(false);
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const suggestedAddOns = findSuggestedAddOns(product, products, cart);
@@ -48,6 +50,7 @@ export default function ProductCard({ product }: Props) {
   }
 
   return (
+    <>
     <div className="product-card reveal visible">
       {/* Badge */}
       {(!isAvailable || product.badge) && (
@@ -85,12 +88,12 @@ export default function ProductCard({ product }: Props) {
       </button>
 
       {/* Image */}
-      <div style={{
+      <button type="button" className="product-card-quick-view-trigger" onClick={() => setShowQuickView(true)} aria-label={`View details for ${product.name}`} style={{
         width: '100%', height: 240,
         background: 'var(--section-alt)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden',
-        transition: 'all 0.4s ease',
+        transition: 'all 0.4s ease', border: 0, padding: 0, cursor: 'pointer',
       }}>
         <img src={product.image} alt={product.name} className="card-image-inner" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} />
         <div style={{
@@ -98,7 +101,7 @@ export default function ProductCard({ product }: Props) {
           height: 60,
           background: 'linear-gradient(transparent, var(--card-bg))',
         }} />
-      </div>
+      </button>
 
       {/* Body */}
       <div style={{ padding: 20 }}>
@@ -115,7 +118,7 @@ export default function ProductCard({ product }: Props) {
           marginBottom: 8, lineHeight: 1.4,
           color: 'var(--text)',
         }}>
-          {product.name}
+          <button type="button" className="product-card-title-button" onClick={() => setShowQuickView(true)}>{product.name}</button>
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: '0.85rem' }}>
           <span style={{ color: '#FFD700', letterSpacing: 2 }}>{stars}</span>
@@ -160,5 +163,7 @@ export default function ProductCard({ product }: Props) {
         )}
       </div>
     </div>
+    {showQuickView && <ProductQuickView product={product} onClose={() => setShowQuickView(false)} />}
+    </>
   );
 }

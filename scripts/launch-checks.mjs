@@ -20,6 +20,9 @@ const authPages = ['LoginPage', 'RegisterPage', 'ForgotPasswordPage']
   .join('\n');
 const preloader = read('src/components/Preloader.tsx');
 const header = read('src/components/Header.tsx');
+const productQuickView = read('src/components/ProductQuickView.tsx');
+const productCard = read('src/components/ProductCard.tsx');
+const homePage = read('src/pages/HomePage.tsx');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -68,5 +71,8 @@ assert.doesNotMatch(authPages, /routing="hash"/, 'Clerk OTP routes must not shar
 assert.match(authPages, /routing="path" path="\/register"/, 'Clerk registration must own its OTP sub-routes');
 assert.match(preloader, /sessionStorage\.getItem\(SESSION_KEY\)/, 'entry loader must only show once per tab');
 assert.match(header, /!isAuthLoading && !isLoggedIn/, 'header must not flash signed-out actions while auth restores');
+assert.match(productQuickView, /<dialog/, 'quick view must use the native dialog element');
+assert.match(productQuickView, /findSuggestedAddOns[\s\S]*selectedAddOnIds[\s\S]*addToCart/, 'quick view must use configured add-ons when adding to cart');
+assert.match(productCard + homePage, /ProductQuickView/g, 'shop and home product cards must expose quick view');
 
 console.log('launch checks passed');

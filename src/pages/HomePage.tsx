@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import ProductQuickView from '../components/ProductQuickView';
 import { getProductCategoryLabel, HERO_GAME_CATEGORIES, productMatchesCategory } from '../data/catalog';
+import type { Product } from '../data/products';
 
 const brands = [
   { name: 'SS Cricket', slug: 'ss', short: 'SS', logo: '/images/brands/ss-cricket.png' },
@@ -37,6 +39,7 @@ export default function HomePage() {
   const { showPage, products, setPresetCategory } = useApp();
 
   const [heroIndex, setHeroIndex] = useState(0);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const heroImages = [
     '/images/hero/AdobeStock_305237820.jpeg',
@@ -224,13 +227,13 @@ export default function HomePage() {
             <div className="home-product-grid">
               {featuredProducts.map(product => (
                 <article className="home-product" key={product.id}>
-                  <div className="home-product-image">
+                  <button className="home-product-image" onClick={() => setQuickViewProduct(product)} aria-label={`View details for ${product.name}`}>
                     {product.badge && <span>{product.badge}</span>}
                     <img src={product.image} alt={product.name} loading="lazy" />
-                  </div>
+                  </button>
                   <div className="home-product-copy">
                     <small>{getProductCategoryLabel(product)}</small>
-                    <h3>{product.name}</h3>
+                    <h3><button className="home-product-name" onClick={() => setQuickViewProduct(product)}>{product.name}</button></h3>
                     <strong>{cadFormatter.format(product.price)}</strong>
                     <button onClick={() => shopGameCategory(product.category)}>
                       View {getProductCategoryLabel(product).toLowerCase()} <span aria-hidden="true">&rarr;</span>
@@ -294,6 +297,7 @@ export default function HomePage() {
             <button className="home-dark-link" onClick={() => showPage('shipping')}>Delivery and returns</button>
           </div>
         </section>
+        {quickViewProduct && <ProductQuickView product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />}
       </main>
     </>
   );

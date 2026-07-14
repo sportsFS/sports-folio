@@ -17,7 +17,16 @@ export default defineSchema({
     reservedQuantity: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
     addOnProductIds: v.optional(v.array(v.id("products"))),
+    subcategoryIds: v.optional(v.array(v.id("subcategories"))),
   }).index("by_category", ["category"]),
+  subcategories: defineTable({
+    name: v.string(),
+    parentCategory: v.string(),
+    isActive: v.boolean(),
+    sortOrder: v.number(),
+    key: v.optional(v.string()),
+  }).index("by_parentCategory", ["parentCategory"])
+    .index("by_key", ["key"]),
   users: defineTable({
     clerkId: v.optional(v.string()),
     name: v.string(),

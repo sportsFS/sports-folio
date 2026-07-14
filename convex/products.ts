@@ -2,6 +2,7 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { v } from "convex/values";
 import { requireAdmin } from "./auth";
 import { PRODUCTS } from "./productData";
+import { getParentProductCategory } from "../shared/productSubcategories";
 
 function productView(product: any) {
   const stockQuantity = product.stockQuantity ?? 0;
@@ -23,6 +24,7 @@ function productView(product: any) {
     availableQuantity: Math.max(0, stockQuantity - reservedQuantity),
     isActive: product.isActive ?? true,
     addOnProductIds: product.addOnProductIds,
+    subcategoryIds: product.subcategoryIds,
   };
 }
 
@@ -32,6 +34,19 @@ async function validateAddOnProductIds(ctx: any, productId: any, addOnProductIds
   for (const addOnProductId of addOnProductIds) {
     if (productId && addOnProductId === productId) throw new Error("A product cannot be its own add-on");
     if (!(await ctx.db.get(addOnProductId))) throw new Error("Add-on product not found");
+  }
+}
+
+async function validateSubcategoryIds(ctx: any, product: { name: string; category: string }, subcategoryIds: any[]) {
+  if (subcategoryIds.length > 10) throw new Error("A product can have at most 10 subcategories");
+  if (new Set(subcategoryIds).size !== subcategoryIds.length) throw new Error("Product subcategories must be unique");
+  const parentCategory = getParentProductCategory(product);
+  for (const subcategoryId of subcategoryIds) {
+    const subcategory = await ctx.db.get(subcategoryId);
+    if (!subcategory) throw new Error("Subcategory not found");
+    if (subcategory.parentCategory !== parentCategory) {
+      throw new Error(`${subcategory.name} does not belong under ${parentCategory}`);
+    }
   }
 }
 
@@ -110,11 +125,13 @@ export const add = mutation({
     stockQuantity: v.number(),
     isActive: v.boolean(),
     addOnProductIds: v.optional(v.array(v.id("products"))),
+    subcategoryIds: v.optional(v.array(v.id("subcategories"))),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     if (!Number.isInteger(args.stockQuantity) || args.stockQuantity < 0) throw new Error("Stock must be a non-negative whole number");
     if (args.addOnProductIds) await validateAddOnProductIds(ctx, undefined, args.addOnProductIds);
+    if (args.subcategoryIds) await validateSubcategoryIds(ctx, args, args.subcategoryIds);
     const id = await ctx.db.insert("products", { ...args, reservedQuantity: 0 });
     return id;
   },
@@ -136,6 +153,7 @@ export const update = mutation({
     stockQuantity: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
     addOnProductIds: v.optional(v.array(v.id("products"))),
+    subcategoryIds: v.optional(v.array(v.id("subcategories"))),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -147,6 +165,15 @@ export const update = mutation({
       if (fields.stockQuantity < (product.reservedQuantity ?? 0)) throw new Error("Stock cannot be lower than the quantity reserved in active checkouts");
     }
     if (fields.addOnProductIds !== undefined) await validateAddOnProductIds(ctx, id, fields.addOnProductIds);
+    if (fields.subcategoryIds !== undefined || fields.category !== undefined || fields.name !== undefined) {
+      const subcategoryIds = fields.subcategoryIds ?? product.subcategoryIds;
+      if (subcategoryIds) {
+        await validateSubcategoryIds(ctx, {
+          name: fields.name ?? product.name,
+          category: fields.category ?? product.category,
+        }, subcategoryIds);
+      }
+    }
     await ctx.db.patch(id, fields);
   },
 });

@@ -3,11 +3,25 @@ import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useApp, Order } from '../context/AppContext';
 import { Product } from '../data/products';
-import { ADMIN_PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/catalog';
+import {
+  ADMIN_PRODUCT_CATEGORIES,
+  PRODUCT_CATEGORY_LABELS,
+  SHOP_FILTER_CATEGORIES,
+  getParentProductCategory,
+  getProductSubcategories,
+} from '../data/catalog';
 import './AdminPage.css';
 
-type Tab = 'dashboard' | 'products' | 'addons' | 'orders' | 'users';
+type Tab = 'dashboard' | 'products' | 'subcategories' | 'addons' | 'orders' | 'users';
 type UserRow = { id: string; name: string; email: string; role: string };
+type ManagedSubcategory = {
+  id: string;
+  name: string;
+  parentCategory: string;
+  isActive: boolean;
+  sortOrder: number;
+  key?: string;
+};
 type ReturnStatus = NonNullable<Order['returnRequest']>['status'];
 type ProductForm = {
   name: string;
@@ -22,16 +36,24 @@ type ProductForm = {
   description: string;
   stockQuantity: string;
   isActive: boolean;
+  subcategoryIds: string[];
+};
+type SubcategoryForm = {
+  name: string;
+  parentCategory: string;
+  sortOrder: string;
+  isActive: boolean;
 };
 
 const categories = ADMIN_PRODUCT_CATEGORIES;
+const subcategoryParents = SHOP_FILTER_CATEGORIES.filter(category => category.value !== 'all');
 const currency = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' });
 
 function emptyProductForm(): ProductForm {
   return {
     name: '', category: 'bats', price: '', oldPrice: '', rating: '4.5', reviews: '',
     image: '/images/products/product.jpg', badge: '', badgeClass: '', description: '',
-    stockQuantity: '0', isActive: true,
+    stockQuantity: '0', isActive: true, subcategoryIds: [],
   };
 }
 
@@ -40,7 +62,9 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('dashboard');
   const usersData = useQuery(api.users.list, user?.role === 'admin' ? {} : 'skip');
   const adminProductsData = useQuery(api.products.listAdmin, user?.role === 'admin' ? {} : 'skip');
+  const subcategoriesData = useQuery(api.subcategories.listAll, user?.role === 'admin' ? {} : 'skip');
   const adminProducts = (adminProductsData ?? products) as Product[];
+  const subcategories = (subcategoriesData ?? []) as ManagedSubcategory[];
 
   if (!user || user.role !== 'admin') {
     return (
@@ -58,6 +82,7 @@ export default function AdminPage() {
   const navItems: { id: Tab; label: string; count?: number }[] = [
     { id: 'dashboard', label: 'Overview' },
     { id: 'products', label: 'Products', count: adminProducts.length },
+    { id: 'subcategories', label: 'Subcategories', count: subcategories.length },
     { id: 'addons', label: 'Add-ons', count: adminProducts.filter(product => product.addOnProductIds?.length).length },
     { id: 'orders', label: 'Orders', count: orders.length },
     { id: 'users', label: 'Customers', count: usersData?.length },
@@ -114,8 +139,9 @@ export default function AdminPage() {
             />
           )}
           {tab === 'products' && (
-            <ProductsTab products={adminProducts} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />
+            <ProductsTab products={adminProducts} subcategories={subcategories} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />
           )}
+          {tab === 'subcategories' && <SubcategoriesTab subcategories={subcategories} products={adminProducts} />}
           {tab === 'addons' && <AddOnsTab products={adminProducts} updateProduct={updateProduct} />}
           {tab === 'orders' && <OrdersTab orders={orders} updateOrderStatus={updateOrderStatus} />}
           {tab === 'users' && <UsersTab users={usersData} />}
@@ -236,8 +262,9 @@ function DashboardTab({ products, totalUsers, orders, showPage, selectTab }: {
   );
 }
 
-function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
+function ProductsTab({ products, subcategories, addProduct, updateProduct, deleteProduct }: {
   products: Product[];
+  subcategories: ManagedSubcategory[];
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -250,14 +277,39 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const uploadAction = useAction(api.upload.uploadImage);
+  const subcategoriesById = useMemo(
+    () => new Map(subcategories.map(subcategory => [subcategory.id, subcategory])),
+    [subcategories]
+  );
+  const eligibleSubcategories = useMemo(() => {
+    const parentCategory = getParentProductCategory({ name: form.name, category: form.category });
+    return subcategories
+      .filter(subcategory => subcategory.parentCategory === parentCategory)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  }, [form.category, form.name, subcategories]);
+
+  function effectiveSubcategoryIds(product: Product) {
+    if (product.subcategoryIds !== undefined) return product.subcategoryIds;
+    const fallbackKeys = getProductSubcategories(product);
+    return subcategories.flatMap(subcategory => subcategory.key && fallbackKeys.includes(subcategory.key) ? [subcategory.id] : []);
+  }
+
+  function subcategoryNames(product: Product) {
+    return effectiveSubcategoryIds(product).flatMap(id => {
+      const subcategory = subcategoriesById.get(id);
+      return subcategory ? [subcategory.name] : [];
+    });
+  }
+
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return products.filter(product => {
       const matchesCategory = category === 'all' || product.category === category;
-      const matchesQuery = !normalizedQuery || product.name.toLowerCase().includes(normalizedQuery);
+      const matchesQuery = !normalizedQuery || [product.name, ...subcategoryNames(product)]
+        .some(value => value.toLowerCase().includes(normalizedQuery));
       return matchesCategory && matchesQuery;
     });
-  }, [products, query, category]);
+  }, [category, products, query, subcategories, subcategoriesById]);
   const editingProduct = modal.editId ? products.find(product => product.id === modal.editId) : undefined;
 
   useEffect(() => {
@@ -289,6 +341,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
       description: product.description ?? '',
       stockQuantity: String(product.stockQuantity ?? 0),
       isActive: product.isActive ?? true,
+      subcategoryIds: effectiveSubcategoryIds(product),
     });
     setFormError('');
     setModal({ open: true, editId: product.id });
@@ -343,6 +396,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
       description: form.description.trim() || undefined,
       stockQuantity,
       isActive: form.isActive,
+      subcategoryIds: form.subcategoryIds,
     };
 
     setSaving(true);
@@ -403,7 +457,10 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
                         <strong>{product.name}</strong>
                       </div>
                     </td>
-                    <td>{PRODUCT_CATEGORY_LABELS[product.category] || product.category}</td>
+                    <td>
+                      {PRODUCT_CATEGORY_LABELS[product.category] || product.category}
+                      <small>{subcategoryNames(product).join(', ') || 'No subcategory'}</small>
+                    </td>
                     <td><strong>{currency.format(product.price)}</strong>{product.oldPrice ? <small>{currency.format(product.oldPrice)}</small> : null}</td>
                     <td><strong>{product.availableQuantity ?? 0} available</strong><small>{product.stockQuantity ?? 0} on hand, {product.reservedQuantity ?? 0} reserved</small></td>
                     <td>{product.isActive === false
@@ -439,8 +496,31 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
             <form onSubmit={handleSave}>
               <div className="admin-form-grid">
                 <label className="admin-field admin-field-full"><span>Product name</span><input autoFocus required value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} /></label>
-                <label className="admin-field"><span>Category</span><select value={form.category} onChange={event => setForm(current => ({ ...current, category: event.target.value }))}>{categories.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+                <label className="admin-field"><span>Category</span><select value={form.category} onChange={event => setForm(current => ({ ...current, category: event.target.value, subcategoryIds: [] }))}>{categories.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
                 <label className="admin-field"><span>Price (CAD)</span><input required min="0.01" step="0.01" type="number" value={form.price} onChange={event => setForm(current => ({ ...current, price: event.target.value }))} /></label>
+                <fieldset className="admin-subcategory-fieldset admin-field-full">
+                  <legend>Subcategories</legend>
+                  <p>Assign every relevant option. Products may belong to more than one.</p>
+                  {eligibleSubcategories.length ? (
+                    <div className="admin-subcategory-options">
+                      {eligibleSubcategories.map(option => (
+                        <label key={option.id}>
+                          <input
+                            type="checkbox"
+                            checked={form.subcategoryIds.includes(option.id)}
+                            onChange={event => setForm(current => ({
+                              ...current,
+                              subcategoryIds: event.target.checked
+                                ? [...current.subcategoryIds, option.id]
+                                : current.subcategoryIds.filter(id => id !== option.id),
+                            }))}
+                          />
+                          <span>{option.name}{!option.isActive && <small>Inactive</small>}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : <small>Create a subcategory under this parent before assigning one.</small>}
+                </fieldset>
                 <label className="admin-field"><span>Stock on hand</span><input required min="0" step="1" type="number" value={form.stockQuantity} onChange={event => setForm(current => ({ ...current, stockQuantity: event.target.value }))} />{editingProduct && <small>{editingProduct.reservedQuantity ?? 0} currently reserved in active checkouts</small>}</label>
                 <label className="admin-field"><span>Compare-at price</span><input min="0" step="0.01" type="number" value={form.oldPrice} onChange={event => setForm(current => ({ ...current, oldPrice: event.target.value }))} /></label>
                 <label className="admin-field"><span>Rating</span><input min="0" max="5" step="0.1" type="number" value={form.rating} onChange={event => setForm(current => ({ ...current, rating: event.target.value }))} /></label>
@@ -470,6 +550,174 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
               <div className="admin-dialog-actions">
                 <button type="button" className="admin-button admin-button-secondary" disabled={saving} onClick={() => setModal({ open: false })}>Cancel</button>
                 <button type="submit" className="admin-button admin-button-primary" disabled={saving || uploading}>{saving ? 'Saving…' : modal.editId ? 'Save changes' : 'Add product'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubcategoriesTab({ subcategories, products }: {
+  subcategories: ManagedSubcategory[];
+  products: Product[];
+}) {
+  const createSubcategory = useMutation(api.subcategories.create);
+  const updateSubcategory = useMutation(api.subcategories.update);
+  const removeSubcategory = useMutation(api.subcategories.remove);
+  const migrateSubcategories = useMutation(api.subcategories.migrateExisting);
+  const [parentFilter, setParentFilter] = useState('all');
+  const [modal, setModal] = useState<{ open: boolean; editId?: string }>({ open: false });
+  const [form, setForm] = useState<SubcategoryForm>({ name: '', parentCategory: 'cricket', sortOrder: '0', isActive: true });
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const filtered = subcategories.filter(subcategory => parentFilter === 'all' || subcategory.parentCategory === parentFilter);
+
+  function productCount(subcategoryId: string) {
+    return products.filter(product => product.subcategoryIds?.includes(subcategoryId)).length;
+  }
+
+  function openAdd() {
+    const parentCategory = parentFilter === 'all' ? 'cricket' : parentFilter;
+    const nextOrder = Math.max(-1, ...subcategories.filter(item => item.parentCategory === parentCategory).map(item => item.sortOrder)) + 1;
+    setForm({ name: '', parentCategory, sortOrder: String(nextOrder), isActive: true });
+    setNotice(null);
+    setModal({ open: true });
+  }
+
+  function openEdit(subcategory: ManagedSubcategory) {
+    setForm({
+      name: subcategory.name,
+      parentCategory: subcategory.parentCategory,
+      sortOrder: String(subcategory.sortOrder),
+      isActive: subcategory.isActive,
+    });
+    setNotice(null);
+    setModal({ open: true, editId: subcategory.id });
+  }
+
+  async function handleSave(event: React.FormEvent) {
+    event.preventDefault();
+    const sortOrder = Number(form.sortOrder);
+    if (form.name.trim().length < 2) return setNotice({ type: 'error', text: 'Enter a subcategory name.' });
+    if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 999) {
+      return setNotice({ type: 'error', text: 'Display order must be a whole number between 0 and 999.' });
+    }
+    setBusy(true);
+    setNotice(null);
+    try {
+      const data = { name: form.name.trim(), parentCategory: form.parentCategory, sortOrder, isActive: form.isActive };
+      if (modal.editId) await updateSubcategory({ id: modal.editId as any, ...data });
+      else await createSubcategory(data);
+      setModal({ open: false });
+      setNotice({ type: 'success', text: `Subcategory ${modal.editId ? 'updated' : 'created'}.` });
+    } catch (error) {
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Subcategory could not be saved.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(subcategory: ManagedSubcategory) {
+    if (!confirm(`Delete "${subcategory.name}"? This is only allowed when no products use it.`)) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      await removeSubcategory({ id: subcategory.id as any });
+      setNotice({ type: 'success', text: 'Subcategory deleted.' });
+    } catch (error) {
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Subcategory could not be deleted.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleMigration() {
+    if (!confirm('Create the default subcategories and assign all existing catalog products?')) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await migrateSubcategories({});
+      setNotice({
+        type: 'success',
+        text: `Import complete: ${result.created} created, ${result.assigned} products assigned, ${result.unassigned} left without a subcategory.`,
+      });
+    } catch (error) {
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Existing catalog could not be imported.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="admin-view">
+      <div className="admin-toolbar">
+        <div className="admin-filters">
+          <label>
+            <span className="sr-only">Filter by parent category</span>
+            <select value={parentFilter} onChange={event => setParentFilter(event.target.value)}>
+              <option value="all">All parent categories</option>
+              {subcategoryParents.map(parent => <option key={parent.value} value={parent.value}>{parent.label}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="admin-subcategory-actions">
+          <button className="admin-button admin-button-secondary" disabled={busy} onClick={() => void handleMigration()}>Import current catalog</button>
+          <button className="admin-button admin-button-primary" disabled={busy} onClick={openAdd}><span aria-hidden="true">+</span> Add subcategory</button>
+        </div>
+      </div>
+
+      {notice && <div className={`admin-notice admin-notice-${notice.type}`} role="status">{notice.text}</div>}
+
+      <section className="admin-panel" aria-label="Product subcategories">
+        <div className="admin-panel-heading admin-list-heading">
+          <div><h2>Subcategories</h2><p>{filtered.length} of {subcategories.length} configured</p></div>
+        </div>
+        {filtered.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table admin-subcategory-table">
+              <thead><tr><th>Name</th><th>Parent category</th><th>Products</th><th>Display order</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <tbody>
+                {filtered.map(subcategory => (
+                  <tr key={subcategory.id}>
+                    <td><strong>{subcategory.name}</strong>{subcategory.key && <small>Catalog default</small>}</td>
+                    <td>{PRODUCT_CATEGORY_LABELS[subcategory.parentCategory] || subcategory.parentCategory}</td>
+                    <td>{productCount(subcategory.id)}</td>
+                    <td>{subcategory.sortOrder}</td>
+                    <td><span className={`admin-badge ${subcategory.isActive ? 'admin-badge-active' : 'admin-badge-neutral'}`}>{subcategory.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                      <div className="admin-row-actions">
+                        <button className="admin-button admin-button-small admin-button-secondary" disabled={busy} onClick={() => openEdit(subcategory)}>Edit</button>
+                        <button className="admin-button admin-button-small admin-button-danger" disabled={busy} onClick={() => void handleDelete(subcategory)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <EmptyState title="No subcategories configured" detail="Import the current catalog or add the first subcategory." />}
+      </section>
+
+      {modal.open && (
+        <div className="admin-dialog-backdrop" role="presentation" onMouseDown={() => !busy && setModal({ open: false })}>
+          <div className="admin-dialog admin-dialog-compact" role="dialog" aria-modal="true" aria-labelledby="subcategory-dialog-title" onMouseDown={event => event.stopPropagation()}>
+            <div className="admin-dialog-heading">
+              <div><h2 id="subcategory-dialog-title">{modal.editId ? 'Edit subcategory' : 'Add subcategory'}</h2><p>Controls the choices shown in the storefront.</p></div>
+              <button className="admin-dialog-close" type="button" aria-label="Close subcategory editor" disabled={busy} onClick={() => setModal({ open: false })}>&times;</button>
+            </div>
+            <form onSubmit={handleSave}>
+              <div className="admin-form-grid">
+                <label className="admin-field admin-field-full"><span>Name</span><input autoFocus required maxLength={60} value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} /></label>
+                <label className="admin-field"><span>Parent category</span><select value={form.parentCategory} onChange={event => setForm(current => ({ ...current, parentCategory: event.target.value }))}>{subcategoryParents.map(parent => <option key={parent.value} value={parent.value}>{parent.label}</option>)}</select></label>
+                <label className="admin-field"><span>Display order</span><input required type="number" min="0" max="999" step="1" value={form.sortOrder} onChange={event => setForm(current => ({ ...current, sortOrder: event.target.value }))} /></label>
+                <label className="admin-availability-field admin-field-full"><input type="checkbox" checked={form.isActive} onChange={event => setForm(current => ({ ...current, isActive: event.target.checked }))} /><span><strong>Visible in storefront</strong><small>Inactive subcategories keep their product assignments.</small></span></label>
+              </div>
+              {notice?.type === 'error' && <div className="admin-form-error" role="alert">{notice.text}</div>}
+              <div className="admin-dialog-actions">
+                <button type="button" className="admin-button admin-button-secondary" disabled={busy} onClick={() => setModal({ open: false })}>Cancel</button>
+                <button type="submit" className="admin-button admin-button-primary" disabled={busy}>{busy ? 'Savingâ€¦' : 'Save subcategory'}</button>
               </div>
             </form>
           </div>

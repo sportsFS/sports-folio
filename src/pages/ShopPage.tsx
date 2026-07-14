@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import ProductCard from '../components/ProductCard';
 import { useApp } from '../context/AppContext';
 import {
   PRODUCT_SUBCATEGORIES,
+  getProductSubcategories,
   productMatchesCategory,
   productMatchesSearch,
   productMatchesSubcategory,
@@ -10,8 +13,25 @@ import {
 } from '../data/catalog';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
+type ManagedSubcategory = {
+  id: string;
+  name: string;
+  parentCategory: string;
+  isActive: boolean;
+  sortOrder: number;
+  key?: string;
+};
+
+type ShopSubcategoryOption = {
+  label: string;
+  value: string;
+  sortOrder: number;
+  managed: boolean;
+  fallbackKey?: string;
+};
 
 const PAGE_SIZE = 12;
+const EMPTY_SUBCATEGORIES: ManagedSubcategory[] = [];
 
 export default function ShopPage() {
   const { presetCategory, setPresetCategory, products, searchQuery, setSearchQuery } = useApp();
@@ -22,6 +42,9 @@ export default function ShopPage() {
   const [sort, setSort] = useState<SortType>('default');
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const subcategoryCatalog = useQuery(api.subcategories.storefront);
+  const managedSubcategories = (subcategoryCatalog?.items ?? EMPTY_SUBCATEGORIES) as ManagedSubcategory[];
+  const managedCatalogInitialized = subcategoryCatalog?.initialized ?? false;
   const catalogProducts = useMemo(
     () => products.filter(product => product.isActive !== false && product.price > 0),
     [products]
@@ -32,6 +55,52 @@ export default function ShopPage() {
     return Math.max(100, Math.ceil(highestPrice / 50) * 50);
   }, [catalogProducts]);
   const selectedMaxPrice = maxPrice ?? priceCeiling;
+  const baseSubcategoryOptions = useMemo<ShopSubcategoryOption[]>(() => {
+    const managed: ShopSubcategoryOption[] = managedSubcategories
+      .filter(option => option.parentCategory === category)
+      .map(option => ({
+        label: option.name,
+        value: option.id,
+        sortOrder: option.sortOrder,
+        managed: true,
+        fallbackKey: option.key,
+      }));
+    const managedKeys = new Set(managed.flatMap(option => option.fallbackKey ? [option.fallbackKey] : []));
+    const fallback: ShopSubcategoryOption[] = (managedCatalogInitialized ? [] : PRODUCT_SUBCATEGORIES[category] || [])
+      .filter(option => !managedKeys.has(option.value))
+      .map((option, sortOrder) => ({ ...option, sortOrder, managed: false }));
+    return [...managed, ...fallback].sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }, [category, managedCatalogInitialized, managedSubcategories]);
+  const managedById = useMemo(
+    () => new Map(managedSubcategories.map(option => [option.id, option])),
+    [managedSubcategories]
+  );
+  const managedByKey = useMemo(
+    () => new Map(managedSubcategories.flatMap(option => option.key ? [[option.key, option] as const] : [])),
+    [managedSubcategories]
+  );
+
+  function matchesSubcategory(product: (typeof catalogProducts)[number], value: string) {
+    if (value === 'all') return true;
+    const option = baseSubcategoryOptions.find(candidate => candidate.value === value);
+    if (!option?.managed) return productMatchesSubcategory(product, value);
+    if (product.subcategoryIds?.includes(value)) return true;
+    return product.subcategoryIds === undefined
+      && Boolean(option.fallbackKey && getProductSubcategories(product).includes(option.fallbackKey));
+  }
+
+  function managedLabelsForProduct(product: (typeof catalogProducts)[number]) {
+    if (product.subcategoryIds !== undefined) {
+      return product.subcategoryIds.flatMap(id => {
+        const option = managedById.get(id);
+        return option ? [option.name] : [];
+      });
+    }
+    return getProductSubcategories(product).flatMap(key => {
+      const option = managedByKey.get(key);
+      return option ? [option.name] : [];
+    });
+  }
 
   useEffect(() => {
     if (presetCategory === 'all') return;
@@ -44,21 +113,32 @@ export default function ShopPage() {
     setVisibleCount(PAGE_SIZE);
   }, [category, subcategory, maxPrice, minimumRating, sort, searchQuery]);
 
+  useEffect(() => {
+    if (subcategory !== 'all' && !baseSubcategoryOptions.some(option => option.value === subcategory)) {
+      setSubcategory('all');
+    }
+  }, [baseSubcategoryOptions, subcategory]);
+
   const filtered = useMemo(() => {
     let result = catalogProducts.filter(product =>
       productMatchesCategory(product, category) &&
-      productMatchesSubcategory(product, subcategory) &&
+      matchesSubcategory(product, subcategory) &&
       product.price <= selectedMaxPrice &&
       product.rating >= minimumRating
     );
     if (searchQuery) {
-      result = result.filter(product => productMatchesSearch(product, searchQuery));
+      result = result.filter(product => productMatchesSearch(
+        product,
+        searchQuery,
+        managedLabelsForProduct(product),
+        !managedCatalogInitialized
+      ));
     }
     if (sort === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sort === 'high') result = [...result].sort((a, b) => b.price - a.price);
     else if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [catalogProducts, category, minimumRating, searchQuery, selectedMaxPrice, sort, subcategory]);
+  }, [baseSubcategoryOptions, catalogProducts, category, managedById, managedByKey, managedCatalogInitialized, minimumRating, searchQuery, selectedMaxPrice, sort, subcategory]);
 
   const filterOptions = SHOP_FILTER_CATEGORIES.map(option => ({
     ...option,
@@ -66,10 +146,10 @@ export default function ShopPage() {
   }));
   const activeCategory = SHOP_FILTER_CATEGORIES.find(option => option.value === category);
   const parentCategoryCount = catalogProducts.filter(product => productMatchesCategory(product, category)).length;
-  const subcategoryOptions = (PRODUCT_SUBCATEGORIES[category] || []).map(option => ({
+  const subcategoryOptions = baseSubcategoryOptions.map(option => ({
     ...option,
     count: catalogProducts.filter(product =>
-      productMatchesCategory(product, category) && productMatchesSubcategory(product, option.value)
+      productMatchesCategory(product, category) && matchesSubcategory(product, option.value)
     ).length,
   }));
   const visibleProducts = filtered.slice(0, visibleCount);

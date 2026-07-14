@@ -18,6 +18,7 @@ import type * as productData from "../productData.js";
 import type * as products from "../products.js";
 import type * as seed from "../seed.js";
 import type * as stripe from "../stripe.js";
+import type * as subcategories from "../subcategories.js";
 import type * as upload from "../upload.js";
 import type * as users from "../users.js";
 
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   seed: typeof seed;
   stripe: typeof stripe;
+  subcategories: typeof subcategories;
   upload: typeof upload;
   users: typeof users;
 }>;

@@ -2,16 +2,20 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   PRODUCT_SUBCATEGORIES,
+  getParentProductCategory,
   getProductSubcategories,
   productMatchesSearch,
 } from '../src/data/catalog.ts';
+import { PRODUCTS } from '../convex/productData.ts';
 
 const read = path => fs.readFileSync(path, 'utf8');
 
 const ci = read('.github/workflows/ci.yml');
 const orders = read('convex/orders.ts');
 const products = read('convex/products.ts');
+const subcategories = read('convex/subcategories.ts');
 const catalog = read('src/data/catalog.ts');
+const sharedSubcategories = read('shared/productSubcategories.ts');
 const stripe = read('convex/stripe.ts');
 const schema = read('convex/schema.ts');
 const crons = read('convex/crons.ts');
@@ -60,12 +64,19 @@ assert.match(admin, /Delivery address[\s\S]*order\.shippingAddress/, 'admin must
 assert.match(schema, /stockQuantity:[\s\S]*reservedQuantity:/, 'products must track on-hand and reserved stock');
 assert.match(products, /availableQuantity[\s\S]*availableQuantity < item\.qty/, 'checkout must enforce available stock');
 assert.match(schema, /addOnProductIds:\s*v\.optional\(v\.array\(v\.id\("products"\)\)\)/, 'products must store admin-managed add-on relationships');
+assert.match(schema, /subcategoryIds:\s*v\.optional\(v\.array\(v\.id\("subcategories"\)\)\)/, 'products must store admin-managed subcategory relationships');
+assert.match(schema, /subcategories:\s*defineTable[\s\S]*by_parentCategory[\s\S]*by_key/, 'subcategories must support parent filtering and stable migration keys');
 assert.match(products, /validateAddOnProductIds[\s\S]*A product cannot be its own add-on[\s\S]*Add-on product not found/, 'add-on relationships must be validated server-side');
+assert.match(products, /validateSubcategoryIds[\s\S]*subcategory\.parentCategory !== parentCategory/, 'product subcategories must be validated against their parent server-side');
 assert.match(products, /referencedBy[\s\S]*Remove this product from/, 'referenced add-on products must not be deleted');
 assert.match(catalog, /product\.addOnProductIds[\s\S]*productsById[\s\S]*isEligible/, 'storefront add-ons must use configured products and availability');
 assert.equal(PRODUCT_SUBCATEGORIES.cricket.length, 15, 'cricket must expose every requested subcategory');
 assert.equal(PRODUCT_SUBCATEGORIES.badminton.length, 4, 'badminton must expose every requested subcategory');
 assert.equal(PRODUCT_SUBCATEGORIES.pickleball.length, 2, 'pickleball must expose every requested subcategory');
+const unclassifiedSeedProducts = PRODUCTS.filter(product =>
+  getParentProductCategory(product) === 'cricket' && getProductSubcategories(product).length === 0
+);
+assert.deepEqual(unclassifiedSeedProducts.map(product => product.name), [], 'every seeded cricket product must survive subcategory migration');
 
 const subcategorySamples = [
   ['cricket-english-willow', { name: 'MRF Bat', category: 'bats', image: '/bat-english-willow-mrf.webp' }],
@@ -95,7 +106,17 @@ for (const [expected, product] of subcategorySamples) {
   assert.ok(getProductSubcategories(product).includes(expected), `${product.name} must map to ${expected}`);
 }
 assert.ok(productMatchesSearch(subcategorySamples[0][1], 'english willow'), 'search must match derived subcategory names');
+assert.equal(productMatchesSearch(subcategorySamples[0][1], 'english willow', [], false), false, 'managed catalogs must not leak legacy subcategory search matches');
+assert.ok(productMatchesSearch(subcategorySamples[0][1], 'premium willow', ['Premium Willow'], false), 'search must match admin-managed subcategory names');
+for (const name of ['listAll', 'create', 'update', 'remove', 'migrateExisting']) {
+  assert.match(subcategories, new RegExp(`export const ${name} = (?:query|mutation)\\([\\s\\S]*?await requireAdmin\\(ctx\\)`), `${name} subcategory operation must require admin`);
+}
+assert.match(subcategories, /remove[\s\S]*subcategoryIds\?\.includes[\s\S]*before deleting it/, 'referenced subcategories must not be deleted');
+assert.match(subcategories, /migrateExisting[\s\S]*product\.subcategoryIds !== undefined[\s\S]*getProductSubcategories[\s\S]*subcategoryIds/, 'subcategory migration must preserve explicit assignments and backfill legacy products');
+assert.match(sharedSubcategories, /getParentProductCategory[\s\S]*getProductSubcategories/, 'server migration and storefront must share one category classifier');
 assert.match(admin, /id: 'addons'[\s\S]*<AddOnsTab/, 'admin must expose dedicated add-on management');
+assert.match(admin, /id: 'subcategories'[\s\S]*<SubcategoriesTab/, 'admin must expose dedicated subcategory management');
+assert.match(admin, /subcategoryIds[\s\S]*admin-subcategory-options[\s\S]*type="checkbox"/, 'product editor must support multiple subcategory assignments');
 assert.match(orders, /inventoryStatus !== "reserved"[\s\S]*requestedByProduct[\s\S]*stockQuantity: product\.stockQuantity - quantity/, 'paid checkout must consume a valid reservation');
 assert.match(crons, /release expired checkout reservations[\s\S]*cleanupExpiredReservationsInternal/, 'expired inventory reservations must be cleaned automatically');
 assert.match(orders, /order\.userId !== user\._id[\s\S]*returnRequest:/, 'return requests must be scoped to the signed-in order owner');
@@ -119,6 +140,7 @@ assert.doesNotMatch(searchBar, /onBlur=\{handleBlur\}/, 'opening a product must 
 assert.match(shopPage, /function selectCategory[\s\S]*setSearchQuery\(''\)[\s\S]*setCategory/, 'choosing a category must clear stale search filters');
 assert.match(shopPage, /productMatchesSubcategory[\s\S]*productMatchesSearch/, 'shop must combine subcategory and searchable catalog filtering');
 assert.match(shopPage, /shop-subcategory-list[\s\S]*aria-pressed/, 'shop subcategories must expose accessible selected states');
+assert.match(shopPage, /api\.subcategories\.storefront[\s\S]*managedCatalogInitialized[\s\S]*product\.subcategoryIds\?\.includes/, 'shop must use active admin-managed assignments after migration');
 assert.match(homePage, /isPaused[\s\S]*setInterval[\s\S]*4000[\s\S]*onFocusCapture/, 'testimonials must auto-advance and pause during interaction');
 assert.match(shopPage, /product\.rating >= minimumRating[\s\S]*slice\(0, visibleCount\)/, 'shop rating filter and incremental product loading must remain functional');
 assert.match(shopPage, /product\.isActive !== false && product\.price > 0/, 'shop must hide inactive and unpriced products');

@@ -20,6 +20,7 @@ export interface Product {
   availableQuantity?: number;
   isActive?: boolean;
   addOnProductIds?: string[];
+  subcategoryIds?: string[];
 }
 
 interface CartItem extends Product { qty: number }
@@ -280,6 +281,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       stockQuantity: p.stockQuantity ?? 0,
       isActive: p.isActive ?? true,
       addOnProductIds: p.addOnProductIds as any,
+      subcategoryIds: p.subcategoryIds as any,
     });
   }, [addProductMutation]);
 
@@ -299,6 +301,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       stockQuantity: updates.stockQuantity,
       isActive: updates.isActive,
       addOnProductIds: updates.addOnProductIds as any,
+      subcategoryIds: updates.subcategoryIds as any,
     });
   }, [updateProductMutation]);
 

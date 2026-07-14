@@ -76,6 +76,7 @@ assert.match(header, /!isAuthLoading && !isLoggedIn/, 'header must not flash sig
 assert.match(productQuickView, /<dialog/, 'quick view must use the native dialog element');
 assert.match(productQuickView, /findSuggestedAddOns[\s\S]*selectedAddOnIds[\s\S]*addToCart/, 'quick view must use configured add-ons when adding to cart');
 assert.match(productCard + homePage, /ProductQuickView/g, 'shop and home product cards must expose quick view');
+assert.match(homePage, /setInterval[\s\S]*4000[\s\S]*Pause customer reviews/, 'testimonials must auto-advance and remain pausable');
 assert.match(shopPage, /product\.rating >= minimumRating[\s\S]*slice\(0, visibleCount\)/, 'shop rating filter and incremental product loading must remain functional');
 assert.match(shopPage, /product\.isActive !== false && product\.price > 0/, 'shop must hide inactive and unpriced products');
 for (const channel of [/mailto:/, /tel:/, /wa\.me/, /<iframe/]) {

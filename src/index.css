@@ -2363,7 +2363,7 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .home-brands-track {
-    animation: none;
+    animation-duration: 30s;
   }
 
   .home-collection img,

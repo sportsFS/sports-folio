@@ -56,7 +56,7 @@ export default function Header() {
   }
 
   return (
-    <header className={scrolled ? 'scrolled' : ''}>
+    <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
       {/* Logo */}
       <button
         onClick={() => navClick('home')}

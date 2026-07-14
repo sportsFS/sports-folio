@@ -23,6 +23,8 @@ const header = read('src/components/Header.tsx');
 const productQuickView = read('src/components/ProductQuickView.tsx');
 const productCard = read('src/components/ProductCard.tsx');
 const homePage = read('src/pages/HomePage.tsx');
+const shopPage = read('src/pages/ShopPage.tsx');
+const contactPage = read('src/pages/ContactPage.tsx');
 
 assert.match(ci, /branches:\s*\n\s*-\s*master/, 'CI must run on master pushes');
 
@@ -74,5 +76,10 @@ assert.match(header, /!isAuthLoading && !isLoggedIn/, 'header must not flash sig
 assert.match(productQuickView, /<dialog/, 'quick view must use the native dialog element');
 assert.match(productQuickView, /findSuggestedAddOns[\s\S]*selectedAddOnIds[\s\S]*addToCart/, 'quick view must use configured add-ons when adding to cart');
 assert.match(productCard + homePage, /ProductQuickView/g, 'shop and home product cards must expose quick view');
+assert.match(shopPage, /product\.rating >= minimumRating[\s\S]*slice\(0, visibleCount\)/, 'shop rating filter and incremental product loading must remain functional');
+assert.match(shopPage, /product\.isActive !== false && product\.price > 0/, 'shop must hide inactive and unpriced products');
+for (const channel of [/mailto:/, /tel:/, /wa\.me/, /<iframe/]) {
+  assert.match(contactPage, channel, 'contact page must expose working email, phone, WhatsApp, and map channels');
+}
 
 console.log('launch checks passed');

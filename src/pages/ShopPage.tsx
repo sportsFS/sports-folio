@@ -1,243 +1,230 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import SkeletonCard from '../components/SkeletonCard';
 import { useApp } from '../context/AppContext';
-import { useScrollReveal } from '../hooks/useScrollReveal';
 import { productMatchesCategory, SHOP_FILTER_CATEGORIES } from '../data/catalog';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
 
+const PAGE_SIZE = 12;
+
 export default function ShopPage() {
   const { presetCategory, setPresetCategory, products, searchQuery } = useApp();
-  const [loaded, setLoaded] = useState(false);
   const [category, setCategory] = useState('all');
-  const [maxPrice, setMaxPrice] = useState(15000);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [minimumRating, setMinimumRating] = useState(0);
   const [sort, setSort] = useState<SortType>('default');
   const [showFilters, setShowFilters] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const catalogProducts = useMemo(
+    () => products.filter(product => product.isActive !== false && product.price > 0),
+    [products]
+  );
+
+  const priceCeiling = useMemo(() => {
+    const highestPrice = Math.max(0, ...catalogProducts.map(product => product.price));
+    return Math.max(100, Math.ceil(highestPrice / 50) * 50);
+  }, [catalogProducts]);
+  const selectedMaxPrice = maxPrice ?? priceCeiling;
 
   useEffect(() => {
-    if (presetCategory !== 'all') {
-      setCategory(presetCategory);
-      setPresetCategory('all');
-    }
-  }, []);
+    if (presetCategory === 'all') return;
+    setCategory(presetCategory);
+    setPresetCategory('all');
+  }, [presetCategory, setPresetCategory]);
 
-  useScrollReveal([loaded]);
-
-  // Skeleton loader
   useEffect(() => {
-    setLoaded(false);
-    const t = setTimeout(() => setLoaded(true), 1200);
-    return () => clearTimeout(t);
-  }, [category, maxPrice]);
+    setVisibleCount(PAGE_SIZE);
+  }, [category, maxPrice, minimumRating, sort, searchQuery]);
 
   const filtered = useMemo(() => {
-    let result = products.filter(p => productMatchesCategory(p, category) && p.price <= maxPrice);
+    let result = catalogProducts.filter(product =>
+      productMatchesCategory(product, category) &&
+      product.price <= selectedMaxPrice &&
+      product.rating >= minimumRating
+    );
     if (searchQuery) {
-      result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      const query = searchQuery.toLowerCase();
+      result = result.filter(product => product.name.toLowerCase().includes(query));
     }
     if (sort === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sort === 'high') result = [...result].sort((a, b) => b.price - a.price);
     else if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [category, maxPrice, sort, searchQuery, products]);
+  }, [catalogProducts, category, minimumRating, searchQuery, selectedMaxPrice, sort]);
 
   const filterOptions = SHOP_FILTER_CATEGORIES.map(option => ({
     ...option,
-    count: products.filter(p => productMatchesCategory(p, option.value)).length,
+    count: catalogProducts.filter(product => productMatchesCategory(product, option.value)).length,
   }));
+  const visibleProducts = filtered.slice(0, visibleCount);
+  const activeFilterCount = Number(maxPrice !== null && maxPrice < priceCeiling) + Number(minimumRating > 0);
+
+  function clearFilters() {
+    setCategory('all');
+    setMaxPrice(null);
+    setMinimumRating(0);
+    setSort('default');
+    setShowFilters(false);
+  }
 
   return (
-    <div style={{ paddingTop: 72 }}>
-      {/* Header */}
-      <section style={{ padding: '60px 40px 40px', textAlign: 'center' }}>
-        <div className="reveal" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)', borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
-          🛒 Shop
+    <div className="shop-page">
+      <header className="shop-intro">
+        <div>
+          <h1>Shop the catalog</h1>
+          <p>Cricket equipment, teamwear, training gear, awards, and custom DTF products in one focused collection.</p>
         </div>
-        <h2 className="reveal section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
-          Sports Gear Store
-        </h2>
-        <p className="reveal" style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-          Browse cricket gear, game categories, jerseys, awards, DTF, and training essentials
-        </p>
-      </section>
+        <button className="btn-neon" onClick={() => setCategory('cricket')}>Browse cricket</button>
+      </header>
 
-      {/* Shop Layout */}
-      <section style={{ padding: '0 40px 100px' }}>
-        <div className="shop-layout-responsive" style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          {/* Sidebar */}
-          <aside className="shop-sidebar-responsive" style={{ width: 280, flexShrink: 0, position: 'sticky', top: 100 }}>
-            {/* Categories Filter */}
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-                📂 Categories
-              </div>
-              {filterOptions.map(opt => (
-                <div
-                  key={opt.value}
-                  className={`filter-option ${category === opt.value ? 'active' : ''}`}
-                  onClick={() => setCategory(opt.value)}
-                >
-                  <div className="filter-checkbox">✓</div>
-                  <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text)' }}>{opt.label}</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{opt.count}</span>
-                </div>
-              ))}
+      <nav className="shop-category-strip" aria-label="Product categories">
+        {filterOptions.map(option => (
+          <button
+            key={option.value}
+            className={category === option.value ? 'is-active' : ''}
+            onClick={() => setCategory(option.value)}
+            aria-pressed={category === option.value}
+          >
+            <span>{option.label}</span>
+            <small>{option.count}</small>
+          </button>
+        ))}
+      </nav>
+
+      <div className="shop-shell">
+        <aside className="shop-filter-sidebar" aria-label="Catalog filters">
+          <div className="shop-filter-heading">
+            <h2>Refine</h2>
+            <button onClick={clearFilters}>Clear all</button>
+          </div>
+          <ShopFilters
+            priceCeiling={priceCeiling}
+            selectedMaxPrice={selectedMaxPrice}
+            setMaxPrice={setMaxPrice}
+            minimumRating={minimumRating}
+            setMinimumRating={setMinimumRating}
+          />
+        </aside>
+
+        <main className="shop-results">
+          {searchQuery && (
+            <div className="shop-search-notice">
+              <span>Results for <strong>“{searchQuery}”</strong></span>
+              <small>{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</small>
             </div>
+          )}
 
-            {/* Price Filter */}
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 16, color: 'var(--text)' }}>💰 Price Range</div>
-              <input
-                type="range" min={0} max={15000} value={maxPrice}
-                onChange={e => setMaxPrice(Number(e.target.value))}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                <span>$0</span>
-                <span>${maxPrice.toLocaleString('en-US')}</span>
-              </div>
-            </div>
-
-            {/* Rating Filter */}
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 16, color: 'var(--text)' }}>⭐ Rating</div>
-              {['4★ & above', '3★ & above'].map(r => (
-                <RatingFilter key={r} label={r} />
-              ))}
-            </div>
-
-            <button
-              className="btn-neon"
-              style={{ width: '100%' }}
-              onClick={() => { setCategory('all'); setMaxPrice(15000); setSort('default'); }}
-            >
-              CLEAR ALL FILTERS
-            </button>
-          </aside>
-
-          {/* Main */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Search Banner */}
-            {searchQuery && (
-              <div style={{
-                padding: '12px 20px', marginBottom: 20,
-                background: 'rgba(170,255,0,0.08)',
-                border: '1px solid rgba(170,255,0,0.25)',
-                borderRadius: 12,
-                display: 'flex', alignItems: 'center', gap: 10,
-                fontSize: '0.9rem', color: 'var(--text)',
-              }}>
-                <span style={{ fontWeight: 600 }}>
-                  Search results for "<span style={{ color: 'var(--neon-dark)' }}>{searchQuery}</span>"
-                </span>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  — {loaded ? filtered.length : '...'} products found
-                </span>
-              </div>
-            )}
-
-            {/* Toolbar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                Showing {loaded ? filtered.length : '...'} products
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  className="mobile-filter-btn"
-                  onClick={() => setShowFilters(s => !s)}
-                  style={{
-                    padding: '10px 18px', fontSize: '0.85rem', fontWeight: 600,
-                    background: showFilters ? 'var(--neon)' : 'var(--card-bg)',
-                    color: showFilters ? 'var(--black)' : 'var(--text)',
-                    border: '1px solid var(--card-border)', borderRadius: 10,
-                    cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif',
-                    display: 'none', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
-                  }}
-                >
-                  ☰ Filters {showFilters ? '▲' : '▼'}
-                </button>
-                <select value={sort} onChange={e => setSort(e.target.value as SortType)}>
-                  <option value="default">Sort by: Featured</option>
-                  <option value="low">Price: Low to High</option>
-                  <option value="high">Price: High to Low</option>
+          <div className="shop-toolbar">
+            <p>
+              Showing <strong>{Math.min(visibleCount, filtered.length)}</strong> of <strong>{filtered.length}</strong> products
+            </p>
+            <div>
+              <button
+                className="shop-mobile-filter-button"
+                onClick={() => setShowFilters(current => !current)}
+                aria-expanded={showFilters}
+                aria-controls="mobile-shop-filters"
+              >
+                Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </button>
+              <label className="shop-sort">
+                <span>Sort</span>
+                <select value={sort} onChange={event => setSort(event.target.value as SortType)}>
+                  <option value="default">Featured</option>
+                  <option value="low">Price: low to high</option>
+                  <option value="high">Price: high to low</option>
                   <option value="name">Name: A to Z</option>
                 </select>
-              </div>
-            </div>
-            {showFilters && (
-              <div className="mobile-filter-panel" style={{
-                background: 'var(--card-bg)', border: '1px solid var(--card-border)',
-                borderRadius: 16, padding: 24, marginBottom: 24,
-              }}>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-                  📂 Categories
-                </div>
-                {filterOptions.map(opt => (
-                  <div
-                    key={opt.value}
-                    className={`filter-option ${category === opt.value ? 'active' : ''}`}
-                    onClick={() => { setCategory(opt.value); setShowFilters(false); }}
-                  >
-                    <div className="filter-checkbox">✓</div>
-                    <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text)' }}>{opt.label}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{opt.count}</span>
-                  </div>
-                ))}
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginTop: 20, marginBottom: 16, color: 'var(--text)' }}>💰 Price Range</div>
-                <input type="range" min={0} max={15000} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  <span>$0</span>
-                  <span>${maxPrice.toLocaleString('en-US')}</span>
-                </div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginTop: 20, marginBottom: 16, color: 'var(--text)' }}>⭐ Rating</div>
-                {['4★ & above', '3★ & above'].map(r => <RatingFilter key={r} label={r} />)}
-                <button
-                  className="btn-neon"
-                  style={{ width: '100%', marginTop: 20 }}
-                  onClick={() => { setCategory('all'); setMaxPrice(15000); setSort('default'); setShowFilters(false); }}
-                >
-                  CLEAR ALL FILTERS
-                </button>
-              </div>
-            )}
-
-            {/* Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24 }}>
-              {!loaded
-                ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-                : filtered.length > 0
-                  ? filtered.map(p => <ProductCard key={p.id} product={p} />)
-                  : (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px' }}>
-                      <div style={{ fontSize: '4rem', marginBottom: 16, opacity: 0.3 }}>🔍</div>
-                      <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', marginBottom: 12, color: 'var(--text)' }}>No Products Found</h3>
-                      <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your filters</p>
-                    </div>
-                  )
-              }
+              </label>
             </div>
           </div>
-        </div>
-      </section>
-      <style>{`
-        @media (max-width: 768px) {
-          .shop-sidebar-responsive { display: none !important; }
-          .mobile-filter-btn { display: inline-flex !important; }
-        }
-        @media (min-width: 769px) {
-          .mobile-filter-panel { display: none !important; }
-        }
-      `}</style>
+
+          {showFilters && (
+            <section className="shop-mobile-filters" id="mobile-shop-filters">
+              <div className="shop-filter-heading">
+                <h2>Refine products</h2>
+                <button onClick={clearFilters}>Clear all</button>
+              </div>
+              <ShopFilters
+                priceCeiling={priceCeiling}
+                selectedMaxPrice={selectedMaxPrice}
+                setMaxPrice={setMaxPrice}
+                minimumRating={minimumRating}
+                setMinimumRating={setMinimumRating}
+              />
+            </section>
+          )}
+
+          {products.length === 0 ? (
+            <div className="shop-empty-state">
+              <h2>Loading the catalog</h2>
+              <p>Products will appear as soon as the store connection responds.</p>
+            </div>
+          ) : visibleProducts.length > 0 ? (
+            <>
+              <div className="shop-product-grid">
+                {visibleProducts.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
+              {visibleCount < filtered.length && (
+                <div className="shop-load-more">
+                  <button onClick={() => setVisibleCount(current => current + PAGE_SIZE)}>Load more products</button>
+                  <span>{filtered.length - visibleCount} remaining</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="shop-empty-state">
+              <h2>No products match these filters</h2>
+              <p>Try another category, rating, or price range.</p>
+              <button onClick={clearFilters}>Clear filters</button>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
 
-function RatingFilter({ label }: { label: string }) {
-  const [active, setActive] = useState(false);
+interface ShopFiltersProps {
+  priceCeiling: number;
+  selectedMaxPrice: number;
+  setMaxPrice: (price: number | null) => void;
+  minimumRating: number;
+  setMinimumRating: (rating: number) => void;
+}
+
+function ShopFilters({ priceCeiling, selectedMaxPrice, setMaxPrice, minimumRating, setMinimumRating }: ShopFiltersProps) {
   return (
-    <div className={`filter-option ${active ? 'active' : ''}`} onClick={() => setActive(a => !a)}>
-      <div className="filter-checkbox">✓</div>
-      <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text)' }}>{label}</span>
+    <div className="shop-filter-controls">
+      <fieldset>
+        <legend>Maximum price</legend>
+        <input
+          type="range"
+          min={0}
+          max={priceCeiling}
+          step={25}
+          value={selectedMaxPrice}
+          onChange={event => setMaxPrice(Number(event.target.value))}
+          aria-label="Maximum product price"
+        />
+        <div><span>CAD 0</span><output>CAD {selectedMaxPrice.toLocaleString('en-CA')}</output></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Minimum rating</legend>
+        <div className="shop-rating-options">
+          {[0, 4, 3].map(rating => (
+            <button
+              key={rating}
+              className={minimumRating === rating ? 'is-active' : ''}
+              onClick={() => setMinimumRating(rating)}
+              aria-pressed={minimumRating === rating}
+            >
+              {rating === 0 ? 'Any rating' : `${rating}.0 and above`}
+            </button>
+          ))}
+        </div>
+      </fieldset>
     </div>
   );
 }

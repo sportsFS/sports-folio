@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useApp } from '../context/AppContext';
-import { productMatchesCategory, SHOP_FILTER_CATEGORIES } from '../data/catalog';
+import {
+  PRODUCT_SUBCATEGORIES,
+  productMatchesCategory,
+  productMatchesSearch,
+  productMatchesSubcategory,
+  SHOP_FILTER_CATEGORIES,
+} from '../data/catalog';
 
 type SortType = 'default' | 'low' | 'high' | 'name';
 
@@ -10,6 +16,7 @@ const PAGE_SIZE = 12;
 export default function ShopPage() {
   const { presetCategory, setPresetCategory, products, searchQuery, setSearchQuery } = useApp();
   const [category, setCategory] = useState('all');
+  const [subcategory, setSubcategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [minimumRating, setMinimumRating] = useState(0);
   const [sort, setSort] = useState<SortType>('default');
@@ -29,32 +36,41 @@ export default function ShopPage() {
   useEffect(() => {
     if (presetCategory === 'all') return;
     setCategory(presetCategory);
+    setSubcategory('all');
     setPresetCategory('all');
   }, [presetCategory, setPresetCategory]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [category, maxPrice, minimumRating, sort, searchQuery]);
+  }, [category, subcategory, maxPrice, minimumRating, sort, searchQuery]);
 
   const filtered = useMemo(() => {
     let result = catalogProducts.filter(product =>
       productMatchesCategory(product, category) &&
+      productMatchesSubcategory(product, subcategory) &&
       product.price <= selectedMaxPrice &&
       product.rating >= minimumRating
     );
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(product => product.name.toLowerCase().includes(query));
+      result = result.filter(product => productMatchesSearch(product, searchQuery));
     }
     if (sort === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sort === 'high') result = [...result].sort((a, b) => b.price - a.price);
     else if (sort === 'name') result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [catalogProducts, category, minimumRating, searchQuery, selectedMaxPrice, sort]);
+  }, [catalogProducts, category, minimumRating, searchQuery, selectedMaxPrice, sort, subcategory]);
 
   const filterOptions = SHOP_FILTER_CATEGORIES.map(option => ({
     ...option,
     count: catalogProducts.filter(product => productMatchesCategory(product, option.value)).length,
+  }));
+  const activeCategory = SHOP_FILTER_CATEGORIES.find(option => option.value === category);
+  const parentCategoryCount = catalogProducts.filter(product => productMatchesCategory(product, category)).length;
+  const subcategoryOptions = (PRODUCT_SUBCATEGORIES[category] || []).map(option => ({
+    ...option,
+    count: catalogProducts.filter(product =>
+      productMatchesCategory(product, category) && productMatchesSubcategory(product, option.value)
+    ).length,
   }));
   const visibleProducts = filtered.slice(0, visibleCount);
   const activeFilterCount = Number(maxPrice !== null && maxPrice < priceCeiling) + Number(minimumRating > 0);
@@ -62,6 +78,12 @@ export default function ShopPage() {
   function selectCategory(nextCategory: string) {
     setSearchQuery('');
     setCategory(nextCategory);
+    setSubcategory('all');
+  }
+
+  function selectSubcategory(nextSubcategory: string) {
+    setSearchQuery('');
+    setSubcategory(nextSubcategory);
   }
 
   function clearFilters() {
@@ -95,6 +117,41 @@ export default function ShopPage() {
           </button>
         ))}
       </nav>
+
+      {subcategoryOptions.length > 0 && activeCategory && (
+        <section className="shop-subcategories" aria-labelledby="shop-subcategories-title">
+          <div className="shop-subcategories-inner">
+            <div className="shop-subcategories-heading">
+              <div>
+                <h2 id="shop-subcategories-title">Explore {activeCategory.label}</h2>
+                <p>Choose a product type to narrow the catalog.</p>
+              </div>
+              <span>{parentCategoryCount} {parentCategoryCount === 1 ? 'product' : 'products'}</span>
+            </div>
+            <div className="shop-subcategory-list" role="group" aria-label={`${activeCategory.label} subcategories`}>
+              <button
+                className={subcategory === 'all' ? 'is-active' : ''}
+                onClick={() => selectSubcategory('all')}
+                aria-pressed={subcategory === 'all'}
+              >
+                <span>All {activeCategory.label}</span>
+                <small>{parentCategoryCount}</small>
+              </button>
+              {subcategoryOptions.map(option => (
+                <button
+                  key={option.value}
+                  className={subcategory === option.value ? 'is-active' : ''}
+                  onClick={() => selectSubcategory(option.value)}
+                  aria-pressed={subcategory === option.value}
+                >
+                  <span>{option.label}</span>
+                  <small>{option.count}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="shop-shell">
         <aside className="shop-filter-sidebar" aria-label="Catalog filters">

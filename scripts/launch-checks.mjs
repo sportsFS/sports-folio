@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {
+  PRODUCT_SUBCATEGORIES,
+  getProductSubcategories,
+  productMatchesSearch,
+} from '../src/data/catalog.ts';
 
 const read = path => fs.readFileSync(path, 'utf8');
 
@@ -58,6 +63,38 @@ assert.match(schema, /addOnProductIds:\s*v\.optional\(v\.array\(v\.id\("products
 assert.match(products, /validateAddOnProductIds[\s\S]*A product cannot be its own add-on[\s\S]*Add-on product not found/, 'add-on relationships must be validated server-side');
 assert.match(products, /referencedBy[\s\S]*Remove this product from/, 'referenced add-on products must not be deleted');
 assert.match(catalog, /product\.addOnProductIds[\s\S]*productsById[\s\S]*isEligible/, 'storefront add-ons must use configured products and availability');
+assert.equal(PRODUCT_SUBCATEGORIES.cricket.length, 15, 'cricket must expose every requested subcategory');
+assert.equal(PRODUCT_SUBCATEGORIES.badminton.length, 4, 'badminton must expose every requested subcategory');
+assert.equal(PRODUCT_SUBCATEGORIES.pickleball.length, 2, 'pickleball must expose every requested subcategory');
+
+const subcategorySamples = [
+  ['cricket-english-willow', { name: 'MRF Bat', category: 'bats', image: '/bat-english-willow-mrf.webp' }],
+  ['cricket-kashmir-willow', { name: 'Kashmir Bat', category: 'bats', image: '/bat-kashmir-willow.webp' }],
+  ['cricket-tapeball-bats', { name: 'CA Tape Bat', category: 'bats', image: '/bat-tapeball-tennis.webp' }],
+  ['cricket-scoop-bats', { name: 'Kerala Scoop Bats', category: 'bats', image: '/scoop.webp' }],
+  ['cricket-leather-balls', { name: 'SG Club Leather', category: 'balls', image: '/ball.webp' }],
+  ['cricket-hard-tennis-balls', { name: 'Nivia Ball Dozen', category: 'balls', image: '/ball.webp', description: 'Hard tennis balls' }],
+  ['cricket-batting-gloves', { name: 'Batting Gloves', category: 'gloves', image: '/gloves-batting.webp' }],
+  ['cricket-wicket-keeping-gloves', { name: 'WK Gloves', category: 'gloves', image: '/gloves-wicketkeeping.webp' }],
+  ['cricket-wicket-keeping-pads', { name: 'WK Pads', category: 'gloves', image: '/gloves-wicketkeeping-pad.webp' }],
+  ['cricket-helmets', { name: 'Shrey Helmet', category: 'protection', image: '/helmet.webp' }],
+  ['cricket-shoes', { name: 'Cricket Shoes', category: 'shoes', image: '/shoes.webp' }],
+  ['cricket-batting-leg-guards', { name: 'Colored Pads', category: 'protection', image: '/pads.webp', description: 'Batting leg guards' }],
+  ['cricket-protective-guards', { name: 'Elbow Guard', category: 'protection', image: '/guard.webp' }],
+  ['cricket-accessories', { name: 'Bat Mallet', category: 'accessories', image: '/mallet.webp' }],
+  ['cricket-juniors', { name: 'Aztral Size 5', category: 'bats', image: '/bat-english-willow.webp' }],
+  ['badminton-yonex', { name: 'Yonex Racquet', category: 'badminton', image: '/racquet.webp' }],
+  ['badminton-li-ning', { name: 'Li-Ning Racquet', category: 'badminton', image: '/racquet.webp' }],
+  ['badminton-victor', { name: 'Victor Racquet', category: 'badminton', image: '/racquet.webp' }],
+  ['badminton-accessories', { name: 'Shuttlecocks', category: 'badminton', image: '/shuttle.webp' }],
+  ['pickleball-paddles', { name: 'Carbon Paddle', category: 'pickleball', image: '/paddle.webp' }],
+  ['pickleball-accessories', { name: 'Pickleball Bag', category: 'pickleball', image: '/bag.webp' }],
+  ['pickleball-accessories', { name: 'Paddle Cover', category: 'pickleball', image: '/cover.webp' }],
+];
+for (const [expected, product] of subcategorySamples) {
+  assert.ok(getProductSubcategories(product).includes(expected), `${product.name} must map to ${expected}`);
+}
+assert.ok(productMatchesSearch(subcategorySamples[0][1], 'english willow'), 'search must match derived subcategory names');
 assert.match(admin, /id: 'addons'[\s\S]*<AddOnsTab/, 'admin must expose dedicated add-on management');
 assert.match(orders, /inventoryStatus !== "reserved"[\s\S]*requestedByProduct[\s\S]*stockQuantity: product\.stockQuantity - quantity/, 'paid checkout must consume a valid reservation');
 assert.match(crons, /release expired checkout reservations[\s\S]*cleanupExpiredReservationsInternal/, 'expired inventory reservations must be cleaned automatically');
@@ -80,6 +117,8 @@ assert.match(productCard + homePage, /ProductQuickView/g, 'shop and home product
 assert.match(searchBar, /function closeSearch\(\)[\s\S]*setSearchQuery\(''\)[\s\S]*setExpanded\(false\)/, 'closing search must clear the shared product query');
 assert.doesNotMatch(searchBar, /onBlur=\{handleBlur\}/, 'opening a product must not clear search through input blur');
 assert.match(shopPage, /function selectCategory[\s\S]*setSearchQuery\(''\)[\s\S]*setCategory/, 'choosing a category must clear stale search filters');
+assert.match(shopPage, /productMatchesSubcategory[\s\S]*productMatchesSearch/, 'shop must combine subcategory and searchable catalog filtering');
+assert.match(shopPage, /shop-subcategory-list[\s\S]*aria-pressed/, 'shop subcategories must expose accessible selected states');
 assert.match(homePage, /isPaused[\s\S]*setInterval[\s\S]*4000[\s\S]*onFocusCapture/, 'testimonials must auto-advance and pause during interaction');
 assert.match(shopPage, /product\.rating >= minimumRating[\s\S]*slice\(0, visibleCount\)/, 'shop rating filter and incremental product loading must remain functional');
 assert.match(shopPage, /product\.isActive !== false && product\.price > 0/, 'shop must hide inactive and unpriced products');

@@ -19,13 +19,21 @@ export default function SearchBar() {
   }, [searchQuery]);
 
   function handleExpand() {
+    if (expanded) {
+      closeSearch();
+      return;
+    }
     setExpanded(true);
   }
 
-  function handleBlur() {
-    if (!query.trim()) {
-      setTimeout(() => setExpanded(false), 150);
-    }
+  function closeSearch() {
+    setQuery('');
+    setSearchQuery('');
+    setExpanded(false);
+  }
+
+  function handleBlur(event: React.FocusEvent<HTMLInputElement>) {
+    if (!wrapperRef.current?.contains(event.relatedTarget as Node | null)) closeSearch();
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -35,16 +43,12 @@ export default function SearchBar() {
       if (!query.trim()) setExpanded(false);
     }
     if (e.key === 'Escape') {
-      setQuery('');
-      setSearchQuery('');
-      setExpanded(false);
+      closeSearch();
     }
   }
 
   function handleClear() {
-    setQuery('');
-    setSearchQuery('');
-    setTimeout(() => setExpanded(false), 150);
+    closeSearch();
   }
 
   return (

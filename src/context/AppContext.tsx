@@ -125,7 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(() => loadJSON('cricket_cart', []));
   const [currentPage, setCurrentPage] = useState(() => pageFromPath(window.location.pathname));
   const [toast, setToast] = useState<ToastData>({ msg: '', sub: '', type: 'success', visible: false });
-  const [presetCategory, setPresetCategory] = useState('all');
+  const [presetCategory, setPresetCategoryState] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const profileSyncStarted = useRef(false);
@@ -231,7 +231,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
   }, []);
 
+  const setPresetCategory = useCallback((category: string) => {
+    setSearchQuery('');
+    setPresetCategoryState(category);
+  }, []);
+
   const showPage = useCallback((page: string) => {
+    if (page !== 'shop') setSearchQuery('');
     setCurrentPage(page);
     const path = pathForPage(page);
     if (window.location.pathname !== path) window.history.pushState({}, '', path);

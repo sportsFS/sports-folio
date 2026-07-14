@@ -8,7 +8,7 @@ type SortType = 'default' | 'low' | 'high' | 'name';
 const PAGE_SIZE = 12;
 
 export default function ShopPage() {
-  const { presetCategory, setPresetCategory, products, searchQuery } = useApp();
+  const { presetCategory, setPresetCategory, products, searchQuery, setSearchQuery } = useApp();
   const [category, setCategory] = useState('all');
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [minimumRating, setMinimumRating] = useState(0);
@@ -59,8 +59,13 @@ export default function ShopPage() {
   const visibleProducts = filtered.slice(0, visibleCount);
   const activeFilterCount = Number(maxPrice !== null && maxPrice < priceCeiling) + Number(minimumRating > 0);
 
+  function selectCategory(nextCategory: string) {
+    setSearchQuery('');
+    setCategory(nextCategory);
+  }
+
   function clearFilters() {
-    setCategory('all');
+    selectCategory('all');
     setMaxPrice(null);
     setMinimumRating(0);
     setSort('default');
@@ -74,7 +79,7 @@ export default function ShopPage() {
           <h1>Shop the catalog</h1>
           <p>Cricket equipment, teamwear, training gear, awards, and custom DTF products in one focused collection.</p>
         </div>
-        <button className="btn-neon" onClick={() => setCategory('cricket')}>Browse cricket</button>
+        <button className="btn-neon" onClick={() => selectCategory('cricket')}>Browse cricket</button>
       </header>
 
       <nav className="shop-category-strip" aria-label="Product categories">
@@ -82,7 +87,7 @@ export default function ShopPage() {
           <button
             key={option.value}
             className={category === option.value ? 'is-active' : ''}
-            onClick={() => setCategory(option.value)}
+            onClick={() => selectCategory(option.value)}
             aria-pressed={category === option.value}
           >
             <span>{option.label}</span>

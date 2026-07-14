@@ -31,10 +31,10 @@ export default function ShippingPage() {
           </Section>
 
           <Section title="2. Shipping Methods and Rates">
-            <p>Delivery is available only to Canadian addresses. The delivery charge is displayed in USD at checkout before payment.</p>
+            <p>Delivery is available only to Canadian addresses. The delivery charge is displayed in CAD at checkout before payment.</p>
             <ul>
-              <li><strong>Canada delivery:</strong> $9.99 USD for orders of $99 USD or less</li>
-              <li><strong>Free Canada delivery:</strong> Orders over $99 USD</li>
+              <li><strong>Canada delivery:</strong> $9.99 CAD for orders of $99 CAD or less</li>
+              <li><strong>Free Canada delivery:</strong> Orders over $99 CAD</li>
               <li>The store owner will confirm the expected delivery timing after the order is received</li>
             </ul>
           </Section>

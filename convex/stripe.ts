@@ -38,7 +38,7 @@ export const createCheckoutSession = action({
 
     const lineItems = checkout.lineItems.map(item => ({
       price_data: {
-        currency: "usd",
+        currency: "cad",
         product_data: { name: item.name },
         unit_amount: Math.round(item.price * 100),
       },
@@ -57,7 +57,7 @@ export const createCheckoutSession = action({
         shipping_options: [{
           shipping_rate_data: {
             type: "fixed_amount",
-            fixed_amount: { amount: Math.round(shippingAmount * 100), currency: "usd" },
+            fixed_amount: { amount: Math.round(shippingAmount * 100), currency: "cad" },
             display_name: shippingAmount === 0 ? "Free Canada delivery" : "Canada delivery",
           },
         }],

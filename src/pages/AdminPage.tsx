@@ -25,7 +25,7 @@ type ProductForm = {
 };
 
 const categories = ADMIN_PRODUCT_CATEGORIES;
-const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+const currency = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' });
 
 function emptyProductForm(): ProductForm {
   return {
@@ -438,7 +438,7 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
               <div className="admin-form-grid">
                 <label className="admin-field admin-field-full"><span>Product name</span><input autoFocus required value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} /></label>
                 <label className="admin-field"><span>Category</span><select value={form.category} onChange={event => setForm(current => ({ ...current, category: event.target.value }))}>{categories.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-                <label className="admin-field"><span>Price (USD)</span><input required min="0.01" step="0.01" type="number" value={form.price} onChange={event => setForm(current => ({ ...current, price: event.target.value }))} /></label>
+                <label className="admin-field"><span>Price (CAD)</span><input required min="0.01" step="0.01" type="number" value={form.price} onChange={event => setForm(current => ({ ...current, price: event.target.value }))} /></label>
                 <label className="admin-field"><span>Stock on hand</span><input required min="0" step="1" type="number" value={form.stockQuantity} onChange={event => setForm(current => ({ ...current, stockQuantity: event.target.value }))} />{editingProduct && <small>{editingProduct.reservedQuantity ?? 0} currently reserved in active checkouts</small>}</label>
                 <label className="admin-field"><span>Compare-at price</span><input min="0" step="0.01" type="number" value={form.oldPrice} onChange={event => setForm(current => ({ ...current, oldPrice: event.target.value }))} /></label>
                 <label className="admin-field"><span>Rating</span><input min="0" max="5" step="0.1" type="number" value={form.rating} onChange={event => setForm(current => ({ ...current, rating: event.target.value }))} /></label>

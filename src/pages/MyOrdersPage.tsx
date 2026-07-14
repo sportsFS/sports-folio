@@ -101,7 +101,7 @@ export default function MyOrdersPage() {
 
                   <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: 12, marginTop: 12, display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem' }}>
                     <span style={{ color: 'var(--text)' }}>Total</span>
-                    <span style={{ color: 'var(--neon-dark)' }}>${order.total.toFixed(2)} USD</span>
+                    <span style={{ color: 'var(--neon-dark)' }}>${order.total.toFixed(2)} CAD</span>
                   </div>
 
                   {order.returnRequest && (

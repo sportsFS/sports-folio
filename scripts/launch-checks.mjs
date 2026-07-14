@@ -38,7 +38,7 @@ assert.match(stripe, /internal\.products\.getCheckoutItems/, 'Stripe checkout mu
 assert.doesNotMatch(stripe, /price:\s*item\.price/, 'Stripe checkout must not trust client item prices');
 assert.match(stripe, /shippingAmount = checkout\.total > 99 \? 0 : 9\.99/, 'server shipping must match the cart rule');
 assert.match(stripe, /allowed_countries:\s*\["CA"\]/, 'checkout delivery must be restricted to Canada');
-assert.match(stripe, /fixed_amount:[\s\S]*currency:\s*"usd"/, 'delivery charges must use USD');
+assert.match(stripe, /fixed_amount:[\s\S]*currency:\s*"cad"/, 'delivery charges must use CAD');
 assert.match(orders, /shippingAddress: args\.shippingAddress/, 'verified checkout address must be stored on the order');
 assert.match(admin, /Delivery address[\s\S]*order\.shippingAddress/, 'admin must show the delivery address');
 

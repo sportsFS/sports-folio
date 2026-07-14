@@ -129,7 +129,7 @@ export default function CartPage() {
             borderRadius: 20, padding: 32, position: 'sticky', top: 100,
           }}>
             <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.2rem', fontWeight: 700, marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--card-border)', color: 'var(--text)' }}>
-              Order Summary (USD)
+              Order Summary (CAD)
             </h3>
 
             <SummaryRow label={`Subtotal (${cart.reduce((s, i) => s + i.qty, 0)} items)`} value={`$${subtotal.toLocaleString('en-US')}`} />

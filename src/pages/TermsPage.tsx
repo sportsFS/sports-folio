@@ -49,7 +49,7 @@ export default function TermsPage() {
 
           <Section title="4. Products and Pricing">
             <ul>
-              <li>All prices are listed in <strong>USD ($)</strong> and are subject to change without notice</li>
+              <li>All prices are listed in <strong>CAD ($)</strong> and are subject to change without notice</li>
               <li>We strive to display accurate product descriptions and images, but slight variations may occur</li>
               <li>We reserve the right to limit quantities or refuse orders at our discretion</li>
               <li>In the event of a pricing error, we will notify you and offer the option to confirm the corrected price or cancel the order</li>
@@ -68,7 +68,7 @@ export default function TermsPage() {
           <Section title="6. Shipping and Delivery">
             <ul>
               <li>Delivery is available only to complete Canadian addresses collected during Stripe Checkout</li>
-              <li>Delivery charges are displayed in USD before payment</li>
+              <li>Delivery charges are displayed in CAD before payment</li>
               <li>The store owner will provide delivery updates and an expected timeframe after receiving the order</li>
               <li>For complete details, see our <button onClick={() => showPage('shipping')} style={{ background: 'none', border: 'none', color: 'var(--neon-dark)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>Shipping, Exchange &amp; Replacement Policy</button></li>
             </ul>

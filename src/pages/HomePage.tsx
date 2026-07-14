@@ -1,61 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
-import SkeletonCard from '../components/SkeletonCard';
-import { useScrollReveal } from '../hooks/useScrollReveal';
-import { HERO_GAME_CATEGORIES } from '../data/catalog';
-
-const flashItems = [
-  '🔥 FLASH SALE — UP TO 50% OFF 🔥',
-  '🏏 FREE SHIPPING ON ORDERS ABOVE $99 🚚',
-  '⚡ FLAT $20 OFF ON FIRST ORDER ⚡',
-  '💥 BUY 2 GET 1 FREE ON ACCESSORIES 💥',
-  '🎯 USE CODE: CRICKET25 FOR 25% OFF 🎯',
-  '🏆 PREMIUM BATS STARTING $199 🏆',
-];
+import { findSuggestedAddOns, HERO_GAME_CATEGORIES, productMatchesCategory } from '../data/catalog';
 
 const brands = [
-  { name: 'SS Cricket', short: 'SS', logo: '/images/brands/ss-cricket.png' },
-  { name: 'SG Sports', short: 'SG', logo: '/images/brands/sg-sports.png' },
-  { name: 'MRF', short: 'MRF', logo: '/images/brands/mrf.png' },
-  { name: 'Gray-Nicolls', short: 'GN', logo: '/images/brands/gray-nicolls.png' },
-  { name: 'Kookaburra', short: 'KB', logo: '/images/brands/kookaburra.png' },
-  { name: 'GM Cricket', short: 'GM', logo: '/images/brands/gm-cricket.png' },
-  { name: 'New Balance', short: 'NB', logo: '/images/brands/new-balance.png' },
-  { name: 'Adidas Cricket', short: 'ADI', logo: '/images/brands/adidas-cricket.png' },
-  { name: 'Puma Cricket', short: 'PUMA', logo: '/images/brands/puma-cricket.png' },
-  { name: 'DSC', short: 'DSC', logo: '/images/brands/dsc.png' },
+  { name: 'SS Cricket', slug: 'ss', short: 'SS', logo: '/images/brands/ss-cricket.png' },
+  { name: 'SG Sports', slug: 'sg', short: 'SG', logo: '/images/brands/sg-sports.png' },
+  { name: 'MRF', slug: 'mrf', short: 'MRF', logo: '/images/brands/mrf.png' },
+  { name: 'Gray-Nicolls', slug: 'gray-nicolls', short: 'GN', logo: '/images/brands/gray-nicolls.png' },
+  { name: 'Kookaburra', slug: 'kookaburra', short: 'KB', logo: '/images/brands/kookaburra.png' },
+  { name: 'GM Cricket', slug: 'gm', short: 'GM', logo: '/images/brands/gm-cricket.png' },
+  { name: 'New Balance', slug: 'new-balance', short: 'NB', logo: '/images/brands/new-balance.png' },
+  { name: 'Adidas Cricket', slug: 'adidas', short: 'ADI', logo: '/images/brands/adidas-cricket.png' },
+  { name: 'Puma Cricket', slug: 'puma', short: 'PUMA', logo: '/images/brands/puma-cricket.png' },
+  { name: 'DSC', slug: 'dsc', short: 'DSC', logo: '/images/brands/dsc.png' },
 ];
-const motionPosterLogos = ['Cricket', 'Badminton', 'Pickleball'];
+
+const departmentDeck = [
+  { value: 'bats', label: 'Cricket bats', detail: 'English, Kashmir and tape-ball bats', size: 'feature' },
+  { value: 'protection', label: 'Protective gear', detail: 'Pads, guards and match protection', size: 'standard' },
+  { value: 'balls', label: 'Cricket balls', detail: 'Leather, practice and tennis balls', size: 'standard' },
+  { value: 'accessories', label: 'Training and care', detail: 'Grips, bat care and practice gear', size: 'wide' },
+  { value: 'jerseys', label: 'Jerseys', detail: 'Team colours and match-day wear', size: 'wide' },
+];
 
 export default function HomePage() {
-  const { showPage, showToast, products, setPresetCategory } = useApp();
-  const [productsLoaded, setProductsLoaded] = useState(false);
-  const [email, setEmail] = useState('');
-  const parallaxRef = useRef<HTMLDivElement>(null);
-  const parallaxBgRef = useRef<HTMLDivElement>(null);
-
-  useScrollReveal([productsLoaded]);
-
-  // Skeleton → Products
-  useEffect(() => {
-    const t = setTimeout(() => setProductsLoaded(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Parallax
-  useEffect(() => {
-    function handleParallax() {
-      if (!parallaxRef.current || !parallaxBgRef.current) return;
-      const rect = parallaxRef.current.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        const scrolled = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
-        parallaxBgRef.current.style.transform = `translateY(${(scrolled - 0.5) * 100}px)`;
-      }
-    }
-    window.addEventListener('scroll', handleParallax);
-    return () => window.removeEventListener('scroll', handleParallax);
-  }, []);
+  const { showPage, products, setPresetCategory } = useApp();
 
   const [heroIndex, setHeroIndex] = useState(0);
 
@@ -72,16 +42,27 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  function handleSubscribe(e: React.FormEvent) {
-    e.preventDefault();
-    showToast('Subscribed! 🎉', 'Welcome to the Crease Club!');
-    setEmail('');
-  }
-
   function shopGameCategory(category: string) {
     setPresetCategory(category);
     showPage('shop');
   }
+
+  const departments = departmentDeck.map(department => {
+    const matchingProducts = products.filter(product => productMatchesCategory(product, department.value));
+    return {
+      ...department,
+      image: matchingProducts.find(product => product.image)?.image,
+      count: matchingProducts.length,
+    };
+  });
+
+  const featuredProducts = products
+    .filter(product => product.isActive !== false && product.price > 0)
+    .sort((a, b) => Number(Boolean(b.badge)) - Number(Boolean(a.badge)))
+    .slice(0, 8);
+
+  const featuredBat = products.find(product => product.category === 'bats' && findSuggestedAddOns(product, products).length > 0);
+  const featuredAddOn = featuredBat ? findSuggestedAddOns(featuredBat, products)[0] : undefined;
 
   return (
     <>
@@ -159,217 +140,157 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ====== FLASH SALE ====== */}
-      <div className="flash-sale-bar">
-        <div className="flash-sale-track">
-          {[...flashItems, ...flashItems].map((item, i) => (
-            <div key={i} className="flash-sale-item">{item}</div>
-          ))}
-        </div>
-      </div>
+      <main className="home-page">
+        <section className="home-assurance" aria-label="Store policies">
+          <div>
+            <strong>Delivery across Canada</strong>
+            <span>Canadian addresses are confirmed at checkout.</span>
+          </div>
+          <div>
+            <strong>Stripe-secured payment</strong>
+            <span>Order totals and delivery charges are shown before payment.</span>
+          </div>
+          <div>
+            <strong>Exchange or replacement</strong>
+            <span>Eligible requests can be submitted within 30 days of delivery.</span>
+          </div>
+        </section>
 
-      {/* ====== SHOP BY GAME ====== */}
-      <section style={{ padding: '86px 40px', background: 'var(--bg)' }}>
-        <div className="section-header reveal" style={{ textAlign: 'center', marginBottom: 44 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px',
-            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
-            borderRadius: 50, fontWeight: 700, fontSize: '0.78rem', color: 'var(--neon-dark)',
-            textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16,
-          }}>Shop by game</div>
-          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.35rem', fontWeight: 850, marginBottom: 12, color: 'var(--text)' }}>
-            Find Gear by Sport
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 620, margin: '0 auto', lineHeight: 1.7 }}>
-            Cricket leads the catalog today, with dedicated paths ready for badminton, pickleball, soccer, and volleyball.
-          </p>
-        </div>
-        <div className="game-category-grid">
-          {HERO_GAME_CATEGORIES.map(game => (
-            <button key={game.value} className="game-category-card reveal" onClick={() => shopGameCategory(game.value)}>
-              <span>{game.label}</span>
-              <small>Shop {game.label}</small>
-            </button>
-          ))}
-        </div>
-      </section>
+        <nav className="home-game-nav" aria-label="Shop by game">
+          <span>Shop by game</span>
+          <div>
+            {HERO_GAME_CATEGORIES.map(game => (
+              <button key={game.value} onClick={() => shopGameCategory(game.value)}>{game.label}</button>
+            ))}
+            <button onClick={() => shopGameCategory('volleyball')}>Volleyball</button>
+            <button onClick={() => shopGameCategory('awards')}>Awards</button>
+            <button onClick={() => shopGameCategory('dtf')}>DTF</button>
+          </div>
+        </nav>
 
-      {/* ====== TRENDING PRODUCTS ====== */}
-      <section style={{ padding: '100px 40px', background: 'var(--section-alt)' }}>
-        <div className="section-header reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px',
-            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
-            borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
-            textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
-          }}>🔥 Trending</div>
-          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
-            Trending Right Now
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-            Most loved products by our cricket community this season
-          </p>
-        </div>
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 24, maxWidth: 1400, margin: '0 auto',
-        }}>
-          {!productsLoaded
-            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-            : products.slice(0, 6).map(p => <ProductCard key={p.id} product={p} />)
-          }
-        </div>
-        <div style={{ textAlign: 'center', marginTop: 48 }}>
-          <button className="btn-neon" onClick={() => showPage('shop')}>VIEW ALL PRODUCTS →</button>
-        </div>
-      </section>
-
-      {/* ====== PARALLAX BANNER ====== */}
-      <div className="parallax-banner" ref={parallaxRef}>
-        <div ref={parallaxBgRef} style={{
-          position: 'absolute', top: '-50%', left: 0,
-          width: '100%', height: '200%',
-          background: `radial-gradient(ellipse at 30% 50%, rgba(170,255,0,0.15) 0%, transparent 60%),
-                       radial-gradient(ellipse at 70% 50%, rgba(170,255,0,0.1) 0%, transparent 60%)`,
-          willChange: 'transform',
-        }} />
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', color: 'white', padding: '0 20px', width: '100%' }}>
-          <p style={{ color: 'var(--neon)', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>
-            SPORTSFOLIO game brands
-          </p>
-          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(1.8rem,4vw,3rem)', fontWeight: 900, marginBottom: 22 }}>
-            Motion Poster for <span style={{ color: 'var(--neon)', textShadow: '0 0 30px var(--neon-glow)' }}>Match Day</span>
-          </h2>
-          <div className="motion-logo-row" aria-label="Cricket, Badminton, and Pickleball brand logos">
-            {[...motionPosterLogos, ...motionPosterLogos].map((label, i) => (
-              <button key={`${label}-${i}`} className="motion-logo-mark" onClick={() => shopGameCategory(label.toLowerCase())}>
-                <span>SF</span>
-                <strong>{label}</strong>
+        <section className="home-section home-departments">
+          <div className="home-section-heading">
+            <h2>Start with what you need.</h2>
+            <p>Browse real departments from the current catalog, then narrow by brand, price, or availability in the shop.</p>
+          </div>
+          <div className="home-department-grid">
+            {departments.map(department => (
+              <button
+                key={department.value}
+                className={`home-department-card home-department-card--${department.size}`}
+                onClick={() => shopGameCategory(department.value)}
+              >
+                {department.image && <img src={department.image} alt="" loading="lazy" />}
+                <span className="home-department-shade" />
+                <span className="home-department-copy">
+                  <strong>{department.label}</strong>
+                  <small>{department.detail}</small>
+                  <b>{department.count} {department.count === 1 ? 'product' : 'products'}</b>
+                </span>
               </button>
             ))}
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* ====== FEATURES ====== */}
-      <section style={{ padding: '100px 40px' }}>
-        <div className="section-header reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px',
-            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
-            borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
-            textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
-          }}>✨ Why Us</div>
-          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
-            Why Choose Sports Folio?
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-            We don't just sell gear — we equip champions
-          </p>
-        </div>
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 24, maxWidth: 1200, margin: '0 auto',
-        }}>
-          {[
-            { icon: '🚚', title: 'Free Express Shipping', desc: 'Lightning fast delivery across India. Free on all orders above $99.' },
-            { icon: '✅', title: '100% Authentic', desc: 'Every product is genuine and sourced directly from authorized manufacturers.' },
-            { icon: '🔄', title: 'Easy Returns', desc: 'Not satisfied? Return within 30 days with our no-hassle return policy.' },
-            { icon: '💬', title: 'Expert Support', desc: 'Our cricket experts are available 24/7 to help you choose the right gear.' },
-          ].map(feat => (
-            <div key={feat.title} className="feature-card reveal">
-              <div style={{
-                width: 56, height: 56, background: 'rgba(170,255,0,0.1)',
-                borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.5rem', marginBottom: 20,
-              }}>
-                {feat.icon}
-              </div>
-              <h3 style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 8, color: 'var(--text)' }}>{feat.title}</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{feat.desc}</p>
+        <section className="home-section home-products-section">
+          <div className="home-section-heading home-section-heading--products">
+            <div>
+              <h2>Gear worth a closer look.</h2>
+              <p>In-stock status and available quantities are controlled by the store owner.</p>
             </div>
-          ))}
-        </div>
-      </section>
+            <button className="home-text-link" onClick={() => showPage('shop')}>
+              View all {products.length > 0 ? products.length : ''} products
+            </button>
+          </div>
+          {featuredProducts.length > 0 ? (
+            <div className="home-product-grid">
+              {featuredProducts.map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+          ) : (
+            <div className="home-catalog-empty">
+              <strong>The catalog is loading.</strong>
+              <span>Products will appear here as soon as the store connection responds.</span>
+            </div>
+          )}
+        </section>
 
-      {/* ====== BRANDS ====== */}
-      <div style={{ padding: '60px 0', overflow: 'hidden', background: 'var(--section-alt)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}>
-            Trusted Brands
-          </span>
-        </div>
-        <div className="brands-track">
-          {[...brands, ...brands].map((brand, i) => (
-            <span key={`${brand.name}-${i}`} className="brand-logo-item" aria-label={brand.name}>
-              <img
-                src={brand.logo}
-                alt={brand.name}
-                className="brand-logo-image"
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none';
-                  event.currentTarget.nextElementSibling?.removeAttribute('hidden');
-                }}
-              />
-              <span className="brand-logo-fallback" hidden>{brand.short}</span>
-            </span>
-          ))}
-        </div>
-      </div>
+        {featuredBat && featuredAddOn && (
+          <section className="home-section home-kit-section">
+            <div className="home-kit-visual" aria-label={`${featuredBat.name} with ${featuredAddOn.name}`}>
+              <figure className="home-kit-product home-kit-product--bat">
+                <img src={featuredBat.image} alt={featuredBat.name} loading="lazy" />
+                <figcaption>{featuredBat.name}</figcaption>
+              </figure>
+              <span className="home-kit-plus" aria-hidden="true">+</span>
+              <figure className="home-kit-product home-kit-product--addon">
+                <img src={featuredAddOn.image} alt={featuredAddOn.name} loading="lazy" />
+                <figcaption>{featuredAddOn.name}</figcaption>
+              </figure>
+            </div>
+            <div className="home-kit-copy">
+              <h2>Complete the kit before checkout.</h2>
+              <p>Selected bats can suggest compatible balls and accessories after they are added to cart. Suggestions follow the add-ons managed by the store owner.</p>
+              <button className="btn-neon" onClick={() => shopGameCategory('bats')}>Shop cricket bats</button>
+            </div>
+          </section>
+        )}
 
-      {/* ====== TESTIMONIALS ====== */}
-      <section style={{ padding: '100px 40px' }}>
-        <div className="section-header reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px',
-            background: 'rgba(170,255,0,0.1)', border: '1px solid rgba(170,255,0,0.3)',
-            borderRadius: 50, fontWeight: 600, fontSize: '0.8rem', color: 'var(--neon-dark)',
-            textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16,
-          }}>💬 Testimonials</div>
-          <h2 className="section-title" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: 'var(--text)' }}>
-            What Players Say
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>
-            Hear from our community of passionate cricketers
-          </p>
-        </div>
-        <TestimonialsCarousel />
-      </section>
+        <section className="home-store-standard">
+          <div>
+            <h2>Clear terms. No surprise promises.</h2>
+            <p>SPORTSFOLIO currently delivers to Canadian addresses. Delivery charges are confirmed before payment, and eligible delivered orders can request an exchange or replacement.</p>
+          </div>
+          <button className="home-text-link" onClick={() => showPage('shipping')}>Read the delivery policy</button>
+        </section>
 
-      {/* ====== NEWSLETTER ====== */}
-      <section style={{ padding: '100px 40px', background: '#000', position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', width: 400, height: 400, background: 'var(--neon)',
-          borderRadius: '50%', filter: 'blur(120px)', opacity: 0.15, top: -200, left: -100,
-        }} />
-        <div style={{
-          position: 'absolute', width: 400, height: 400, background: 'var(--neon)',
-          borderRadius: '50%', filter: 'blur(120px)', opacity: 0.15, bottom: -200, right: -100,
-        }} />
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 600, margin: '0 auto' }} className="reveal">
-          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '2.2rem', fontWeight: 800, color: '#fff', marginBottom: 16 }}>
-            JOIN THE CREASE CLUB
-          </h2>
-          <p style={{ color: '#999', marginBottom: 32, lineHeight: 1.7 }}>
-            Subscribe to get exclusive deals, early access to new arrivals, and cricket tips from the pros.
-          </p>
-          <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: 12, maxWidth: 500, margin: '0 auto', flexWrap: 'wrap' }}>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              style={{
-                flex: 1, minWidth: 200, padding: '16px 24px', border: '2px solid #333',
-                borderRadius: 50, background: '#111', color: 'white', fontSize: '0.95rem',
-                fontFamily: 'Space Grotesk, sans-serif', outline: 'none',
-              }}
-            />
-            <button type="submit" className="btn-neon">SUBSCRIBE</button>
-          </form>
-        </div>
-      </section>
+        <section className="home-brands" aria-labelledby="home-brands-title">
+          <div className="home-brands-heading">
+            <h2 id="home-brands-title">Brands players recognise.</h2>
+            <p>Browse established cricket labels already represented across the SPORTSFOLIO catalog.</p>
+          </div>
+          <div className="home-brands-window">
+            <div className="home-brands-track">
+              {[0, 1].map(group => (
+                <div className="home-brand-sequence" key={group} aria-hidden={group === 1 ? 'true' : undefined}>
+                  {brands.map(brand => (
+                    <span key={`${group}-${brand.name}`} className={`home-brand-logo home-brand-logo--${brand.slug}`}>
+                      <img
+                        src={brand.logo}
+                        alt={group === 0 ? brand.name : ''}
+                        loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                          event.currentTarget.nextElementSibling?.removeAttribute('hidden');
+                        }}
+                      />
+                      <span hidden>{brand.short}</span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="home-section home-reviews-section">
+          <div className="home-section-heading">
+            <h2>Advice that stays with the order.</h2>
+            <p>Customers consistently mention practical product guidance, bat selection, and responsive service.</p>
+          </div>
+          <TestimonialsCarousel />
+        </section>
+
+        <section className="home-help-section">
+          <div>
+            <h2>Not sure which gear fits your game?</h2>
+            <p>Tell SPORTSFOLIO what you play, your level, and your budget. The team can help narrow the catalog before you order.</p>
+          </div>
+          <div className="home-help-actions">
+            <button className="btn-neon" onClick={() => showPage('contact')}>Get product help</button>
+            <button className="home-dark-link" onClick={() => showPage('shop')}>Browse all gear</button>
+          </div>
+        </section>
+      </main>
     </>
   );
 }
@@ -384,61 +305,34 @@ const testimonialData = [
 
 function TestimonialsCarousel() {
   const [index, setIndex] = useState(0);
+  const testimonial = testimonialData[index];
 
-  useEffect(() => {
-    const timer = setInterval(() => setIndex(prev => (prev + 1) % testimonialData.length), 4000);
-    return () => clearInterval(timer);
-  }, []);
+  function showPrevious() {
+    setIndex(current => (current - 1 + testimonialData.length) % testimonialData.length);
+  }
+
+  function showNext() {
+    setIndex(current => (current + 1) % testimonialData.length);
+  }
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }}>
-      <div style={{ position: 'relative', minHeight: 280 }}>
-        {testimonialData.map((t, i) => (
-          <div
-            key={t.name}
-            style={{
-              position: 'absolute', width: '100%',
-              opacity: i === index ? 1 : 0,
-              transform: i === index ? 'translateX(0) scale(1)' : 'translateX(40px) scale(0.95)',
-              transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-              pointerEvents: i === index ? 'auto' : 'none',
-            }}
-          >
-            <div className="testimonial-card reveal visible" style={{ textAlign: 'center' }}>
-              <div style={{ color: '#FFD700', fontSize: '1.1rem', letterSpacing: 3, marginBottom: 20 }}>★★★★★</div>
-              <p style={{ fontSize: '1rem', lineHeight: 1.8, color: 'var(--text-secondary)', marginBottom: 28, fontStyle: 'italic' }}>
-                {t.text}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: '50%',
-                  background: 'var(--neon)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: '1rem', color: 'var(--black)',
-                }}>
-                  {t.initials}
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{t.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t.role}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 20 }}>
-        {testimonialData.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIndex(i)}
-            style={{
-              width: i === index ? 24 : 10, height: 10,
-              borderRadius: 5, border: 'none',
-              background: i === index ? 'var(--neon)' : 'var(--card-border)',
-              cursor: 'pointer', transition: 'all 0.3s ease',
-            }}
-          />
-        ))}
+    <div className="home-testimonial" aria-live="polite">
+      <blockquote>
+        <p>{testimonial.text}</p>
+        <div className="home-review-author">
+          <span className="home-review-avatar" aria-hidden="true">{testimonial.initials}</span>
+          <span>
+            <strong>{testimonial.name}</strong>
+            <small>{testimonial.role}</small>
+          </span>
+        </div>
+      </blockquote>
+      <div className="home-review-controls">
+        <span>{index + 1} / {testimonialData.length}</span>
+        <div>
+          <button onClick={showPrevious} aria-label="Previous customer review">&larr;</button>
+          <button onClick={showNext} aria-label="Next customer review">&rarr;</button>
+        </div>
       </div>
     </div>
   );

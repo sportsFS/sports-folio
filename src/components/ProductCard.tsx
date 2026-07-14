@@ -7,6 +7,12 @@ interface Props {
   product: Product;
 }
 
+const cadFormatter = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  currencyDisplay: 'code',
+});
+
 export default function ProductCard({ product }: Props) {
   const { addToCart, showToast, isLoggedIn, showPage, products, cart } = useApp();
   const [added, setAdded] = useState(false);
@@ -62,6 +68,8 @@ export default function ProductCard({ product }: Props) {
       <button
         onClick={() => setWishlisted(w => !w)}
         className={`wishlist-btn ${wishlisted ? 'active' : ''}`}
+        aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+        aria-pressed={wishlisted}
         style={{
           position: 'absolute', top: 16, right: 16,
           width: 38, height: 38,
@@ -73,7 +81,7 @@ export default function ProductCard({ product }: Props) {
           fontSize: '1rem',
         }}
       >
-        {wishlisted ? '❤️' : '♡'}
+        {wishlisted ? '♥' : '♡'}
       </button>
 
       {/* Image */}
@@ -117,15 +125,17 @@ export default function ProductCard({ product }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '1.3rem', fontWeight: 800, color: 'var(--text)' }}>
-              ${product.price.toLocaleString('en-US')}
+              {cadFormatter.format(product.price)}
             </span>
             {product.oldPrice && (
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through', marginLeft: 8 }}>
-                ${product.oldPrice.toLocaleString('en-US')}
+                {cadFormatter.format(product.oldPrice)}
               </span>
             )}
           </div>
-          <span style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
+          {discount > 0 && (
+            <span style={{ color: 'var(--neon-dark)', fontWeight: 700, fontSize: '0.85rem' }}>{discount}% OFF</span>
+          )}
         </div>
         {isAvailable && availableQuantity <= 5 && (
           <p style={{ color: '#8a5200', fontSize: '0.78rem', fontWeight: 700, margin: '-6px 0 10px' }}>
@@ -133,7 +143,7 @@ export default function ProductCard({ product }: Props) {
           </p>
         )}
         <button className={`card-add-btn ${added ? 'added' : ''}`} onClick={handleAddToCart} disabled={!isAvailable}>
-          {!isAvailable ? 'OUT OF STOCK' : added ? '✓ ADDED' : '🛒 ADD TO CART'}
+          {!isAvailable ? 'OUT OF STOCK' : added ? 'ADDED' : 'ADD TO CART'}
         </button>
         {showAddOn && suggestedAddOns.length > 0 && (
           <div className="product-addon-panel">
@@ -141,7 +151,7 @@ export default function ProductCard({ product }: Props) {
             <div className="product-addon-list">
               {suggestedAddOns.map(addOn => (
                 <div className="product-addon-item" key={addOn.id}>
-                  <span>{addOn.name}<small>${addOn.price.toLocaleString('en-CA')} CAD</small></span>
+                  <span>{addOn.name}<small>{cadFormatter.format(addOn.price)}</small></span>
                   <button onClick={() => handleAddOn(addOn)} aria-label={`Add ${addOn.name} to cart`}>Add</button>
                 </div>
               ))}

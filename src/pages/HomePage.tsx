@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import ProductCard from '../components/ProductCard';
-import { findSuggestedAddOns, HERO_GAME_CATEGORIES, productMatchesCategory } from '../data/catalog';
+import { getProductCategoryLabel, HERO_GAME_CATEGORIES, productMatchesCategory } from '../data/catalog';
 
 const brands = [
   { name: 'SS Cricket', slug: 'ss', short: 'SS', logo: '/images/brands/ss-cricket.png' },
@@ -10,19 +9,29 @@ const brands = [
   { name: 'Gray-Nicolls', slug: 'gray-nicolls', short: 'GN', logo: '/images/brands/gray-nicolls.png' },
   { name: 'Kookaburra', slug: 'kookaburra', short: 'KB', logo: '/images/brands/kookaburra.png' },
   { name: 'GM Cricket', slug: 'gm', short: 'GM', logo: '/images/brands/gm-cricket.png' },
-  { name: 'New Balance', slug: 'new-balance', short: 'NB', logo: '/images/brands/new-balance.png' },
-  { name: 'Adidas Cricket', slug: 'adidas', short: 'ADI', logo: '/images/brands/adidas-cricket.png' },
   { name: 'Puma Cricket', slug: 'puma', short: 'PUMA', logo: '/images/brands/puma-cricket.png' },
   { name: 'DSC', slug: 'dsc', short: 'DSC', logo: '/images/brands/dsc.png' },
 ];
 
-const departmentDeck = [
-  { value: 'bats', label: 'Cricket bats', detail: 'English, Kashmir and tape-ball bats', size: 'feature' },
-  { value: 'protection', label: 'Protective gear', detail: 'Pads, guards and match protection', size: 'standard' },
-  { value: 'balls', label: 'Cricket balls', detail: 'Leather, practice and tennis balls', size: 'standard' },
-  { value: 'accessories', label: 'Training and care', detail: 'Grips, bat care and practice gear', size: 'wide' },
-  { value: 'jerseys', label: 'Jerseys', detail: 'Team colours and match-day wear', size: 'wide' },
+const categoryShowcase = [
+  { value: 'bats', label: 'Cricket bats', detail: 'English willow, Kashmir willow and tape-ball bats', image: '/images/products/bat-english-willow-mrf-gold.webp', layout: 'hero' },
+  { value: 'protection', label: 'Protection', detail: 'Helmets, guards and batting pads', image: '/images/products/protective-helmets-shrey-helmet.webp', layout: 'standard' },
+  { value: 'balls', label: 'Match balls', detail: 'Leather, practice and tennis balls', image: '/images/products/balls-sg-club-leather.webp', layout: 'standard' },
+  { value: 'jerseys', label: 'Jerseys', detail: 'Match-day colours and teamwear', image: '/images/products/team-sportswear-csk-jersey.webp', layout: 'wide' },
 ];
+
+const preferredFeaturedImages = [
+  '/images/products/protective-helmets-shrey-helmet.webp',
+  '/images/products/balls-sg-club-leather.webp',
+  '/images/products/team-sportswear-csk-jersey.webp',
+  '/images/products/accessories-stumps-sportsfolio-plastic-stump.webp',
+];
+
+const cadFormatter = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  currencyDisplay: 'code',
+});
 
 export default function HomePage() {
   const { showPage, products, setPresetCategory } = useApp();
@@ -47,22 +56,22 @@ export default function HomePage() {
     showPage('shop');
   }
 
-  const departments = departmentDeck.map(department => {
-    const matchingProducts = products.filter(product => productMatchesCategory(product, department.value));
+  const collections = categoryShowcase.map(collection => {
+    const matchingProducts = products.filter(product => productMatchesCategory(product, collection.value));
     return {
-      ...department,
-      image: matchingProducts.find(product => product.image)?.image,
+      ...collection,
       count: matchingProducts.length,
     };
   });
 
   const featuredProducts = products
     .filter(product => product.isActive !== false && product.price > 0)
-    .sort((a, b) => Number(Boolean(b.badge)) - Number(Boolean(a.badge)))
-    .slice(0, 8);
-
-  const featuredBat = products.find(product => product.category === 'bats' && findSuggestedAddOns(product, products).length > 0);
-  const featuredAddOn = featuredBat ? findSuggestedAddOns(featuredBat, products)[0] : undefined;
+    .sort((a, b) => {
+      const aRank = preferredFeaturedImages.indexOf(a.image);
+      const bRank = preferredFeaturedImages.indexOf(b.image);
+      return (aRank < 0 ? Number.MAX_SAFE_INTEGER : aRank) - (bRank < 0 ? Number.MAX_SAFE_INTEGER : bRank);
+    })
+    .slice(0, 4);
 
   return (
     <>
@@ -141,23 +150,23 @@ export default function HomePage() {
       </section>
 
       <main className="home-page">
-        <section className="home-assurance" aria-label="Store policies">
+        <section className="home-service-bar" aria-label="Store services">
           <div>
-            <strong>Delivery across Canada</strong>
-            <span>Canadian addresses are confirmed at checkout.</span>
+            <strong>Canada-wide delivery</strong>
+            <span>Charges confirmed before payment</span>
           </div>
           <div>
-            <strong>Stripe-secured payment</strong>
-            <span>Order totals and delivery charges are shown before payment.</span>
+            <strong>Secure checkout</strong>
+            <span>Payments processed by Stripe</span>
           </div>
           <div>
-            <strong>Exchange or replacement</strong>
-            <span>Eligible requests can be submitted within 30 days of delivery.</span>
+            <strong>30-day requests</strong>
+            <span>Eligible exchange or replacement support</span>
           </div>
         </section>
 
         <nav className="home-game-nav" aria-label="Shop by game">
-          <span>Shop by game</span>
+          <span>Browse the store</span>
           <div>
             {HERO_GAME_CATEGORIES.map(game => (
               <button key={game.value} onClick={() => shopGameCategory(game.value)}>{game.label}</button>
@@ -168,85 +177,80 @@ export default function HomePage() {
           </div>
         </nav>
 
-        <section className="home-section home-departments">
-          <div className="home-section-heading">
-            <h2>Start with what you need.</h2>
-            <p>Browse real departments from the current catalog, then narrow by brand, price, or availability in the shop.</p>
+        <section className="home-shell home-collections">
+          <div className="home-heading-row">
+            <div>
+              <h2>Shop cricket essentials</h2>
+              <p>Equipment for training days, match days, and everything between.</p>
+            </div>
+            <button className="home-inline-link" onClick={() => showPage('shop')}>View the full catalog</button>
           </div>
-          <div className="home-department-grid">
-            {departments.map(department => (
+          <div className="home-collection-grid">
+            {collections.map(collection => (
               <button
-                key={department.value}
-                className={`home-department-card home-department-card--${department.size}`}
-                onClick={() => shopGameCategory(department.value)}
+                key={collection.value}
+                className={`home-collection home-collection--${collection.layout}`}
+                onClick={() => shopGameCategory(collection.value)}
               >
-                {department.image && <img src={department.image} alt="" loading="lazy" />}
-                <span className="home-department-shade" />
-                <span className="home-department-copy">
-                  <strong>{department.label}</strong>
-                  <small>{department.detail}</small>
-                  <b>{department.count} {department.count === 1 ? 'product' : 'products'}</b>
+                <span className="home-collection-copy">
+                  <strong>{collection.label}</strong>
+                  <small>{collection.detail}</small>
+                  <b>{collection.count} {collection.count === 1 ? 'item' : 'items'} <span aria-hidden="true">&rarr;</span></b>
                 </span>
+                <img src={collection.image} alt="" loading="lazy" />
               </button>
             ))}
           </div>
         </section>
 
-        <section className="home-section home-products-section">
-          <div className="home-section-heading home-section-heading--products">
+        <section className="home-cricket-feature">
+          <img src="/images/hero/Max_a_A_hyper-realistic_4K.png" alt="Cricket player batting under stadium lights" loading="lazy" />
+          <div className="home-cricket-feature-copy">
+            <h2>Made for every innings.</h2>
+            <p>From first nets to weekend matches, find cricket equipment selected for the way you play.</p>
+            <button className="btn-neon" onClick={() => shopGameCategory('cricket')}>Shop cricket</button>
+          </div>
+        </section>
+
+        <section className="home-shell home-featured-products">
+          <div className="home-heading-row">
             <div>
-              <h2>Gear worth a closer look.</h2>
-              <p>In-stock status and available quantities are controlled by the store owner.</p>
+              <h2>Featured equipment</h2>
+              <p>A focused selection from the current SPORTSFOLIO catalog.</p>
             </div>
-            <button className="home-text-link" onClick={() => showPage('shop')}>
-              View all {products.length > 0 ? products.length : ''} products
-            </button>
+            <button className="home-inline-link" onClick={() => showPage('shop')}>Shop all products</button>
           </div>
           {featuredProducts.length > 0 ? (
             <div className="home-product-grid">
-              {featuredProducts.map(product => <ProductCard key={product.id} product={product} />)}
+              {featuredProducts.map(product => (
+                <article className="home-product" key={product.id}>
+                  <div className="home-product-image">
+                    {product.badge && <span>{product.badge}</span>}
+                    <img src={product.image} alt={product.name} loading="lazy" />
+                  </div>
+                  <div className="home-product-copy">
+                    <small>{getProductCategoryLabel(product)}</small>
+                    <h3>{product.name}</h3>
+                    <strong>{cadFormatter.format(product.price)}</strong>
+                    <button onClick={() => shopGameCategory(product.category)}>
+                      View {getProductCategoryLabel(product).toLowerCase()} <span aria-hidden="true">&rarr;</span>
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
           ) : (
             <div className="home-catalog-empty">
-              <strong>The catalog is loading.</strong>
-              <span>Products will appear here as soon as the store connection responds.</span>
+              <strong>Loading the catalog</strong>
+              <span>Featured equipment will appear here shortly.</span>
             </div>
           )}
         </section>
 
-        {featuredBat && featuredAddOn && (
-          <section className="home-section home-kit-section">
-            <div className="home-kit-visual" aria-label={`${featuredBat.name} with ${featuredAddOn.name}`}>
-              <figure className="home-kit-product home-kit-product--bat">
-                <img src={featuredBat.image} alt={featuredBat.name} loading="lazy" />
-                <figcaption>{featuredBat.name}</figcaption>
-              </figure>
-              <span className="home-kit-plus" aria-hidden="true">+</span>
-              <figure className="home-kit-product home-kit-product--addon">
-                <img src={featuredAddOn.image} alt={featuredAddOn.name} loading="lazy" />
-                <figcaption>{featuredAddOn.name}</figcaption>
-              </figure>
-            </div>
-            <div className="home-kit-copy">
-              <h2>Complete the kit before checkout.</h2>
-              <p>Selected bats can suggest compatible balls and accessories after they are added to cart. Suggestions follow the add-ons managed by the store owner.</p>
-              <button className="btn-neon" onClick={() => shopGameCategory('bats')}>Shop cricket bats</button>
-            </div>
-          </section>
-        )}
-
-        <section className="home-store-standard">
-          <div>
-            <h2>Clear terms. No surprise promises.</h2>
-            <p>SPORTSFOLIO currently delivers to Canadian addresses. Delivery charges are confirmed before payment, and eligible delivered orders can request an exchange or replacement.</p>
-          </div>
-          <button className="home-text-link" onClick={() => showPage('shipping')}>Read the delivery policy</button>
-        </section>
-
         <section className="home-brands" aria-labelledby="home-brands-title">
           <div className="home-brands-heading">
-            <h2 id="home-brands-title">Brands players recognise.</h2>
-            <p>Browse established cricket labels already represented across the SPORTSFOLIO catalog.</p>
+            <h2 id="home-brands-title">Trusted names in cricket</h2>
+            <p>Leading equipment brands represented across the SPORTSFOLIO catalog.</p>
           </div>
           <div className="home-brands-window">
             <div className="home-brands-track">
@@ -272,22 +276,22 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="home-section home-reviews-section">
-          <div className="home-section-heading">
-            <h2>Advice that stays with the order.</h2>
-            <p>Customers consistently mention practical product guidance, bat selection, and responsive service.</p>
+        <section className="home-shell home-reviews-section">
+          <div className="home-reviews-heading">
+            <h2>Service players remember</h2>
+            <p>Customers value practical advice, careful bat selection, and responsive support.</p>
           </div>
           <TestimonialsCarousel />
         </section>
 
         <section className="home-help-section">
           <div>
-            <h2>Not sure which gear fits your game?</h2>
-            <p>Tell SPORTSFOLIO what you play, your level, and your budget. The team can help narrow the catalog before you order.</p>
+            <h2>Need help choosing the right gear?</h2>
+            <p>Share your game, playing level, and budget. The SPORTSFOLIO team can help narrow the options.</p>
           </div>
           <div className="home-help-actions">
-            <button className="btn-neon" onClick={() => showPage('contact')}>Get product help</button>
-            <button className="home-dark-link" onClick={() => showPage('shop')}>Browse all gear</button>
+            <button className="btn-neon" onClick={() => showPage('contact')}>Talk to the team</button>
+            <button className="home-dark-link" onClick={() => showPage('shipping')}>Delivery and returns</button>
           </div>
         </section>
       </main>

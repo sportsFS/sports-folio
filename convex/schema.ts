@@ -16,6 +16,7 @@ export default defineSchema({
     stockQuantity: v.optional(v.number()),
     reservedQuantity: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
+    addOnProductIds: v.optional(v.array(v.id("products"))),
   }).index("by_category", ["category"]),
   users: defineTable({
     clerkId: v.optional(v.string()),

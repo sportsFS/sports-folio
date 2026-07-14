@@ -6,7 +6,7 @@ import { Product } from '../data/products';
 import { ADMIN_PRODUCT_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/catalog';
 import './AdminPage.css';
 
-type Tab = 'dashboard' | 'products' | 'orders' | 'users';
+type Tab = 'dashboard' | 'products' | 'addons' | 'orders' | 'users';
 type UserRow = { id: string; name: string; email: string; role: string };
 type ReturnStatus = NonNullable<Order['returnRequest']>['status'];
 type ProductForm = {
@@ -58,6 +58,7 @@ export default function AdminPage() {
   const navItems: { id: Tab; label: string; count?: number }[] = [
     { id: 'dashboard', label: 'Overview' },
     { id: 'products', label: 'Products', count: adminProducts.length },
+    { id: 'addons', label: 'Add-ons', count: adminProducts.filter(product => product.addOnProductIds?.length).length },
     { id: 'orders', label: 'Orders', count: orders.length },
     { id: 'users', label: 'Customers', count: usersData?.length },
   ];
@@ -115,6 +116,7 @@ export default function AdminPage() {
           {tab === 'products' && (
             <ProductsTab products={adminProducts} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />
           )}
+          {tab === 'addons' && <AddOnsTab products={adminProducts} updateProduct={updateProduct} />}
           {tab === 'orders' && <OrdersTab orders={orders} updateOrderStatus={updateOrderStatus} />}
           {tab === 'users' && <UsersTab users={usersData} />}
         </main>
@@ -473,6 +475,85 @@ function ProductsTab({ products, addProduct, updateProduct, deleteProduct }: {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AddOnsTab({ products, updateProduct }: {
+  products: Product[];
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+}) {
+  const sortedProducts = useMemo(() => [...products].sort((a, b) => a.name.localeCompare(b.name)), [products]);
+  const [sourceId, setSourceId] = useState('');
+  const [candidateId, setCandidateId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const source = sortedProducts.find(product => product.id === sourceId);
+  const configuredIds = source?.addOnProductIds ?? [];
+  const configuredAddOns = configuredIds.flatMap(id => {
+    const product = sortedProducts.find(candidate => candidate.id === id);
+    return product ? [product] : [];
+  });
+  const candidates = sortedProducts.filter(product => product.id !== sourceId && !configuredIds.includes(product.id));
+
+  useEffect(() => {
+    if (source && products.some(product => product.id === source.id)) return;
+    const firstSource = sortedProducts.find(product => product.addOnProductIds?.length)
+      ?? sortedProducts.find(product => product.category === 'bats')
+      ?? sortedProducts[0];
+    setSourceId(firstSource?.id ?? '');
+  }, [products, sortedProducts, source]);
+
+  useEffect(() => {
+    if (candidates.some(product => product.id === candidateId)) return;
+    setCandidateId(candidates[0]?.id ?? '');
+  }, [candidateId, candidates]);
+
+  async function saveAddOns(ids: string[], message: string) {
+    if (!source || saving) return;
+    setSaving(true);
+    setNotice(null);
+    try {
+      await updateProduct(source.id, { addOnProductIds: ids });
+      setNotice({ type: 'success', text: message });
+    } catch (error) {
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Add-ons could not be updated.' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const usesLegacyBall = source?.addOnProductIds === undefined && source?.category === 'bats';
+
+  return (
+    <div className="admin-view">
+      <section className="admin-panel" aria-label="Add-on offers">
+        <div className="admin-panel-heading admin-list-heading">
+          <div><h2>Add-on offers</h2><p>Offer existing catalog products after a customer adds another product.</p></div>
+        </div>
+
+        <div className="admin-addon-controls">
+          <label><span>When a customer adds</span><select value={sourceId} onChange={event => { setSourceId(event.target.value); setNotice(null); }}>{sortedProducts.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+          <label><span>Offer this product</span><select value={candidateId} onChange={event => setCandidateId(event.target.value)} disabled={!candidates.length}>{candidates.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+          <button className="admin-button admin-button-primary" disabled={!source || !candidateId || saving} onClick={() => void saveAddOns([...configuredIds, candidateId], 'Add-on offer added.')}>{saving ? 'Saving...' : 'Add offer'}</button>
+        </div>
+
+        {notice && <div className={`admin-notice admin-notice-${notice.type} admin-addon-notice`} role="status">{notice.text}</div>}
+
+        <div className="admin-addon-list">
+          <div className="admin-addon-list-heading">
+            <div><h3>{source?.name ?? 'Select a product'}</h3><p>{usesLegacyBall ? 'Currently using the automatic in-stock ball suggestion.' : `${configuredAddOns.length} configured offer${configuredAddOns.length === 1 ? '' : 's'}`}</p></div>
+            {usesLegacyBall && <button className="admin-button admin-button-small admin-button-secondary" disabled={saving} onClick={() => void saveAddOns([], 'Automatic suggestion disabled.')}>Disable automatic suggestion</button>}
+          </div>
+
+          {configuredAddOns.length ? configuredAddOns.map(addOn => (
+            <div className="admin-addon-row" key={addOn.id}>
+              <div className="admin-product-cell"><img src={addOn.image} alt="" /><span><strong>{addOn.name}</strong><small>{currency.format(addOn.price)} · {addOn.isActive === false ? 'Inactive' : `${addOn.availableQuantity ?? 0} available`}</small></span></div>
+              <button className="admin-button admin-button-small admin-button-danger" disabled={saving} onClick={() => void saveAddOns(configuredIds.filter(id => id !== addOn.id), 'Add-on offer removed.')}>Remove</button>
+            </div>
+          )) : !usesLegacyBall && <EmptyState title="No add-ons configured" detail="Choose a product above to create an offer." />}
+        </div>
+      </section>
     </div>
   );
 }

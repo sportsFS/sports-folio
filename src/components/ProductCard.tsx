@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Product } from '../data/products';
 import { useApp } from '../context/AppContext';
-import { findSuggestedAddOn, getProductCategoryLabel } from '../data/catalog';
+import { findSuggestedAddOns, getProductCategoryLabel } from '../data/catalog';
 
 interface Props {
   product: Product;
@@ -14,7 +14,7 @@ export default function ProductCard({ product }: Props) {
   const [showAddOn, setShowAddOn] = useState(false);
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
-  const suggestedAddOn = findSuggestedAddOn(product, products, cart);
+  const suggestedAddOns = findSuggestedAddOns(product, products, cart);
   const availableQuantity = product.availableQuantity ?? 0;
   const isAvailable = product.isActive !== false && product.price > 0 && availableQuantity > 0;
   const stars = '★'.repeat(Math.floor(product.rating));
@@ -32,15 +32,13 @@ export default function ProductCard({ product }: Props) {
     addToCart(product);
     showToast(product.name, 'Added to your cart successfully!');
     setAdded(true);
-    setShowAddOn(Boolean(suggestedAddOn));
+    setShowAddOn(suggestedAddOns.length > 0);
     setTimeout(() => setAdded(false), 1500);
   }
 
-  function handleAddOn() {
-    if (!suggestedAddOn) return;
-    addToCart(suggestedAddOn);
-    showToast(suggestedAddOn.name, 'Add-on added to your cart');
-    setShowAddOn(false);
+  function handleAddOn(addOn: Product) {
+    addToCart(addOn);
+    showToast(addOn.name, 'Add-on added to your cart');
   }
 
   return (
@@ -137,13 +135,17 @@ export default function ProductCard({ product }: Props) {
         <button className={`card-add-btn ${added ? 'added' : ''}`} onClick={handleAddToCart} disabled={!isAvailable}>
           {!isAvailable ? 'OUT OF STOCK' : added ? '✓ ADDED' : '🛒 ADD TO CART'}
         </button>
-        {showAddOn && suggestedAddOn && (
+        {showAddOn && suggestedAddOns.length > 0 && (
           <div className="product-addon-panel">
-            <div>
-              <strong>Complete the kit</strong>
-              <span>Add {suggestedAddOn.name} for ${suggestedAddOn.price.toLocaleString('en-US')}</span>
+            <strong>Complete your order</strong>
+            <div className="product-addon-list">
+              {suggestedAddOns.map(addOn => (
+                <div className="product-addon-item" key={addOn.id}>
+                  <span>{addOn.name}<small>${addOn.price.toLocaleString('en-CA')} CAD</small></span>
+                  <button onClick={() => handleAddOn(addOn)} aria-label={`Add ${addOn.name} to cart`}>Add</button>
+                </div>
+              ))}
             </div>
-            <button onClick={handleAddOn}>Add ball</button>
           </div>
         )}
       </div>

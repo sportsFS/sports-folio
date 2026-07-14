@@ -22,7 +22,17 @@ function productView(product: any) {
     reservedQuantity,
     availableQuantity: Math.max(0, stockQuantity - reservedQuantity),
     isActive: product.isActive ?? true,
+    addOnProductIds: product.addOnProductIds,
   };
+}
+
+async function validateAddOnProductIds(ctx: any, productId: any, addOnProductIds: any[]) {
+  if (addOnProductIds.length > 10) throw new Error("A product can have at most 10 add-ons");
+  if (new Set(addOnProductIds).size !== addOnProductIds.length) throw new Error("Add-on products must be unique");
+  for (const addOnProductId of addOnProductIds) {
+    if (productId && addOnProductId === productId) throw new Error("A product cannot be its own add-on");
+    if (!(await ctx.db.get(addOnProductId))) throw new Error("Add-on product not found");
+  }
 }
 
 export const list = query({
@@ -99,10 +109,12 @@ export const add = mutation({
     description: v.optional(v.string()),
     stockQuantity: v.number(),
     isActive: v.boolean(),
+    addOnProductIds: v.optional(v.array(v.id("products"))),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
     if (!Number.isInteger(args.stockQuantity) || args.stockQuantity < 0) throw new Error("Stock must be a non-negative whole number");
+    if (args.addOnProductIds) await validateAddOnProductIds(ctx, undefined, args.addOnProductIds);
     const id = await ctx.db.insert("products", { ...args, reservedQuantity: 0 });
     return id;
   },
@@ -123,6 +135,7 @@ export const update = mutation({
     description: v.optional(v.string()),
     stockQuantity: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
+    addOnProductIds: v.optional(v.array(v.id("products"))),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -133,6 +146,7 @@ export const update = mutation({
       if (!Number.isInteger(fields.stockQuantity) || fields.stockQuantity < 0) throw new Error("Stock must be a non-negative whole number");
       if (fields.stockQuantity < (product.reservedQuantity ?? 0)) throw new Error("Stock cannot be lower than the quantity reserved in active checkouts");
     }
+    if (fields.addOnProductIds !== undefined) await validateAddOnProductIds(ctx, id, fields.addOnProductIds);
     await ctx.db.patch(id, fields);
   },
 });
@@ -146,6 +160,9 @@ export const remove = mutation({
     const product = await ctx.db.get(args.id);
     if (!product) throw new Error("Product not found");
     if ((product.reservedQuantity ?? 0) > 0) throw new Error("Product has stock reserved in an active checkout");
+    const referencedBy = (await ctx.db.query("products").collect())
+      .find(candidate => candidate.addOnProductIds?.includes(args.id));
+    if (referencedBy) throw new Error(`Remove this product from ${referencedBy.name}'s add-ons before deleting it`);
     await ctx.db.delete(args.id);
   },
 });

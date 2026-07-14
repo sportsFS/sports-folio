@@ -6,6 +6,7 @@ const read = path => fs.readFileSync(path, 'utf8');
 const ci = read('.github/workflows/ci.yml');
 const orders = read('convex/orders.ts');
 const products = read('convex/products.ts');
+const catalog = read('src/data/catalog.ts');
 const stripe = read('convex/stripe.ts');
 const schema = read('convex/schema.ts');
 const crons = read('convex/crons.ts');
@@ -44,6 +45,11 @@ assert.match(admin, /Delivery address[\s\S]*order\.shippingAddress/, 'admin must
 
 assert.match(schema, /stockQuantity:[\s\S]*reservedQuantity:/, 'products must track on-hand and reserved stock');
 assert.match(products, /availableQuantity[\s\S]*availableQuantity < item\.qty/, 'checkout must enforce available stock');
+assert.match(schema, /addOnProductIds:\s*v\.optional\(v\.array\(v\.id\("products"\)\)\)/, 'products must store admin-managed add-on relationships');
+assert.match(products, /validateAddOnProductIds[\s\S]*A product cannot be its own add-on[\s\S]*Add-on product not found/, 'add-on relationships must be validated server-side');
+assert.match(products, /referencedBy[\s\S]*Remove this product from/, 'referenced add-on products must not be deleted');
+assert.match(catalog, /product\.addOnProductIds[\s\S]*productsById[\s\S]*isEligible/, 'storefront add-ons must use configured products and availability');
+assert.match(admin, /id: 'addons'[\s\S]*<AddOnsTab/, 'admin must expose dedicated add-on management');
 assert.match(orders, /inventoryStatus !== "reserved"[\s\S]*requestedByProduct[\s\S]*stockQuantity: product\.stockQuantity - quantity/, 'paid checkout must consume a valid reservation');
 assert.match(crons, /release expired checkout reservations[\s\S]*cleanupExpiredReservationsInternal/, 'expired inventory reservations must be cleaned automatically');
 assert.match(orders, /order\.userId !== user\._id[\s\S]*returnRequest:/, 'return requests must be scoped to the signed-in order owner');

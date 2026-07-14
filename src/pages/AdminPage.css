@@ -418,6 +418,28 @@
 .admin-muted { color: var(--text-secondary); }
 .admin-mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 
+.admin-addon-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-addon-controls label { display: grid; gap: 6px; min-width: 0; }
+.admin-addon-controls label > span { color: var(--text-secondary); font-size: 0.72rem; font-weight: 700; }
+.admin-addon-controls select { width: 100%; min-height: 40px; padding: 0 32px 0 11px; border: 1px solid var(--admin-line); border-radius: 8px; background: var(--admin-surface); color: var(--text); font: inherit; font-size: 0.78rem; }
+.admin-addon-controls select:focus-visible { border-color: #527b00; outline: 3px solid rgba(170, 255, 0, 0.28); outline-offset: 1px; }
+.admin-addon-notice { margin: 16px 20px 0; }
+.admin-addon-list { padding: 0 20px 20px; }
+.admin-addon-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 12px; }
+.admin-addon-list-heading h3 { font-size: 0.9rem; }
+.admin-addon-list-heading p { margin-top: 3px; color: var(--text-secondary); font-size: 0.72rem; }
+.admin-addon-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--admin-line); }
+.admin-addon-row .admin-product-cell span { display: grid; gap: 3px; }
+.admin-addon-row .admin-product-cell small { color: var(--text-secondary); font-size: 0.7rem; }
+
 .admin-badge {
   display: inline-flex;
   align-items: center;
@@ -623,6 +645,8 @@
   .admin-search { width: 100%; }
   .admin-filters > label { flex: 1; min-width: 0; }
   .admin-toolbar > .admin-button { align-self: flex-start; }
+  .admin-addon-controls { grid-template-columns: 1fr; }
+  .admin-addon-controls .admin-button { width: 100%; }
 }
 
 @media (max-width: 520px) {
@@ -647,6 +671,8 @@
   .admin-image-preview { width: 86px; height: 86px; }
   .admin-dialog-actions { flex-direction: column-reverse; }
   .admin-dialog-actions .admin-button { width: 100%; }
+  .admin-addon-list-heading { align-items: flex-start; flex-direction: column; }
+  .admin-addon-row { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

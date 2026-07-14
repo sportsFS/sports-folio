@@ -76,16 +76,23 @@ export function productMatchesCategory(product: Pick<Product, 'name' | 'category
   return displayCategory === category;
 }
 
-export function findSuggestedAddOn(product: Product, products: Product[], cart: Product[] = []) {
-  if (product.category !== 'bats') return null;
-
+export function findSuggestedAddOns(product: Product, products: Product[], cart: Product[] = []) {
   const cartIds = new Set(cart.map(item => item.id));
-  return products.find(candidate =>
-    candidate.category === 'balls' &&
+  const isEligible = (candidate: Product) =>
     candidate.price > 0 &&
     candidate.isActive !== false &&
     (candidate.availableQuantity ?? 0) > 0 &&
     candidate.id !== product.id &&
-    !cartIds.has(candidate.id)
-  ) || null;
+    !cartIds.has(candidate.id);
+
+  if (product.addOnProductIds === undefined) {
+    if (product.category !== 'bats') return [];
+    const fallback = products.find(candidate => candidate.category === 'balls' && isEligible(candidate));
+    return fallback ? [fallback] : [];
+  }
+
+  const productsById = new Map(products.map(candidate => [candidate.id, candidate]));
+  return product.addOnProductIds
+    .map(id => productsById.get(id))
+    .filter((candidate): candidate is Product => Boolean(candidate && isEligible(candidate)));
 }

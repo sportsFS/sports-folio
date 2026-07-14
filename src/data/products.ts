@@ -14,6 +14,7 @@ export interface Product {
   reservedQuantity?: number;
   availableQuantity?: number;
   isActive?: boolean;
+  addOnProductIds?: string[];
 }
 
 // Products are now managed in Convex

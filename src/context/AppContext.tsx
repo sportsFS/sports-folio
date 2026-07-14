@@ -19,6 +19,7 @@ export interface Product {
   reservedQuantity?: number;
   availableQuantity?: number;
   isActive?: boolean;
+  addOnProductIds?: string[];
 }
 
 interface CartItem extends Product { qty: number }
@@ -271,6 +272,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       description: p.description,
       stockQuantity: p.stockQuantity ?? 0,
       isActive: p.isActive ?? true,
+      addOnProductIds: p.addOnProductIds as any,
     });
   }, [addProductMutation]);
 
@@ -289,6 +291,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       description: updates.description,
       stockQuantity: updates.stockQuantity,
       isActive: updates.isActive,
+      addOnProductIds: updates.addOnProductIds as any,
     });
   }, [updateProductMutation]);
 
